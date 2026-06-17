@@ -3,12 +3,16 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Plus, Trash2, Link2, GripVertical, Image as ImageIcon, UploadCloud, Loader2, X, Video, Link as LinkIcon } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { usePages } from '@/hooks/usePages'
+import { useAuth } from '@/hooks/useAuth'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import IconPicker from '@/components/IconPicker'
 import BlockPickerModal from '@/components/BlockPickerModal'
 import SEO from '@/components/SEO'
+import ComplexBlockRender from '@/components/ComplexBlockRender'
+import ProductEditorModal from '@/components/ProductEditorModal'
+import BlogEditorModal from '@/components/BlogEditorModal'
 import toast from 'react-hot-toast'
 
 const getYouTubeEmbedUrl = (url) => {
@@ -87,6 +91,7 @@ export default function PageEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { getPage, updatePage, uploadImage } = usePages()
+  const { user } = useAuth()
   
   const [page, setPage] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -129,6 +134,11 @@ export default function PageEditor() {
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false)
   const [isBlockPickerOpen, setIsBlockPickerOpen] = useState(false)
   const [currentEditingLinkIndex, setCurrentEditingLinkIndex] = useState(null)
+  const [editingProductIndex, setEditingProductIndex] = useState(null)
+  const [editingBlogIndex, setEditingBlogIndex] = useState(null)
+  const [activeLinkTabs, setActiveLinkTabs] = useState({})
+
+  const setLinkTab = (index, tab) => setActiveLinkTabs(prev => ({ ...prev, [index]: tab }))
 
   useEffect(() => {
     const fetchPageData = async () => {
@@ -233,6 +243,14 @@ export default function PageEditor() {
 
   const handleAddBlock = (blockId) => {
     setIsBlockPickerOpen(false)
+
+    const isMonetization = ['digital_product', 'appointment', 'event', 'physical_product', 'blog'].includes(blockId);
+    if (isMonetization && !user?.user_metadata?.whatsapp_number) {
+      toast.error('Silakan isi Nomor WhatsApp di menu Profile terlebih dahulu.', { duration: 4000 });
+      navigate('/settings');
+      return;
+    }
+
     if (blockId === 'header') {
       setLinks([...links, { id: Date.now().toString(), type: 'header', title: 'New Section' }])
     } else if (blockId === 'link') {
@@ -243,9 +261,13 @@ export default function PageEditor() {
     }
   }
 
-  const updateLink = (index, field, value) => {
+  const updateLink = (index, field, value, fullObject = null) => {
     const newLinks = [...links]
-    newLinks[index] = { ...newLinks[index], [field]: value }
+    if (fullObject) {
+      newLinks[index] = fullObject;
+    } else {
+      newLinks[index] = { ...newLinks[index], [field]: value }
+    }
     setLinks(newLinks)
   }
 
@@ -317,7 +339,7 @@ export default function PageEditor() {
                 Profile
               </h2>
               <div className="space-y-5 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                <div className="flex gap-6 items-start">
+                <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
                   <div className="w-24 h-24 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden shrink-0">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -451,8 +473,8 @@ export default function PageEditor() {
                 <h2 className="text-xl font-bold text-slate-900 flex items-center">
                   Links & Blocks
                 </h2>
-                <Button type="button" onClick={() => setIsBlockPickerOpen(true)} className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-2 text-sm font-bold">
-                  <Plus className="h-4 w-4 mr-1" />
+                <Button type="button" onClick={() => setIsBlockPickerOpen(true)} className="bg-[#0b5cff] hover:bg-blue-700 shadow-lg shadow-blue-500/30 text-white rounded-xl px-5 py-2.5 text-sm font-black transition-all hover:-translate-y-0.5">
+                  <Plus className="h-4 w-4 mr-1 stroke-[3]" />
                   Add Block
                 </Button>
               </div>
@@ -465,14 +487,16 @@ export default function PageEditor() {
                   </div>
                 ) : (
                   links.map((link, index) => (
-                    <div key={link.id || index} className={`bg-white border ${link.type === 'header' ? 'border-indigo-200 shadow-sm' : 'border-slate-200 shadow-sm'} rounded-2xl p-5 flex gap-4 group`}>
-                      <div className="flex flex-col items-center justify-center gap-2 text-slate-300">
+                    <div key={link.id || index} className={`bg-white border ${link.type === 'header' ? 'border-indigo-200 shadow-sm' : 'border-slate-200 shadow-sm'} rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 group`}>
+                      <div className="flex flex-row sm:flex-col items-center justify-center gap-2 text-slate-300 w-full sm:w-auto border-b sm:border-b-0 border-slate-100 pb-2 sm:pb-0">
                         <button type="button" onClick={() => moveLink(index, 'up')} disabled={index === 0} className="hover:text-slate-600 disabled:opacity-30">
-                          <span className="text-lg leading-none">▲</span>
+                          <span className="text-lg leading-none sm:block hidden">▲</span>
+                          <span className="text-lg leading-none sm:hidden">◀</span>
                         </button>
-                        <GripVertical className="h-5 w-5" />
+                        <GripVertical className="h-5 w-5 rotate-90 sm:rotate-0" />
                         <button type="button" onClick={() => moveLink(index, 'down')} disabled={index === links.length - 1} className="hover:text-slate-600 disabled:opacity-30">
-                          <span className="text-lg leading-none">▼</span>
+                          <span className="text-lg leading-none sm:block hidden">▼</span>
+                          <span className="text-lg leading-none sm:hidden">▶</span>
                         </button>
                       </div>
                       
@@ -530,8 +554,8 @@ export default function PageEditor() {
                           </div>
                         </>
                       ) : (
-                        <>
-                          <div className="flex flex-col items-center justify-center border-r border-slate-100 pr-4 gap-3">
+                        <div className="flex flex-col w-full">
+                          <div className="flex flex-row sm:flex-col items-center justify-center sm:border-r border-b sm:border-b-0 border-slate-100 sm:pr-4 pb-4 sm:pb-0 gap-3 w-full sm:w-auto sm:mb-0 mb-4 self-center sm:self-start sm:float-left">
                             {link.thumbnail_url ? (
                               <div className="relative group w-16 h-16">
                                 <img src={link.thumbnail_url} alt="thumb" className="w-16 h-16 rounded-xl object-cover border border-slate-200" />
@@ -571,73 +595,52 @@ export default function PageEditor() {
                             )}
                           </div>
 
-                          <div className="flex-1 space-y-3">
-                            <Input
-                              placeholder="Title (e.g. My Website)"
-                              value={link.title || ''}
-                              onChange={(e) => updateLink(index, 'title', e.target.value)}
-                              className="font-bold text-slate-800 border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 text-lg py-2"
-                            />
-                            <Input
-                              placeholder="Subtitle (Optional)"
-                              value={link.subtitle || ''}
-                              onChange={(e) => updateLink(index, 'subtitle', e.target.value)}
-                              className="text-sm text-slate-600 border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 py-2"
-                            />
-                            
-                            {link.type === 'digital_product' && (
-                              <div className="grid grid-cols-2 gap-2 p-3 bg-orange-50/50 rounded-xl border border-orange-100">
-                                <div className="col-span-2 text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-1">Product Details</div>
-                                <Input
-                                  placeholder="Price (e.g. Rp 50.000)"
-                                  value={link.price || ''}
-                                  onChange={(e) => updateLink(index, 'price', e.target.value)}
-                                  className="font-bold text-slate-800 border-none bg-white focus:ring-2 focus:ring-orange-500/20 py-2"
-                                />
-                                <Input
-                                  placeholder="Discount Price (Optional)"
-                                  value={link.discount_price || ''}
-                                  onChange={(e) => updateLink(index, 'discount_price', e.target.value)}
-                                  className="font-bold text-slate-400 line-through border-none bg-white focus:ring-2 focus:ring-orange-500/20 py-2"
-                                />
-                                <Input
-                                  placeholder="Button Text (e.g. Beli)"
-                                  value={link.button_text || ''}
-                                  onChange={(e) => updateLink(index, 'button_text', e.target.value)}
-                                  className="font-bold text-slate-600 border-none bg-white focus:ring-2 focus:ring-orange-500/20 py-2"
-                                />
-                                <div className="col-span-1">
-                                  {link.product_file_url ? (
-                                    <div className="h-full flex items-center justify-between px-3 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 text-xs font-bold">
-                                      <span>File Attached</span>
-                                      <button onClick={() => updateLink(index, 'product_file_url', '')} className="text-red-500 hover:text-red-700 p-1"><X className="w-3 h-3"/></button>
-                                    </div>
-                                  ) : (
-                                    <label className="h-full flex items-center justify-center gap-1 bg-white hover:bg-orange-100 text-orange-500 rounded-lg border border-orange-200 text-xs font-bold cursor-pointer transition-colors">
-                                      <LinkIcon className="w-3 h-3"/> Attach File (ZIP/PDF)
-                                      <input type="file" className="hidden" accept=".zip,.pdf,.rar" onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if(!file) return;
-                                        // Reusing uploadImage to upload the file to avatars bucket for now
-                                        const res = await uploadImage(file);
-                                        if(res.success) updateLink(index, 'product_file_url', res.url);
-                                      }} />
-                                    </label>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                            {(() => {
+                              const isComplex = ['digital_product', 'appointment', 'event', 'physical_product', 'blog'].includes(link.type);
+                              const tab = activeLinkTabs[index] || 'content';
+                              
+                              if (!isComplex) {
+                                return (
+                                  <div className="flex-1 space-y-3">
+                                    <Input
+                                      placeholder="Title (e.g. My Website)"
+                                      value={link.title || ''}
+                                      onChange={(e) => updateLink(index, 'title', e.target.value)}
+                                      className="font-bold text-slate-800 border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 text-lg py-2"
+                                    />
+                                    <Input
+                                      placeholder="Subtitle (Optional)"
+                                      value={link.subtitle || ''}
+                                      onChange={(e) => updateLink(index, 'subtitle', e.target.value)}
+                                      className="text-sm text-slate-600 border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 py-2"
+                                    />
+                                    <Input
+                                      placeholder="URL (e.g. https://ryz.my.id/site)"
+                                      value={link.url || ''}
+                                      onChange={(e) => updateLink(index, 'url', e.target.value)}
+                                      className="border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20"
+                                    />
+                                  </div>
+                                );
+                              }
 
-                            {link.type !== 'digital_product' && (
-                              <Input
-                                placeholder="URL (e.g. https://ryz.my.id/site)"
-                                value={link.url || ''}
-                                onChange={(e) => updateLink(index, 'url', e.target.value)}
-                                className="border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20"
-                              />
-                            )}
-                          </div>
-                        </>
+                              return (
+                                <div className="flex-1 flex flex-col justify-center gap-2">
+                                  <div>
+                                    <div className="text-sm font-bold text-slate-800">{link.title || 'Untitled Product'}</div>
+                                    <div className="text-xs font-semibold text-emerald-600">{link.price ? `Rp ${parseInt(link.price).toLocaleString('id-ID')}` : 'FREE'}</div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => link.type === 'blog' ? setEditingBlogIndex(index) : setEditingProductIndex(index)}
+                                    className="self-start px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors"
+                                  >
+                                    ⚙️ Edit Details
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                        </div>
                       )}
                       <button 
                         type="button"
@@ -966,51 +969,12 @@ export default function PageEditor() {
                         )
                       }
 
-                      if (link.type === 'digital_product') {
+                      const isComplex = ['digital_product', 'appointment', 'event', 'physical_product', 'blog'].includes(link.type);
+                      if (isComplex) {
                         return (
-                          <a
-                            key={i}
-                            href={link.product_file_url || link.url || '#'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-col ${theme.layout === 'grid' ? 'col-span-2' : ''}`}
-                            style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
-                          >
-                            {link.thumbnail_url ? (
-                              <div className="w-full h-32 shrink-0">
-                                <img src={link.thumbnail_url} alt={link.title} className="w-full h-full object-cover" />
-                              </div>
-                            ) : (
-                              <div className="w-full h-24 bg-black/5 flex flex-col items-center justify-center text-current opacity-60">
-                                {link.icon && LucideIcons[link.icon] ? (
-                                  (() => {
-                                    const IconComponent = LucideIcons[link.icon];
-                                    return <IconComponent className="w-6 h-6 mb-1" />;
-                                  })()
-                                ) : (
-                                  <ImageIcon className="w-6 h-6 mb-1" />
-                                )}
-                                <span className="text-[10px] font-medium">No Cover Image</span>
-                              </div>
-                            )}
-                            <div className="p-3 flex flex-col justify-between flex-1 w-full">
-                              <div>
-                                <h3 className="font-bold text-sm leading-tight mb-1">{link.title || 'Digital Product'}</h3>
-                                {link.subtitle && <p className="text-[10px] opacity-80 leading-snug mb-2 line-clamp-2">{link.subtitle}</p>}
-                              </div>
-                              <div className="flex items-center justify-between mt-1 pt-2" style={{ borderTop: `1px dashed ${theme.text_color}30` }}>
-                                <div className="flex flex-col">
-                                  {link.discount_price && (
-                                    <span className="text-[10px] line-through opacity-60 mb-[-2px]">{link.discount_price}</span>
-                                  )}
-                                  <span className="font-black text-sm text-orange-600">{link.price || 'FREE'}</span>
-                                </div>
-                                <div className="bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-md" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#fff' }}>
-                                  {link.button_text || 'Beli'}
-                                </div>
-                              </div>
-                            </div>
-                          </a>
+                          <div key={i} className="pointer-events-none">
+                            <ComplexBlockRender link={link} theme={theme} />
+                          </div>
                         )
                       }
 
@@ -1079,10 +1043,38 @@ export default function PageEditor() {
         }}
       />
       
-      <BlockPickerModal 
+      <BlockPickerModal
         isOpen={isBlockPickerOpen}
         onClose={() => setIsBlockPickerOpen(false)}
         onSelect={handleAddBlock}
+      />
+
+      <ProductEditorModal
+        isOpen={editingProductIndex !== null}
+        onClose={() => setEditingProductIndex(null)}
+        initialData={editingProductIndex !== null ? links[editingProductIndex] : null}
+        onSave={async (updatedLink) => {
+          updateLink(editingProductIndex, null, null, updatedLink);
+          setEditingProductIndex(null);
+          
+          const newLinks = [...links];
+          newLinks[editingProductIndex] = updatedLink;
+          await updatePage(id, { title, description, avatar_url: avatarUrl, theme, links: newLinks });
+        }}
+      />
+      
+      <BlogEditorModal
+        isOpen={editingBlogIndex !== null}
+        onClose={() => setEditingBlogIndex(null)}
+        initialData={editingBlogIndex !== null ? links[editingBlogIndex] : null}
+        onSave={async (updatedLink) => {
+          updateLink(editingBlogIndex, null, null, updatedLink);
+          setEditingBlogIndex(null);
+
+          const newLinks = [...links];
+          newLinks[editingBlogIndex] = updatedLink;
+          await updatePage(id, { title, description, avatar_url: avatarUrl, theme, links: newLinks });
+        }}
       />
     </DashboardLayout>
   )

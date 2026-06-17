@@ -16,6 +16,7 @@ import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, Upload
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
+  whatsapp_number: z.string().optional(),
 })
 
 const passwordSchema = z.object({
@@ -49,6 +50,7 @@ export default function SettingsPage() {
     defaultValues: {
       full_name: user?.user_metadata?.full_name || '',
       email: user?.email || '',
+      whatsapp_number: user?.user_metadata?.whatsapp_number || '',
     }
   })
 
@@ -61,6 +63,7 @@ export default function SettingsPage() {
       resetProfile({
         full_name: user.user_metadata?.full_name || '',
         email: user.email || '',
+        whatsapp_number: user.user_metadata?.whatsapp_number || '',
       })
     }
   }, [user, resetProfile])
@@ -69,9 +72,12 @@ export default function SettingsPage() {
     setSuccessMsg('')
     setErrorMsg('')
     
-    // Update Name
-    if (data.full_name !== user?.user_metadata?.full_name) {
-      const res = await updateProfile({ full_name: data.full_name })
+    // Update Name & WA Number
+    if (data.full_name !== user?.user_metadata?.full_name || data.whatsapp_number !== user?.user_metadata?.whatsapp_number) {
+      const res = await updateProfile({ 
+        full_name: data.full_name,
+        whatsapp_number: data.whatsapp_number
+      })
       if (!res.success) {
         setErrorMsg(res.error)
         return
@@ -228,15 +234,27 @@ export default function SettingsPage() {
                         {...registerProfile('full_name')} 
                         className="bitly-input" 
                       />
-                      <Input 
-                        label={<span className="text-slate-700 font-bold">Email Address</span>} 
-                        type="email" 
-                        error={profileErrors.email?.message} 
-                        {...registerProfile('email')} 
-                        className="bitly-input" 
-                      />
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+                        <Input 
+                          type="email"
+                          error={profileErrors.email?.message} 
+                          {...registerProfile('email')} 
+                        />
+                      </div>
 
-                      <div className="pt-4">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">WhatsApp Number</label>
+                        <Input 
+                          type="text"
+                          placeholder="e.g. 628123456789"
+                          error={profileErrors.whatsapp_number?.message} 
+                          {...registerProfile('whatsapp_number')} 
+                        />
+                        <p className="text-xs text-slate-500 mt-2 font-medium">Include country code (e.g. 62 for Indonesia). This will be used for your checkout links.</p>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-200">
                         <Button type="submit" isLoading={isProfileSubmitting || isLoading} className="bitly-button-primary">Save Changes</Button>
                       </div>
                     </form>

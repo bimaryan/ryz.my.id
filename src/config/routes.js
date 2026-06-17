@@ -16,6 +16,7 @@ import TeamDetailsPage from '@/pages/TeamDetailsPage'
 import PagesPage from '@/pages/PagesPage'
 import PageEditor from '@/pages/PageEditor'
 import PublicPage from '@/pages/PublicPage'
+import BlogPublicPage from '@/pages/BlogPublicPage'
 import LinksPage from '@/pages/LinksPage'
 import DocsPage from '@/pages/DocsPage'
 import TermsPage from '@/pages/TermsPage'
@@ -56,6 +57,11 @@ export const routes = [
   {
     path: '/p/:slug',
     element: PublicPage,
+    public: true,
+  },
+  {
+    path: '/:slug/blog/:blogId',
+    element: BlogPublicPage,
     public: true,
   },
   {

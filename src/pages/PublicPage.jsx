@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import * as LucideIcons from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
+import ComplexBlockRender from '@/components/ComplexBlockRender'
 
 const BRAND_COLORS = {
   instagram: '#E1306C',
@@ -15,9 +16,35 @@ const BRAND_COLORS = {
 
 export default function PublicPage() {
   const { slug } = useParams()
+  const navigate = useNavigate()
   const [page, setPage] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', address: '' })
+  const [creatorWA, setCreatorWA] = useState('')
+
+  const handleCheckout = (e) => {
+    e.preventDefault();
+    if (!selectedProduct) return;
+    if (selectedProduct.ask_phone !== false && !checkoutForm.name) {
+      alert("Please fill in your Name.");
+      return;
+    }
+    if (selectedProduct.require_address && !checkoutForm.address) {
+      alert("Please fill in your Shipping Address.");
+      return;
+    }
+    let text = `Halo, saya tertarik dengan:\n\n*${selectedProduct.title}*\n`;
+    if (selectedProduct.price) text += `Harga: Rp ${parseInt(selectedProduct.price).toLocaleString('id-ID')}\n`;
+    if (checkoutForm.name) text += `\nNama Pemesan: ${checkoutForm.name}`;
+    if (checkoutForm.address) text += `\nAlamat Pengiriman: ${checkoutForm.address}`;
+    
+    const waUrl = `https://wa.me/${creatorWA}?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, '_blank');
+    setIsCheckoutOpen(false);
+  };
 
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return null;
@@ -41,6 +68,15 @@ export default function PublicPage() {
           setError('Page not found')
         } else {
           setPage(data)
+          
+          try {
+            const { data: waData } = await supabase.rpc('get_page_whatsapp_number', { page_slug: slug })
+            if (waData) {
+              setCreatorWA(waData.replace(/[^0-9]/g, ''));
+            }
+          } catch (e) {
+            console.error('Failed to fetch WA:', e)
+          }
         }
       } catch (err) {
         setError('Page not found')
@@ -173,51 +209,23 @@ export default function PublicPage() {
                 )
               }
 
-              if (link.type === 'digital_product') {
+              const isComplex = ['digital_product', 'appointment', 'event', 'physical_product', 'blog'].includes(link.type);
+              if (isComplex) {
                 return (
-                  <a
-                    key={i}
-                    href={link.product_file_url || link.url || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-col ${theme.layout === 'grid' ? 'col-span-2' : ''}`}
-                    style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
-                  >
-                    {link.thumbnail_url ? (
-                      <div className="w-full h-40 shrink-0">
-                        <img src={link.thumbnail_url} alt={link.title} className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className="w-full h-32 bg-black/5 flex flex-col items-center justify-center text-current opacity-60">
-                        {link.icon && LucideIcons[link.icon] ? (
-                          (() => {
-                            const IconComponent = LucideIcons[link.icon];
-                            return <IconComponent className="w-8 h-8 mb-2" />;
-                          })()
-                        ) : (
-                          <LucideIcons.Image className="w-8 h-8 mb-2" />
-                        )}
-                        <span className="text-xs font-medium">No Cover Image</span>
-                      </div>
-                    )}
-                    <div className="p-4 flex flex-col justify-between flex-1 w-full">
-                      <div>
-                        <h3 className="font-bold text-lg leading-tight mb-1">{link.title || 'Digital Product'}</h3>
-                        {link.subtitle && <p className="text-sm opacity-80 leading-snug mb-3 line-clamp-2">{link.subtitle}</p>}
-                      </div>
-                      <div className="flex items-center justify-between mt-2 pt-3" style={{ borderTop: `1px dashed ${theme.text_color}30` }}>
-                        <div className="flex flex-col">
-                          {link.discount_price && (
-                            <span className="text-xs line-through opacity-60 mb-[-2px]">{link.discount_price}</span>
-                          )}
-                          <span className="font-black text-lg text-orange-600">{link.price || 'FREE'}</span>
-                        </div>
-                        <div className="text-white text-xs font-bold px-4 py-2 rounded-lg" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#fff' }}>
-                          {link.button_text || 'Beli'}
-                        </div>
-                      </div>
-                    </div>
-                  </a>
+                  <ComplexBlockRender 
+                    key={i} 
+                    link={link} 
+                    theme={theme} 
+                    onClick={(product) => {
+                      if (product.type === 'blog') {
+                        navigate(`/${slug}/blog/${product.id}`);
+                      } else {
+                        setSelectedProduct(product);
+                        setIsCheckoutOpen(true);
+                        setCheckoutForm({ name: '', phone: '' });
+                      }
+                    }} 
+                  />
                 )
               }
 
@@ -270,6 +278,62 @@ export default function PublicPage() {
           </div>
         </a>
       </div>
+
+      {isCheckoutOpen && selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex flex-col items-center p-6 text-center border-b border-slate-100">
+              <h3 className="text-xl font-black text-slate-900 mb-1">{selectedProduct.title || 'Checkout'}</h3>
+              <p className="text-sm font-bold text-slate-500">{selectedProduct.price ? `Rp ${parseInt(selectedProduct.price).toLocaleString('id-ID')}` : 'FREE'}</p>
+            </div>
+            
+            <form onSubmit={handleCheckout} className="p-6 flex flex-col gap-4">
+              {selectedProduct.ask_phone !== false ? (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      placeholder="e.g. John Doe"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900"
+                      value={checkoutForm.name}
+                      onChange={(e) => setCheckoutForm({...checkoutForm, name: e.target.value})}
+                    />
+                    <p className="text-[11px] text-slate-500 mt-2">Pesan akan diteruskan ke WhatsApp kreator.</p>
+                  </div>
+                  {selectedProduct.require_address && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Shipping Address</label>
+                      <textarea 
+                        required
+                        placeholder="Alamat lengkap (Jalan, RT/RW, Kecamatan, Kota, Kode Pos)"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
+                        rows={3}
+                        value={checkoutForm.address}
+                        onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center text-sm font-bold text-slate-500 py-4">
+                  Proceed to complete your transaction via WhatsApp.
+                </div>
+              )}
+              
+              <div className="flex gap-3 mt-4">
+                <button type="button" onClick={() => setIsCheckoutOpen(false)} className="flex-1 py-3 px-4 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-[2] py-3 px-4 font-bold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors shadow-lg shadow-green-500/30 flex justify-center items-center gap-2">
+                  <LucideIcons.MessageCircle className="w-5 h-5" /> Checkout via WA
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Image as ImageIcon, Link as LinkIcon, Type, PlaySquare, ShoppingBag, Calendar, Star, DollarSign } from 'lucide-react'
+import { X, Image as ImageIcon, Link as LinkIcon, Type, PlaySquare, ShoppingBag, Calendar, Star, DollarSign, BookOpen } from 'lucide-react'
 
 const BLOCKS = [
   {
@@ -7,8 +7,8 @@ const BLOCKS = [
     title: 'Link',
     description: 'Add a link shortcut',
     icon: LinkIcon,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50',
+    color: 'text-[#0b5cff]',
+    bg: 'bg-blue-50',
     category: 'Basic'
   },
   {
@@ -16,8 +16,8 @@ const BLOCKS = [
     title: 'Text',
     description: 'Add headlines and descriptions',
     icon: Type,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50',
+    color: 'text-[#0b5cff]',
+    bg: 'bg-blue-50',
     category: 'Basic'
   },
   {
@@ -25,8 +25,8 @@ const BLOCKS = [
     title: 'Image',
     description: 'Add images',
     icon: ImageIcon,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50',
+    color: 'text-[#0b5cff]',
+    bg: 'bg-blue-50',
     category: 'Basic',
     badge: 'NEW'
   },
@@ -35,8 +35,8 @@ const BLOCKS = [
     title: 'Video',
     description: 'Play video from other platform',
     icon: PlaySquare,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50',
+    color: 'text-[#0b5cff]',
+    bg: 'bg-blue-50',
     category: 'Basic'
   },
   {
@@ -44,8 +44,8 @@ const BLOCKS = [
     title: 'Digital Product',
     description: 'Sell digital products',
     icon: DollarSign,
-    color: 'text-orange-500',
-    bg: 'bg-orange-50',
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
     category: 'Monetization'
   },
   {
@@ -53,8 +53,8 @@ const BLOCKS = [
     title: 'Appointment',
     description: 'Create paid calendar booking',
     icon: Calendar,
-    color: 'text-orange-500',
-    bg: 'bg-orange-50',
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
     category: 'Monetization'
   },
   {
@@ -62,8 +62,8 @@ const BLOCKS = [
     title: 'Event',
     description: 'Create events for your fans',
     icon: Star,
-    color: 'text-orange-500',
-    bg: 'bg-orange-50',
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
     category: 'Monetization'
   },
   {
@@ -71,8 +71,17 @@ const BLOCKS = [
     title: 'Physical Product',
     description: 'Sell physical products',
     icon: ShoppingBag,
-    color: 'text-orange-500',
-    bg: 'bg-orange-50',
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
+    category: 'Monetization'
+  },
+  {
+    id: 'blog',
+    title: 'Blog / E-Learning',
+    description: 'Create multi-chapter web novels or guides',
+    icon: BookOpen,
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
     category: 'Monetization'
   }
 ]
@@ -98,17 +107,17 @@ export default function BlockPickerModal({ isOpen, onClose, onSelect }) {
     return (
       <button 
         onClick={() => onSelect(block.id)}
-        className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors text-left group w-full relative"
+        className="flex items-center gap-4 p-4 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-2xl transition-all text-left group w-full relative"
       >
-        <div className={`w-12 h-12 rounded-xl ${block.bg} ${block.color} flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105`}>
+        <div className={`w-14 h-14 rounded-2xl ${block.bg} ${block.color} flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105`}>
           <Icon className="w-6 h-6" />
         </div>
         <div>
-          <div className="font-bold text-slate-800 text-sm">{block.title}</div>
-          <div className="text-xs text-slate-500 mt-0.5">{block.description}</div>
+          <div className="font-bold text-slate-800 text-sm mb-0.5">{block.title}</div>
+          <div className="text-xs text-slate-500 leading-snug pr-8">{block.description}</div>
         </div>
         {block.badge && (
-          <span className="absolute right-4 top-4 bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+          <span className="absolute right-4 top-4 bg-[#0b5cff] shadow-sm shadow-blue-500/30 text-white text-[9px] font-black tracking-widest px-2 py-1 rounded-full uppercase">
             {block.badge}
           </span>
         )}
@@ -117,33 +126,38 @@ export default function BlockPickerModal({ isOpen, onClose, onSelect }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in-up">
-      <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in-up">
+      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col max-h-[85vh] border border-slate-100">
         
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
-          <h3 className="text-xl font-bold text-slate-900">Add new block</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition-colors p-1 hover:bg-slate-100 rounded-md">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 shrink-0 bg-slate-50/50">
+          <div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Add New Block</h3>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Select a block to add to your page</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 bg-white shadow-sm border border-slate-200 transition-all p-2 hover:bg-slate-50 rounded-full">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex px-6 border-b border-slate-100 shrink-0 gap-6">
+        <div className="flex px-8 border-b border-slate-100 shrink-0 gap-8">
           {tabs.map(tab => (
             <button 
               key={tab}
               onClick={() => setActiveTab(tab)} 
-              className={`py-4 text-sm font-bold border-b-2 transition-colors ${activeTab === tab ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+              className={`py-4 text-sm font-bold border-b-2 transition-all ${activeTab === tab ? 'border-[#0b5cff] text-[#0b5cff]' : 'border-transparent text-slate-400 hover:text-slate-700'}`}
             >
               {tab}
             </button>
           ))}
         </div>
         
-        <div className="p-6 overflow-y-auto custom-scrollbar">
+        <div className="p-8 overflow-y-auto custom-scrollbar bg-slate-50/30">
           {activeTab === 'All Blocks' || activeTab === 'Basic' ? (
-            <div className="mb-8">
-              <h4 className="text-sm font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Basic</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="mb-10">
+              <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="w-4 h-px bg-slate-300"></span> Basic Blocks
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {basicBlocks.map(block => <BlockItem key={block.id} block={block} />)}
               </div>
             </div>
@@ -151,8 +165,10 @@ export default function BlockPickerModal({ isOpen, onClose, onSelect }) {
 
           {activeTab === 'All Blocks' || activeTab === 'Monetization' ? (
             <div>
-              <h4 className="text-sm font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Monetization</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="w-4 h-px bg-slate-300"></span> Monetization Blocks
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {monetizationBlocks.map(block => <BlockItem key={block.id} block={block} />)}
               </div>
             </div>
