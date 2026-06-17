@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .animate-gradient {
+    background-size: 300% 300%;
+    animation: gradient-move 8s ease infinite;
+  }
+}
+
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 @layer base {
   body {
     @apply antialiased bg-[#f4f6fa] text-[#273144] overflow-x-hidden min-h-screen relative;

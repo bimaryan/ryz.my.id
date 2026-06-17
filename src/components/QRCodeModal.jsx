@@ -36,6 +36,11 @@ const CORNERS_TYPES = [
   { id: 'dot', label: 'Dot' }
 ]
 
+const CORNERS_DOT_TYPES = [
+  { id: 'dot', label: 'Dot' },
+  { id: 'square', label: 'Square' }
+]
+
 export default function QRCodeModal({ isOpen, onClose, link }) {
   const qrRef = useRef(null)
   
@@ -44,6 +49,9 @@ export default function QRCodeModal({ isOpen, onClose, link }) {
   const [bgColor, setBgColor] = useState(BG_COLORS[0])
   const [dotsType, setDotsType] = useState('rounded')
   const [cornersType, setCornersType] = useState('extra-rounded')
+  const [cornersDotType, setCornersDotType] = useState('dot')
+  const [qrGradient, setQrGradient] = useState(false)
+  const [qrGradientColor2, setQrGradientColor2] = useState('#00c6ff')
   const [logoUrl, setLogoUrl] = useState('')
   const [activeTab, setActiveTab] = useState('design')
 
@@ -59,15 +67,30 @@ export default function QRCodeModal({ isOpen, onClose, link }) {
       margin: 0,
       dotsOptions: {
         color: fgColor,
-        type: dotsType
+        type: dotsType,
+        gradient: qrGradient ? {
+          type: 'linear',
+          rotation: 0,
+          colorStops: [{ offset: 0, color: fgColor }, { offset: 1, color: qrGradientColor2 }]
+        } : undefined
       },
       cornersSquareOptions: {
         color: fgColor,
-        type: cornersType
+        type: cornersType,
+        gradient: qrGradient ? {
+          type: 'linear',
+          rotation: 0,
+          colorStops: [{ offset: 0, color: fgColor }, { offset: 1, color: qrGradientColor2 }]
+        } : undefined
       },
       cornersDotOptions: {
         color: fgColor,
-        type: "dot" 
+        type: cornersDotType,
+        gradient: qrGradient ? {
+          type: 'linear',
+          rotation: 0,
+          colorStops: [{ offset: 0, color: fgColor }, { offset: 1, color: qrGradientColor2 }]
+        } : undefined
       },
       backgroundOptions: {
         color: bgColor,
@@ -91,16 +114,22 @@ export default function QRCodeModal({ isOpen, onClose, link }) {
   // Update QR code when URL or Customization changes
   useEffect(() => {
     if (qrCode) {
+      const gradientOptions = qrGradient ? {
+        type: 'linear',
+        rotation: 0,
+        colorStops: [{ offset: 0, color: fgColor }, { offset: 1, color: qrGradientColor2 }]
+      } : undefined;
+
       qrCode.update({
         data: url,
         image: logoUrl || undefined,
-        dotsOptions: { color: fgColor, type: dotsType },
-        cornersSquareOptions: { color: fgColor, type: cornersType },
-        cornersDotOptions: { color: fgColor },
+        dotsOptions: { color: fgColor, type: dotsType, gradient: gradientOptions },
+        cornersSquareOptions: { color: fgColor, type: cornersType, gradient: gradientOptions },
+        cornersDotOptions: { color: fgColor, type: cornersDotType, gradient: gradientOptions },
         backgroundOptions: { color: bgColor }
       });
     }
-  }, [url, fgColor, bgColor, dotsType, cornersType, logoUrl, qrCode]);
+  }, [url, fgColor, bgColor, dotsType, cornersType, cornersDotType, qrGradient, qrGradientColor2, logoUrl, qrCode]);
 
   if (!isOpen || !link) return null
 
@@ -164,7 +193,7 @@ export default function QRCodeModal({ isOpen, onClose, link }) {
             {activeTab === 'design' && (
               <div className="space-y-6">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">QR Color</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">QR Color 1</label>
                   <div className="flex gap-3 flex-wrap">
                     {FG_COLORS.map(c => (
                       <button
@@ -180,6 +209,27 @@ export default function QRCodeModal({ isOpen, onClose, link }) {
                       <input type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="w-8 h-8 p-0 border-0 rounded cursor-pointer" />
                     </div>
                   </div>
+                </div>
+
+                <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <input 
+                    type="checkbox" 
+                    id="qrGradient"
+                    checked={qrGradient}
+                    onChange={(e) => setQrGradient(e.target.checked)}
+                    className="rounded text-[#0b5cff] focus:ring-[#0b5cff]"
+                  />
+                  <label htmlFor="qrGradient" className="text-sm font-bold text-slate-700 cursor-pointer flex-1">Enable Gradient QR</label>
+                  
+                  {qrGradient && (
+                    <input 
+                      type="color" 
+                      value={qrGradientColor2} 
+                      onChange={(e) => setQrGradientColor2(e.target.value)} 
+                      className="w-8 h-8 p-0 border-0 rounded cursor-pointer" 
+                      title="Gradient Color 2"
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -241,13 +291,28 @@ export default function QRCodeModal({ isOpen, onClose, link }) {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">Corner Style</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">Corner Square Style</label>
                   <div className="grid grid-cols-3 gap-2">
                     {CORNERS_TYPES.map(type => (
                       <button
                         key={type.id}
                         onClick={() => setCornersType(type.id)}
                         className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${cornersType === type.id ? 'border-[#0b5cff] bg-[#0b5cff]/5 text-[#0b5cff]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">Corner Dot Style</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CORNERS_DOT_TYPES.map(type => (
+                      <button
+                        key={type.id}
+                        onClick={() => setCornersDotType(type.id)}
+                        className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${cornersDotType === type.id ? 'border-[#0b5cff] bg-[#0b5cff]/5 text-[#0b5cff]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                       >
                         {type.label}
                       </button>
