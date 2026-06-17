@@ -19,6 +19,15 @@ export default function PublicPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11)
+      ? `https://www.youtube.com/embed/${match[2]}`
+      : null;
+  };
+
   useEffect(() => {
     const fetchPage = async () => {
       try {
@@ -127,11 +136,48 @@ export default function PublicPage() {
                 )
               }
 
+              if (link.type === 'video') {
+                const embedUrl = getYouTubeEmbedUrl(link.url);
+                return (
+                  <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
+                    {embedUrl ? (
+                      <div className="relative w-full pb-[56.25%]">
+                        <iframe
+                          src={embedUrl}
+                          className="absolute top-0 left-0 w-full h-full border-0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                    ) : (
+                      <div className="w-full py-12 bg-black/5 flex flex-col items-center justify-center text-current opacity-60">
+                        <LucideIcons.Video className="w-8 h-8 mb-2" />
+                        <span className="text-xs font-medium">Invalid Video URL</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
+              if (link.type === 'image') {
+                return (
+                  <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.button_animation || 'hover:scale-[1.02]'} transition-transform ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
+                    {link.url ? (
+                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="block w-full">
+                        <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
+                      </a>
+                    ) : (
+                      <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
+                    )}
+                  </div>
+                )
+              }
+
               if (link.type === 'digital_product') {
                 return (
                   <a
                     key={i}
-                    href={link.url || '#'}
+                    href={link.product_file_url || link.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-col ${theme.layout === 'grid' ? 'col-span-2' : ''}`}
@@ -160,9 +206,14 @@ export default function PublicPage() {
                         {link.subtitle && <p className="text-sm opacity-80 leading-snug mb-3 line-clamp-2">{link.subtitle}</p>}
                       </div>
                       <div className="flex items-center justify-between mt-2 pt-3" style={{ borderTop: `1px dashed ${theme.text_color}30` }}>
-                        <span className="font-black text-lg">{link.price || 'Rp 0'}</span>
-                        <div className="bg-black text-white text-xs font-bold px-4 py-2 rounded-lg" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#fff' }}>
-                          Beli
+                        <div className="flex flex-col">
+                          {link.discount_price && (
+                            <span className="text-xs line-through opacity-60 mb-[-2px]">{link.discount_price}</span>
+                          )}
+                          <span className="font-black text-lg text-orange-600">{link.price || 'FREE'}</span>
+                        </div>
+                        <div className="text-white text-xs font-bold px-4 py-2 rounded-lg" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#fff' }}>
+                          {link.button_text || 'Beli'}
                         </div>
                       </div>
                     </div>

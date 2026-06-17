@@ -7,10 +7,17 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import SEO from '@/components/SEO'
 
+const DISPOSABLE_DOMAINS = [
+  'mailinator.com', '10minutemail.com', 'temp-mail.org', 'guerrillamail.com', 'yopmail.com', 'throwawaymail.com', 'getnada.com', 'tempmail.com', 'trashmail.com', 'sharklasers.com', 'dispostable.com', 'tempmail.net'
+];
+
 const signupSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   username: z.string().min(3, 'Username must be at least 3 characters'),
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address').refine(email => {
+    const domain = email.split('@')[1];
+    return !DISPOSABLE_DOMAINS.includes(domain?.toLowerCase());
+  }, { message: "Disposable or temporary emails are not allowed." }),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
@@ -25,6 +32,12 @@ export default function SignupPage() {
   const { signUp, isLoading, error: authError } = useAuth()
   const [serverError, setServerError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  
+  // Math CAPTCHA state
+  const [num1] = useState(Math.floor(Math.random() * 10) + 1)
+  const [num2] = useState(Math.floor(Math.random() * 10) + 1)
+  const [captchaAnswer, setCaptchaAnswer] = useState('')
+  const [captchaError, setCaptchaError] = useState('')
 
   const {
     register,
@@ -35,6 +48,13 @@ export default function SignupPage() {
   })
 
   const onSubmit = async (data) => {
+    // Math CAPTCHA verification
+    if (parseInt(captchaAnswer) !== num1 + num2) {
+      setCaptchaError('Incorrect math answer. Please try again.')
+      return
+    }
+    setCaptchaError('')
+
     // Honeypot check: If the hidden field is filled, it's a bot.
     if (data._bot_catcher) {
       console.warn('Bot detected during signup.')
@@ -142,6 +162,22 @@ export default function SignupPage() {
             {/* Honeypot field - hidden from humans, visible to bots reading HTML */}
             <div className="hidden" aria-hidden="true" style={{ display: 'none' }}>
               <input type="text" tabIndex="-1" autoComplete="off" {...register('_bot_catcher')} />
+            </div>
+
+            <div className="space-y-2 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <label className="block text-[14px] font-bold text-[#273144]">Security Question: What is {num1} + {num2}?</label>
+              <input
+                type="number"
+                placeholder="Enter the result"
+                value={captchaAnswer}
+                onChange={(e) => {
+                  setCaptchaAnswer(e.target.value)
+                  setCaptchaError('')
+                }}
+                className="bitly-input w-full"
+                required
+              />
+              {captchaError && <p className="text-sm text-red-500 mt-1">{captchaError}</p>}
             </div>
 
             {(authError || serverError) && (

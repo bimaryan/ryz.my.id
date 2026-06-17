@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Save, Plus, Trash2, Link2, GripVertical, Image as ImageIcon, UploadCloud, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Trash2, Link2, GripVertical, Image as ImageIcon, UploadCloud, Loader2, X, Video, Link as LinkIcon } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { usePages } from '@/hooks/usePages'
 import DashboardLayout from '@/components/layout/DashboardLayout'
@@ -10,6 +10,15 @@ import IconPicker from '@/components/IconPicker'
 import BlockPickerModal from '@/components/BlockPickerModal'
 import SEO from '@/components/SEO'
 import toast from 'react-hot-toast'
+
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11)
+    ? `https://www.youtube.com/embed/${match[2]}`
+    : null;
+};
 
 const FONTS = ['Inter', 'Roboto', 'Playfair Display', 'Outfit', 'Space Grotesk', 'Poppins', 'Montserrat', 'Lora']
 
@@ -472,11 +481,54 @@ export default function PageEditor() {
                            <div className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Header Block</div>
                            <Input
                             placeholder="Header Title"
-                            value={link.title}
+                            value={link.title || ''}
                             onChange={(e) => updateLink(index, 'title', e.target.value)}
                             className="font-bold text-slate-800 border-none bg-indigo-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 text-lg py-3"
                           />
                         </div>
+                      ) : link.type === 'video' ? (
+                        <div className="flex-1 flex flex-col justify-center space-y-3">
+                           <div className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Video className="w-4 h-4"/> Video Embed</div>
+                           <Input
+                            placeholder="YouTube or TikTok URL"
+                            value={link.url || ''}
+                            onChange={(e) => updateLink(index, 'url', e.target.value)}
+                            className="font-bold text-slate-800 border-none bg-red-50 focus:bg-white focus:ring-2 focus:ring-red-500/20 py-3"
+                          />
+                          <p className="text-[10px] text-slate-400">Paste a YouTube or TikTok link to embed a video player.</p>
+                        </div>
+                      ) : link.type === 'image' ? (
+                        <>
+                          <div className="flex flex-col items-center justify-center border-r border-slate-100 pr-4 gap-3">
+                            {link.thumbnail_url ? (
+                              <div className="relative group w-24 h-24">
+                                <img src={link.thumbnail_url} alt="img" className="w-24 h-24 rounded-xl object-cover border border-slate-200" />
+                                <button onClick={() => updateLink(index, 'thumbnail_url', '')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
+                              </div>
+                            ) : (
+                              <label className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500/50 hover:bg-emerald-50 text-slate-400 flex flex-col items-center justify-center cursor-pointer transition-all">
+                                <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
+                                <span className="text-[10px] font-bold">Upload</span>
+                                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if(!file) return;
+                                  const res = await uploadImage(file);
+                                  if(res.success) updateLink(index, 'thumbnail_url', res.url);
+                                }} />
+                              </label>
+                            )}
+                          </div>
+                          <div className="flex-1 flex flex-col justify-center space-y-3">
+                             <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">Image Block</div>
+                             <Input
+                              placeholder="Destination URL (Optional)"
+                              value={link.url || ''}
+                              onChange={(e) => updateLink(index, 'url', e.target.value)}
+                              className="border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 py-2"
+                            />
+                            <p className="text-[10px] text-slate-400">Make the image clickable by adding a destination URL.</p>
+                          </div>
+                        </>
                       ) : (
                         <>
                           <div className="flex flex-col items-center justify-center border-r border-slate-100 pr-4 gap-3">
@@ -522,7 +574,7 @@ export default function PageEditor() {
                           <div className="flex-1 space-y-3">
                             <Input
                               placeholder="Title (e.g. My Website)"
-                              value={link.title}
+                              value={link.title || ''}
                               onChange={(e) => updateLink(index, 'title', e.target.value)}
                               className="font-bold text-slate-800 border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 text-lg py-2"
                             />
@@ -532,20 +584,58 @@ export default function PageEditor() {
                               onChange={(e) => updateLink(index, 'subtitle', e.target.value)}
                               className="text-sm text-slate-600 border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 py-2"
                             />
+                            
                             {link.type === 'digital_product' && (
+                              <div className="grid grid-cols-2 gap-2 p-3 bg-orange-50/50 rounded-xl border border-orange-100">
+                                <div className="col-span-2 text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-1">Product Details</div>
+                                <Input
+                                  placeholder="Price (e.g. Rp 50.000)"
+                                  value={link.price || ''}
+                                  onChange={(e) => updateLink(index, 'price', e.target.value)}
+                                  className="font-bold text-slate-800 border-none bg-white focus:ring-2 focus:ring-orange-500/20 py-2"
+                                />
+                                <Input
+                                  placeholder="Discount Price (Optional)"
+                                  value={link.discount_price || ''}
+                                  onChange={(e) => updateLink(index, 'discount_price', e.target.value)}
+                                  className="font-bold text-slate-400 line-through border-none bg-white focus:ring-2 focus:ring-orange-500/20 py-2"
+                                />
+                                <Input
+                                  placeholder="Button Text (e.g. Beli)"
+                                  value={link.button_text || ''}
+                                  onChange={(e) => updateLink(index, 'button_text', e.target.value)}
+                                  className="font-bold text-slate-600 border-none bg-white focus:ring-2 focus:ring-orange-500/20 py-2"
+                                />
+                                <div className="col-span-1">
+                                  {link.product_file_url ? (
+                                    <div className="h-full flex items-center justify-between px-3 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 text-xs font-bold">
+                                      <span>File Attached</span>
+                                      <button onClick={() => updateLink(index, 'product_file_url', '')} className="text-red-500 hover:text-red-700 p-1"><X className="w-3 h-3"/></button>
+                                    </div>
+                                  ) : (
+                                    <label className="h-full flex items-center justify-center gap-1 bg-white hover:bg-orange-100 text-orange-500 rounded-lg border border-orange-200 text-xs font-bold cursor-pointer transition-colors">
+                                      <LinkIcon className="w-3 h-3"/> Attach File (ZIP/PDF)
+                                      <input type="file" className="hidden" accept=".zip,.pdf,.rar" onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if(!file) return;
+                                        // Reusing uploadImage to upload the file to avatars bucket for now
+                                        const res = await uploadImage(file);
+                                        if(res.success) updateLink(index, 'product_file_url', res.url);
+                                      }} />
+                                    </label>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {link.type !== 'digital_product' && (
                               <Input
-                                placeholder="Price (e.g. Rp 50.000)"
-                                value={link.price || ''}
-                                onChange={(e) => updateLink(index, 'price', e.target.value)}
-                                className="font-bold text-orange-600 border-none bg-orange-50 focus:bg-white focus:ring-2 focus:ring-orange-500/20 py-2"
+                                placeholder="URL (e.g. https://ryz.my.id/site)"
+                                value={link.url || ''}
+                                onChange={(e) => updateLink(index, 'url', e.target.value)}
+                                className="border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20"
                               />
                             )}
-                            <Input
-                              placeholder="URL (e.g. https://ryz.my.id/site)"
-                              value={link.url}
-                              onChange={(e) => updateLink(index, 'url', e.target.value)}
-                              className="border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20"
-                            />
                           </div>
                         </>
                       )}
@@ -839,11 +929,48 @@ export default function PageEditor() {
                         )
                       }
 
+                      if (link.type === 'video') {
+                        const embedUrl = getYouTubeEmbedUrl(link.url);
+                        return (
+                          <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
+                            {embedUrl ? (
+                              <div className="relative w-full pb-[56.25%]">
+                                <iframe
+                                  src={embedUrl}
+                                  className="absolute top-0 left-0 w-full h-full border-0 pointer-events-none"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                ></iframe>
+                              </div>
+                            ) : (
+                              <div className="w-full py-12 bg-black/5 flex flex-col items-center justify-center text-current opacity-60">
+                                <LucideIcons.Video className="w-8 h-8 mb-2" />
+                                <span className="text-xs font-medium">Invalid Video URL</span>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      }
+
+                      if (link.type === 'image') {
+                        return (
+                          <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.button_animation || 'hover:scale-[1.02]'} transition-transform ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
+                            {link.url ? (
+                              <a href={link.url} target="_blank" rel="noopener noreferrer" className="block w-full">
+                                <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
+                              </a>
+                            ) : (
+                              <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
+                            )}
+                          </div>
+                        )
+                      }
+
                       if (link.type === 'digital_product') {
                         return (
                           <a
                             key={i}
-                            href={link.url || '#'}
+                            href={link.product_file_url || link.url || '#'}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-col ${theme.layout === 'grid' ? 'col-span-2' : ''}`}
@@ -872,9 +999,14 @@ export default function PageEditor() {
                                 {link.subtitle && <p className="text-[10px] opacity-80 leading-snug mb-2 line-clamp-2">{link.subtitle}</p>}
                               </div>
                               <div className="flex items-center justify-between mt-1 pt-2" style={{ borderTop: `1px dashed ${theme.text_color}30` }}>
-                                <span className="font-black text-sm">{link.price || 'Rp 0'}</span>
+                                <div className="flex flex-col">
+                                  {link.discount_price && (
+                                    <span className="text-[10px] line-through opacity-60 mb-[-2px]">{link.discount_price}</span>
+                                  )}
+                                  <span className="font-black text-sm text-orange-600">{link.price || 'FREE'}</span>
+                                </div>
                                 <div className="bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-md" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#fff' }}>
-                                  Beli
+                                  {link.button_text || 'Beli'}
                                 </div>
                               </div>
                             </div>
