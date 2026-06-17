@@ -62,14 +62,26 @@ export default function PagesPage() {
       text: "You won't be able to revert this! The page will be deleted permanently.",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Yes, delete it!'
+      confirmButtonText: 'Yes, delete it!',
+      customClass: {
+        actions: "flex gap-3",
+        confirmButton: "bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors m-0",
+        cancelButton: "bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors m-0"
+      },
+      buttonsStyling: false
     });
 
     if (result.isConfirmed) {
       await deletePage(id)
-      Swal.fire('Deleted!', 'The page has been deleted.', 'success')
+      Swal.fire({
+        title: 'Deleted!',
+        text: 'The page has been deleted.',
+        icon: 'success',
+        customClass: {
+          confirmButton: "bg-[#0b5cff] hover:bg-[#004cd9] text-white font-bold py-2 px-4 rounded-md"
+        },
+        buttonsStyling: false
+      })
     }
   }
 

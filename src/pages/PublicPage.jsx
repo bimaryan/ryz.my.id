@@ -57,8 +57,12 @@ export default function PublicPage() {
 
   return (
     <div 
-      className="min-h-screen w-full flex flex-col items-center py-16 px-4 font-sans"
-      style={{ backgroundColor: theme.bg_color, color: theme.text_color }}
+      className="min-h-screen w-full flex flex-col items-center py-16 px-4"
+      style={{ 
+        fontFamily: theme.font_family || 'Inter',
+        background: theme.bg_type === 'gradient' ? theme.bg_value : theme.bg_type === 'image' ? `url(${theme.bg_value}) center/cover` : theme.bg_value || theme.bg_color,
+        color: theme.text_color 
+      }}
     >
       <Helmet>
         <title>{title || `@${slug}`} | RYZLink</title>
@@ -66,14 +70,18 @@ export default function PublicPage() {
         <meta property="og:title" content={title || `@${slug}`} />
         <meta property="og:description" content={description || `Link-in-Bio for ${title || slug}`} />
         {avatar_url && <meta property="og:image" content={avatar_url} />}
+        {/* Dynamic Google Font Loader */}
+        {theme.font_family && theme.font_family !== 'Inter' && (
+          <link href={`https://fonts.googleapis.com/css2?family=${theme.font_family.replace(/ /g, '+')}:wght@400;600;700;800&display=swap`} rel="stylesheet" />
+        )}
       </Helmet>
 
       <div className="w-full max-w-[600px] flex flex-col items-center animate-fade-in-up">
         {/* Avatar */}
         {avatar_url ? (
-          <img src={avatar_url} alt={title || slug} className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover mb-6 shadow-xl border-4 border-white/10" />
+          <img src={avatar_url} alt={title || slug} className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover mb-6 shadow-xl border-4 border-white/20" />
         ) : (
-          <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-black/5 mb-6 shadow-xl border-4 border-white/10 flex items-center justify-center text-black/20">
+          <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-black/5 mb-6 shadow-xl border-4 border-white/20 flex items-center justify-center text-black/20">
             <ImageIcon className="h-10 w-10" />
           </div>
         )}
@@ -95,7 +103,7 @@ export default function PublicPage() {
                 href={link.url || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`block w-full text-center py-4 px-6 text-lg font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg ${theme.button_style}`}
+                className={`block w-full text-center py-4 px-6 text-lg font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${theme.button_style} ${theme.button_shadow} ${theme.button_border} border`}
                 style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
               >
                 {link.title || 'Untitled Link'}
@@ -114,7 +122,7 @@ export default function PublicPage() {
         >
           <div className="text-xs font-bold uppercase tracking-widest mb-1">Powered by</div>
           <div className="flex items-center gap-2 font-black text-xl tracking-tighter">
-            <div className="w-6 h-6 rounded-md flex items-center justify-center text-sm" style={{ backgroundColor: theme.text_color, color: theme.bg_color }}>R</div>
+            <div className="w-6 h-6 rounded-md flex items-center justify-center text-sm" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#000' }}>R</div>
             RYZLink
           </div>
         </a>

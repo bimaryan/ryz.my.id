@@ -14,7 +14,7 @@ import {
   Calendar,
   Share2,
   MousePointerClick,
-  Activity
+  Activity,
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -32,16 +32,22 @@ export default function DashboardPage() {
 
   const [searchParams] = useSearchParams();
   const searchQuery = (searchParams.get("q") || "").toLowerCase();
+  const [selectedCategory, setSelectedCategory] = useState("");
 
-  const filteredLinks = links.filter(link => {
-    if (!searchQuery) return true;
-    return (
+  const filteredLinks = links.filter((link) => {
+    // 1. Search Query Filter
+    const matchesSearch = !searchQuery || (
       (link.title && link.title.toLowerCase().includes(searchQuery)) ||
       (link.short_code && link.short_code.toLowerCase().includes(searchQuery)) ||
       (link.original_url && link.original_url.toLowerCase().includes(searchQuery))
     );
+
+    // 2. Category Filter
+    const matchesCategory = !selectedCategory || link.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
   });
-  
+
   const [qrCodeLink, setQrCodeLink] = useState(null);
   const [shareLink, setShareLink] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
@@ -64,10 +70,13 @@ export default function DashboardPage() {
       showCancelButton: true,
       confirmButtonText: "Yes, delete it!",
       customClass: {
-        confirmButton: "bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md ml-2 transition-colors",
-        cancelButton: "bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors"
+        actions: "flex gap-3",
+        confirmButton:
+          "bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors m-0",
+        cancelButton:
+          "bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors m-0",
       },
-      buttonsStyling: false
+      buttonsStyling: false,
     });
 
     if (result.isConfirmed) {
@@ -77,15 +86,18 @@ export default function DashboardPage() {
         text: "Your link has been deleted.",
         icon: "success",
         customClass: {
-          confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded-md transition-colors"
+          confirmButton:
+            "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded-md transition-colors",
         },
-        buttonsStyling: false
+        buttonsStyling: false,
       });
     }
   };
 
   const handleCopy = (link) => {
-    const domain = link.custom_domain ? `https://${link.custom_domain}` : window.location.origin;
+    const domain = link.custom_domain
+      ? `https://${link.custom_domain}`
+      : window.location.origin;
     const url = `${domain}/${link.short_code}`;
     navigator.clipboard.writeText(url);
     setCopiedId(link.short_code);
@@ -130,13 +142,16 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <p className="text-slate-500 font-medium mt-1">
-            Welcome back, <span className="text-slate-700 font-semibold">{user?.user_metadata?.full_name || "User"}</span>!
+            Welcome back,{" "}
+            <span className="text-slate-700 font-semibold">
+              {user?.user_metadata?.full_name || "User"}
+            </span>
+            !
           </p>
         </div>
 
         {/* Top Cards Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          
           {/* Quick Create Card (Takes 2 Columns on Desktop) */}
           <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
             <div className="flex justify-between items-start mb-6">
@@ -145,7 +160,10 @@ export default function DashboardPage() {
                   Quick create: Short link
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
-                  Domain: <span className="font-semibold text-slate-700">ryz.my.id</span>
+                  Domain:{" "}
+                  <span className="font-semibold text-slate-700">
+                    ryz.my.id
+                  </span>
                 </p>
               </div>
               <div className="hidden sm:flex bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
@@ -194,7 +212,10 @@ export default function DashboardPage() {
                 onChange={(e) => setQuickQr(e.target.checked)}
                 className="w-4 h-4 text-[#0b5cff] bg-slate-100 border-slate-300 rounded focus:ring-[#0b5cff] focus:ring-2 cursor-pointer"
               />
-              <label htmlFor="quickQr" className="text-sm font-medium text-slate-600 cursor-pointer select-none">
+              <label
+                htmlFor="quickQr"
+                className="text-sm font-medium text-slate-600 cursor-pointer select-none"
+              >
                 Also generate a QR Code for this link
               </label>
             </div>
@@ -205,12 +226,9 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold text-slate-800 mb-1">
               Monthly Usage
             </h2>
-            <p className="text-slate-500 text-sm mb-6">
-              Current Billing Cycle
-            </p>
+            <p className="text-slate-500 text-sm mb-6">Current Billing Cycle</p>
 
             <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-6 flex-1">
-              
               {/* Short Links Stat */}
               <div>
                 <div className="flex justify-between font-bold text-slate-700 mb-2 text-sm items-center">
@@ -218,7 +236,9 @@ export default function DashboardPage() {
                     <Link2 className="w-4 h-4 text-[#0b5cff]" />
                     <span>Short links</span>
                   </div>
-                  <span className="text-slate-500">{stats?.activeLinks || 0} / 100</span>
+                  <span className="text-slate-500">
+                    {stats?.activeLinks || 0} / 100
+                  </span>
                 </div>
                 <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                   <div
@@ -237,7 +257,9 @@ export default function DashboardPage() {
                     <MousePointerClick className="w-4 h-4 text-emerald-500" />
                     <span>Total Clicks</span>
                   </div>
-                  <span className="text-slate-500">{stats?.totalClicks || 0}</span>
+                  <span className="text-slate-500">
+                    {stats?.totalClicks || 0}
+                  </span>
                 </div>
                 <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                   <div
@@ -248,7 +270,6 @@ export default function DashboardPage() {
                   ></div>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -261,10 +282,15 @@ export default function DashboardPage() {
               Your Recent Links
             </h2>
             <div className="flex gap-3 w-full sm:w-auto">
-              <select className="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-2 text-slate-700 font-semibold focus:outline-none focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 transition-all cursor-pointer">
+              <select 
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full sm:w-auto bg-white border border-slate-200 hover:border-slate-300 rounded-lg text-sm px-4 py-2 text-slate-700 font-semibold focus:outline-none focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 transition-all cursor-pointer shadow-sm"
+              >
                 <option value="">All Categories</option>
-                <option value="marketing">Marketing</option>
-                <option value="social">Social</option>
+                {Array.from(new Set(links.map(l => l.category).filter(Boolean))).map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -273,10 +299,12 @@ export default function DashboardPage() {
             {linksLoading && (
               <div className="text-center py-12">
                 <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mx-auto"></div>
-                <p className="mt-4 text-slate-500 font-medium">Loading your links...</p>
+                <p className="mt-4 text-slate-500 font-medium">
+                  Loading your links...
+                </p>
               </div>
             )}
-            
+
             {!linksLoading && filteredLinks.length === 0 && (
               <div className="py-20 text-center bg-slate-50/50">
                 <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
@@ -286,12 +314,14 @@ export default function DashboardPage() {
                   {searchQuery ? "No results found" : "No links created yet"}
                 </p>
                 <p className="text-slate-500 text-sm">
-                  {searchQuery ? "Try adjusting your search terms." : "Use the form above to create your first short link."}
+                  {searchQuery
+                    ? "Try adjusting your search terms."
+                    : "Use the form above to create your first short link."}
                 </p>
               </div>
             )}
 
-            {filteredLinks.map((link) => (
+            {filteredLinks.slice(0, 10).map((link) => (
               <div
                 key={link.id}
                 className="p-6 flex flex-col lg:flex-row gap-6 lg:items-center justify-between hover:bg-slate-50/80 transition-colors group"
@@ -301,7 +331,7 @@ export default function DashboardPage() {
                   <div className="hidden sm:flex mt-1 h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#0b5cff]">
                     <Link2 className="h-5 w-5" />
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-slate-800 text-lg truncate mb-1">
                       {link.title || link.short_code}
@@ -309,12 +339,16 @@ export default function DashboardPage() {
 
                     <div className="flex items-center gap-3 mb-2">
                       <a
-                        href={link.custom_domain ? `https://${link.custom_domain}/${link.short_code}` : `/${link.short_code}`}
+                        href={
+                          link.custom_domain
+                            ? `https://${link.custom_domain}/${link.short_code}`
+                            : `/${link.short_code}`
+                        }
                         target="_blank"
                         rel="noreferrer"
                         className="text-[#0b5cff] hover:text-[#094bdd] hover:underline text-sm font-bold flex items-center gap-1.5 transition-colors w-fit"
                       >
-                        {link.custom_domain || 'ryz.my.id'}/{link.short_code}
+                        {link.custom_domain || "ryz.my.id"}/{link.short_code}
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     </div>
@@ -326,7 +360,11 @@ export default function DashboardPage() {
                     <div className="flex flex-wrap gap-3 items-center">
                       <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
                         <Calendar className="h-3.5 w-3.5" />
-                        {new Date(link.created_at).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {new Date(link.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </span>
                       {link.category && (
                         <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-md uppercase tracking-wide">
@@ -347,7 +385,7 @@ export default function DashboardPage() {
                       Engagements
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center gap-1.5 border-l border-slate-200 pl-6">
                     <button
                       onClick={() => setShareLink(link)}
@@ -366,13 +404,17 @@ export default function DashboardPage() {
                     <button
                       onClick={() => handleCopy(link)}
                       className={`p-2.5 border border-transparent shadow-sm hover:shadow rounded-lg transition-all ${
-                        copiedId === link.short_code 
-                          ? "bg-green-50 text-green-600 border-green-200" 
+                        copiedId === link.short_code
+                          ? "bg-green-50 text-green-600 border-green-200"
                           : "text-slate-400 hover:text-[#0b5cff] hover:bg-white hover:border-slate-200"
                       }`}
                       title="Copy Link"
                     >
-                      {copiedId === link.short_code ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {copiedId === link.short_code ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
                     </button>
                     <button
                       onClick={() => handleDelete(link.id)}

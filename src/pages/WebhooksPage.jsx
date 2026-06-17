@@ -57,8 +57,9 @@ export default function WebhooksPage() {
       showCancelButton: true,
       confirmButtonText: "Yes, delete it!",
       customClass: {
-        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded ml-2",
-        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded"
+        actions: "flex gap-3",
+        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded m-0",
+        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded m-0"
       },
       buttonsStyling: false
     });
@@ -69,7 +70,10 @@ export default function WebhooksPage() {
         title: "Deleted!",
         text: "Webhook deleted.",
         icon: "success",
-        confirmButtonColor: "#0b5cff"
+        customClass: {
+          confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded"
+        },
+        buttonsStyling: false
       });
     }
   };

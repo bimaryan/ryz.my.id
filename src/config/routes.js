@@ -18,6 +18,8 @@ import PageEditor from '@/pages/PageEditor'
 import PublicPage from '@/pages/PublicPage'
 import LinksPage from '@/pages/LinksPage'
 import DocsPage from '@/pages/DocsPage'
+import TermsPage from '@/pages/TermsPage'
+import PrivacyPage from '@/pages/PrivacyPage'
 
 export const routes = [
   // Public routes
@@ -54,6 +56,16 @@ export const routes = [
   {
     path: '/p/:slug',
     element: PublicPage,
+    public: true,
+  },
+  {
+    path: '/terms',
+    element: TermsPage,
+    public: true,
+  },
+  {
+    path: '/privacy',
+    element: PrivacyPage,
     public: true,
   },
   {

@@ -8,6 +8,40 @@ import Input from '@/components/ui/Input'
 import SEO from '@/components/SEO'
 import toast from 'react-hot-toast'
 
+const FONTS = ['Inter', 'Roboto', 'Playfair Display', 'Outfit', 'Space Grotesk']
+
+const GRADIENTS = [
+  'linear-gradient(to right, #ff7e5f, #feb47b)',
+  'linear-gradient(to right, #00c6ff, #0072ff)',
+  'linear-gradient(to right, #11998e, #38ef7d)',
+  'linear-gradient(to bottom right, #fc466b, #3f5efb)',
+  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)',
+]
+
+const TEMPLATES = [
+  {
+    name: 'Minimal Light',
+    theme: { font_family: 'Inter', bg_type: 'color', bg_value: '#f4f6fa', text_color: '#273144', button_bg: '#ffffff', button_text: '#273144', button_style: 'rounded-xl', button_shadow: 'shadow-sm', button_border: 'border-transparent' }
+  },
+  {
+    name: 'Midnight Dark',
+    theme: { font_family: 'Outfit', bg_type: 'color', bg_value: '#0f172a', text_color: '#f8fafc', button_bg: '#1e293b', button_text: '#f8fafc', button_style: 'rounded-xl', button_shadow: 'shadow-md', button_border: 'border-slate-700' }
+  },
+  {
+    name: 'Sunset Glass',
+    theme: { font_family: 'Space Grotesk', bg_type: 'gradient', bg_value: 'linear-gradient(to bottom right, #fc466b, #3f5efb)', text_color: '#ffffff', button_bg: 'rgba(255, 255, 255, 0.1)', button_text: '#ffffff', button_style: 'rounded-xl backdrop-blur-md', button_shadow: 'shadow-xl', button_border: 'border-white/20' }
+  },
+  {
+    name: 'Cyberpunk',
+    theme: { font_family: 'Space Grotesk', bg_type: 'color', bg_value: '#000000', text_color: '#00ff00', button_bg: '#000000', button_text: '#00ff00', button_style: 'rounded-none', button_shadow: 'shadow-[4px_4px_0_#00ff00]', button_border: 'border-[#00ff00]' }
+  },
+  {
+    name: 'Elegant',
+    theme: { font_family: 'Playfair Display', bg_type: 'color', bg_value: '#fdfbf7', text_color: '#2c3e50', button_bg: '#ffffff', button_text: '#2c3e50', button_style: 'rounded-none', button_shadow: 'shadow-none', button_border: 'border-slate-300' }
+  }
+]
+
 export default function PageEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -17,17 +51,23 @@ export default function PageEditor() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [isUploadingBg, setIsUploadingBg] = useState(false)
 
   // Form State
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [theme, setTheme] = useState({
-    bg_color: '#f4f6fa',
+    font_family: 'Inter',
+    bg_type: 'color', // color, gradient, image
+    bg_value: '#f4f6fa',
+    bg_color: '#f4f6fa', // legacy/fallback
     text_color: '#273144',
     button_bg: '#ffffff',
     button_text: '#273144',
-    button_style: 'rounded-xl' // rounded-md, rounded-xl, rounded-full
+    button_style: 'rounded-xl', // rounded-md, rounded-xl, rounded-full
+    button_shadow: 'shadow-sm', // shadow-none, shadow-sm, shadow-md, shadow-xl
+    button_border: 'border-transparent' // border-transparent, border-white, border-black, etc
   })
   const [links, setLinks] = useState([])
 
@@ -40,7 +80,16 @@ export default function PageEditor() {
         setDescription(res.data.description || '')
         setAvatarUrl(res.data.avatar_url || '')
         setTheme(res.data.theme || {
-          bg_color: '#f4f6fa', text_color: '#273144', button_bg: '#ffffff', button_text: '#273144', button_style: 'rounded-xl'
+          font_family: 'Inter',
+          bg_type: 'color',
+          bg_value: '#f4f6fa',
+          bg_color: '#f4f6fa', 
+          text_color: '#273144', 
+          button_bg: '#ffffff', 
+          button_text: '#273144', 
+          button_style: 'rounded-xl',
+          button_shadow: 'shadow-sm',
+          button_border: 'border-transparent'
         })
         setLinks(res.data.links || [])
       } else {
@@ -91,6 +140,27 @@ export default function PageEditor() {
       toast.success('Avatar uploaded!')
     } else {
       toast.error(res.error || 'Failed to upload avatar')
+    }
+  }
+
+  const handleBgUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size must be less than 2MB')
+      return
+    }
+
+    setIsUploadingBg(true)
+    const res = await uploadImage(file)
+    setIsUploadingBg(false)
+
+    if (res.success) {
+      setTheme({ ...theme, bg_type: 'image', bg_value: res.url, bg_color: '#000000' })
+      toast.success('Background uploaded!')
+    } else {
+      toast.error(res.error || 'Failed to upload background')
     }
   }
 
@@ -284,85 +354,170 @@ export default function PageEditor() {
             {/* Appearance Section */}
             <section>
               <h2 className="text-xl font-bold text-slate-900 mb-6">Appearance</h2>
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Background Color</label>
-                  <div className="flex gap-3 items-center">
-                    <input 
-                      type="color" 
-                      value={theme.bg_color} 
-                      onChange={(e) => setTheme({...theme, bg_color: e.target.value})}
-                      className="h-10 w-10 rounded cursor-pointer border-0 p-0"
-                    />
-                    <Input 
-                      value={theme.bg_color} 
-                      onChange={(e) => setTheme({...theme, bg_color: e.target.value})}
-                      className="flex-1"
-                    />
-                  </div>
+              
+              {/* Templates Gallery */}
+              <div className="mb-8">
+                <label className="block text-sm font-bold text-slate-700 mb-3">Premium Templates</label>
+                <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                  {TEMPLATES.map((tpl, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setTheme({ ...theme, ...tpl.theme })}
+                      className="flex-shrink-0 w-32 h-40 rounded-2xl border-2 border-transparent hover:border-[#0b5cff]/50 focus:border-[#0b5cff] shadow-sm relative overflow-hidden group transition-all"
+                      style={{ 
+                        background: tpl.theme.bg_type === 'gradient' ? tpl.theme.bg_value : tpl.theme.bg_type === 'image' ? `url(${tpl.theme.bg_value}) center/cover` : tpl.theme.bg_value 
+                      }}
+                    >
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-3 gap-2">
+                        <div className="w-10 h-10 rounded-full bg-black/20 mb-2"></div>
+                        <div className={`w-full h-6 ${tpl.theme.button_style} ${tpl.theme.button_shadow} ${tpl.theme.button_border} border`} style={{ background: tpl.theme.button_bg }}></div>
+                        <div className={`w-full h-6 ${tpl.theme.button_style} ${tpl.theme.button_shadow} ${tpl.theme.button_border} border`} style={{ background: tpl.theme.button_bg }}></div>
+                      </div>
+                      <div className="absolute bottom-0 inset-x-0 bg-white/90 backdrop-blur-sm p-2 text-center text-xs font-bold text-slate-900">
+                        {tpl.name}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Text Color</label>
-                  <div className="flex gap-3 items-center">
-                    <input 
-                      type="color" 
-                      value={theme.text_color} 
-                      onChange={(e) => setTheme({...theme, text_color: e.target.value})}
-                      className="h-10 w-10 rounded cursor-pointer border-0 p-0"
-                    />
-                    <Input 
-                      value={theme.text_color} 
-                      onChange={(e) => setTheme({...theme, text_color: e.target.value})}
-                      className="flex-1"
-                    />
-                  </div>
+              </div>
+
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Font Family */}
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Font Family</label>
+                  <select 
+                    value={theme.font_family || 'Inter'} 
+                    onChange={(e) => setTheme({...theme, font_family: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0b5cff]/20 focus:border-[#0b5cff]"
+                  >
+                    {FONTS.map(font => (
+                      <option key={font} value={font}>{font}</option>
+                    ))}
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Button Background</label>
-                  <div className="flex gap-3 items-center">
-                    <input 
-                      type="color" 
-                      value={theme.button_bg} 
-                      onChange={(e) => setTheme({...theme, button_bg: e.target.value})}
-                      className="h-10 w-10 rounded cursor-pointer border-0 p-0"
-                    />
-                    <Input 
-                      value={theme.button_bg} 
-                      onChange={(e) => setTheme({...theme, button_bg: e.target.value})}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Button Text Color</label>
-                  <div className="flex gap-3 items-center">
-                    <input 
-                      type="color" 
-                      value={theme.button_text} 
-                      onChange={(e) => setTheme({...theme, button_text: e.target.value})}
-                      className="h-10 w-10 rounded cursor-pointer border-0 p-0"
-                    />
-                    <Input 
-                      value={theme.button_text} 
-                      onChange={(e) => setTheme({...theme, button_text: e.target.value})}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Button Style</label>
-                  <div className="flex gap-4">
-                    {['rounded-md', 'rounded-xl', 'rounded-full'].map(style => (
+
+                {/* Background Selector */}
+                <div className="col-span-1 md:col-span-2 space-y-4">
+                  <label className="block text-sm font-bold text-slate-700">Background</label>
+                  
+                  <div className="flex gap-2 p-1 bg-slate-200/50 rounded-xl w-fit">
+                    {['color', 'gradient', 'image'].map(type => (
                       <button
-                        key={style}
-                        onClick={() => setTheme({...theme, button_style: style})}
-                        className={`flex-1 py-3 border-2 transition-all ${style} ${theme.button_style === style ? 'border-[#0b5cff] bg-blue-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                        key={type}
+                        onClick={() => setTheme({...theme, bg_type: type})}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-colors ${theme.bg_type === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                       >
-                        <div className={`mx-auto w-3/4 h-3 bg-slate-300 ${style}`}></div>
+                        {type}
                       </button>
                     ))}
                   </div>
+
+                  {theme.bg_type === 'color' && (
+                    <div className="flex gap-3 items-center">
+                      <input 
+                        type="color" 
+                        value={theme.bg_color || theme.bg_value} 
+                        onChange={(e) => setTheme({...theme, bg_value: e.target.value, bg_color: e.target.value})}
+                        className="h-10 w-10 rounded cursor-pointer border-0 p-0"
+                      />
+                      <Input 
+                        value={theme.bg_color || theme.bg_value} 
+                        onChange={(e) => setTheme({...theme, bg_value: e.target.value, bg_color: e.target.value})}
+                        className="flex-1"
+                      />
+                    </div>
+                  )}
+
+                  {theme.bg_type === 'gradient' && (
+                    <div className="grid grid-cols-6 gap-2">
+                      {GRADIENTS.map((grad, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setTheme({...theme, bg_value: grad})}
+                          className={`h-12 rounded-lg border-2 transition-all ${theme.bg_value === grad ? 'border-[#0b5cff] scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
+                          style={{ background: grad }}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {theme.bg_type === 'image' && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-3">
+                        <label className={`flex flex-1 items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-slate-300 font-bold text-sm cursor-pointer transition-colors ${isUploadingBg ? 'bg-slate-100 text-slate-400' : 'bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400'}`}>
+                          {isUploadingBg ? <Loader2 className="h-5 w-5 animate-spin" /> : <UploadCloud className="h-5 w-5" />}
+                          {isUploadingBg ? 'Uploading...' : 'Upload Background Image'}
+                          <input type="file" accept="image/*" className="hidden" onChange={handleBgUpload} disabled={isUploadingBg} />
+                        </label>
+                      </div>
+                      {theme.bg_value && theme.bg_type === 'image' && (
+                        <div className="h-24 rounded-xl border border-slate-200 overflow-hidden relative">
+                          <img src={theme.bg_value} alt="Background" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Text & Button Colors */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Text Color</label>
+                  <div className="flex gap-3 items-center">
+                    <input type="color" value={theme.text_color} onChange={(e) => setTheme({...theme, text_color: e.target.value})} className="h-10 w-10 rounded cursor-pointer border-0 p-0" />
+                    <Input value={theme.text_color} onChange={(e) => setTheme({...theme, text_color: e.target.value})} className="flex-1" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Button Text Color</label>
+                  <div className="flex gap-3 items-center">
+                    <input type="color" value={theme.button_text} onChange={(e) => setTheme({...theme, button_text: e.target.value})} className="h-10 w-10 rounded cursor-pointer border-0 p-0" />
+                    <Input value={theme.button_text} onChange={(e) => setTheme({...theme, button_text: e.target.value})} className="flex-1" />
+                  </div>
+                </div>
+
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Button Background (Hex or RGBA)</label>
+                  <div className="flex gap-3 items-center">
+                    <input type="color" value={theme.button_bg.startsWith('#') ? theme.button_bg : '#ffffff'} onChange={(e) => setTheme({...theme, button_bg: e.target.value})} className="h-10 w-10 rounded cursor-pointer border-0 p-0" />
+                    <Input value={theme.button_bg} onChange={(e) => setTheme({...theme, button_bg: e.target.value})} placeholder="e.g. #ffffff or rgba(255,255,255,0.1)" className="flex-1" />
+                  </div>
+                </div>
+
+                {/* Button Style & Shadows */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Button Radius</label>
+                  <select value={theme.button_style?.split(' ')[0] || 'rounded-xl'} onChange={(e) => setTheme({...theme, button_style: e.target.value + (theme.button_style?.includes('backdrop-blur') ? ' backdrop-blur-md' : '')})} className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0b5cff]/20 focus:border-[#0b5cff]">
+                    <option value="rounded-none">Square</option>
+                    <option value="rounded-md">Rounded</option>
+                    <option value="rounded-xl">Rounded XL</option>
+                    <option value="rounded-full">Pill</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Button Shadow</label>
+                  <select value={theme.button_shadow || 'shadow-sm'} onChange={(e) => setTheme({...theme, button_shadow: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0b5cff]/20 focus:border-[#0b5cff]">
+                    <option value="shadow-none">None</option>
+                    <option value="shadow-sm">Small</option>
+                    <option value="shadow-md">Medium</option>
+                    <option value="shadow-xl">Large</option>
+                    <option value="shadow-[4px_4px_0_#000000]">Hard Shadow</option>
+                    <option value="shadow-[4px_4px_0_#00ff00]">Neon Shadow</option>
+                  </select>
+                </div>
+                
+                <div className="col-span-1 md:col-span-2 flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl">
+                  <div className="font-bold text-slate-700">Enable Glassmorphism</div>
+                  <button 
+                    onClick={() => setTheme({...theme, button_style: theme.button_style?.includes('backdrop-blur') ? theme.button_style.replace(' backdrop-blur-md', '') : theme.button_style + ' backdrop-blur-md'})}
+                    className={`w-12 h-6 rounded-full transition-colors relative ${theme.button_style?.includes('backdrop-blur') ? 'bg-[#0b5cff]' : 'bg-slate-300'}`}
+                  >
+                    <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${theme.button_style?.includes('backdrop-blur') ? 'translate-x-7' : 'translate-x-1'}`}></div>
+                  </button>
+                </div>
+
               </div>
             </section>
             
@@ -382,12 +537,16 @@ export default function PageEditor() {
             {/* Actual Preview Content */}
             <div 
               className="absolute inset-0 z-10 overflow-y-auto no-scrollbar"
-              style={{ backgroundColor: theme.bg_color, color: theme.text_color }}
+              style={{ 
+                fontFamily: theme.font_family || 'Inter',
+                background: theme.bg_type === 'gradient' ? theme.bg_value : theme.bg_type === 'image' ? `url(${theme.bg_value}) center/cover` : theme.bg_value || theme.bg_color,
+                color: theme.text_color 
+              }}
             >
               <div className="px-6 py-12 flex flex-col items-center">
                 {/* Avatar */}
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full object-cover mb-4 shadow-md" />
+                  <img src={avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full object-cover mb-4 shadow-md border-2 border-white/20" />
                 ) : (
                   <div className="w-24 h-24 rounded-full bg-slate-200 mb-4 shadow-md flex items-center justify-center text-slate-400">
                     <ImageIcon className="h-8 w-8" />
@@ -411,7 +570,7 @@ export default function PageEditor() {
                         href={link.url || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`block w-full text-center py-4 px-6 font-bold transition-transform hover:scale-[1.02] active:scale-95 shadow-sm ${theme.button_style}`}
+                        className={`block w-full text-center py-4 px-6 font-bold transition-transform hover:scale-[1.02] active:scale-95 ${theme.button_style} ${theme.button_shadow} ${theme.button_border} border`}
                         style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
                       >
                         {link.title || 'Link Title'}
@@ -419,7 +578,7 @@ export default function PageEditor() {
                     ))
                   ) : (
                     <div 
-                      className={`block w-full text-center py-4 px-6 font-bold opacity-50 ${theme.button_style}`}
+                      className={`block w-full text-center py-4 px-6 font-bold opacity-50 ${theme.button_style} ${theme.button_shadow} ${theme.button_border} border`}
                       style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
                     >
                       Sample Link
@@ -428,7 +587,7 @@ export default function PageEditor() {
                 </div>
                 
                 <div className="mt-12 opacity-50 text-xs font-medium tracking-wider flex items-center gap-1" style={{ color: theme.text_color }}>
-                  <div className="w-4 h-4 bg-black rounded-sm text-white flex items-center justify-center font-bold text-[10px]">R</div>
+                  <div className="w-4 h-4 rounded-sm flex items-center justify-center font-bold text-[10px]" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#000' }}>R</div>
                   RYZLink
                 </div>
               </div>
