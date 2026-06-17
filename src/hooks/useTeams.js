@@ -14,15 +14,40 @@ export function useTeams() {
     setError(null)
     
     try {
-      // Fetch teams owned by user OR where user is a member
+      // 1. Fetch teams owned by user
       const { data: ownedTeams, error: err1 } = await supabase
         .from('teams')
         .select('*')
         .eq('owner_id', session.user.id)
 
       if (err1) throw err1
+
+      // 2. Fetch teams where user is a member
+      const { data: memberships, error: memErr } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', session.user.id)
+
+      if (memErr) throw memErr
+
+      const teamIds = memberships.map(m => m.team_id)
       
-      setTeams(ownedTeams || [])
+      let memberTeams = []
+      if (teamIds.length > 0) {
+        const { data: userTeams, error: err2 } = await supabase
+          .from('teams')
+          .select('*')
+          .in('id', teamIds)
+          
+        if (err2) throw err2
+        memberTeams = userTeams || []
+      }
+
+      // Combine and deduplicate
+      const allTeams = [...(ownedTeams || []), ...memberTeams]
+      const uniqueTeams = Array.from(new Map(allTeams.map(item => [item.id, item])).values())
+      
+      setTeams(uniqueTeams)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -72,11 +97,129 @@ export function useTeams() {
     }
   }, [session])
 
+  const fetchTeamDetails = useCallback(async (teamId) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const { data: team, error: teamErr } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('id', teamId)
+        .single()
+      if (teamErr) throw teamErr
+
+      // Fetch members using RPC to bypass RLS on users table
+      const { data: rawMembers, error: memErr } = await supabase.rpc('get_team_members', { p_team_id: teamId })
+      if (memErr) throw memErr
+
+      // Map rawMembers to match expected structure
+      const members = rawMembers.map(m => ({
+        id: m.id,
+        role: m.role,
+        joined_at: m.joined_at,
+        users: {
+          id: m.user_id,
+          email: m.email,
+          full_name: m.full_name,
+          avatar_url: m.avatar_url
+        }
+      }))
+
+      const { data: links, error: linkErr } = await supabase
+        .from('team_links')
+        .select(`
+          id, created_at,
+          links!inner(*)
+        `)
+        .eq('team_id', teamId)
+      if (linkErr) throw linkErr
+
+      return { success: true, data: { team, members, links } }
+    } catch (err) {
+      setError(err.message)
+      return { success: false, error: err.message }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const addTeamMember = useCallback(async (teamId, email, role = 'member') => {
+    try {
+      // Use SECURITY DEFINER RPC to bypass INSERT RLS and check email securely
+      const { data, error: rpcErr } = await supabase.rpc('invite_team_member', { 
+        p_team_id: teamId, 
+        p_email: email, 
+        p_role: role 
+      })
+
+      if (rpcErr) throw rpcErr
+      
+      // Update member count (if the RPC didn't already trigger a db function)
+      await supabase.rpc('increment_team_members', { p_team_id: teamId })
+
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message || 'Error inviting member' }
+    }
+  }, [])
+
+  const removeTeamMember = useCallback(async (teamId, userId) => {
+    try {
+      const { error: delErr } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', teamId)
+        .eq('user_id', userId)
+
+      if (delErr) throw delErr
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  }, [])
+
+  const updateTeam = useCallback(async (teamId, updates) => {
+    try {
+      const { error: err } = await supabase
+        .from('teams')
+        .update(updates)
+        .eq('id', teamId)
+
+      if (err) throw err
+      
+      setTeams(prev => prev.map(t => t.id === teamId ? { ...t, ...updates } : t))
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  }, [])
+
+  const deleteTeam = useCallback(async (teamId) => {
+    try {
+      const { error: err } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId)
+
+      if (err) throw err
+      
+      setTeams(prev => prev.filter(t => t.id !== teamId))
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  }, [])
+
   return {
     teams,
     isLoading,
     error,
     fetchTeams,
-    createTeam
+    createTeam,
+    updateTeam,
+    deleteTeam,
+    fetchTeamDetails,
+    addTeamMember,
+    removeTeamMember
   }
 }

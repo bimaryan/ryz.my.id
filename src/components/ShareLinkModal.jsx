@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLinkShares } from '@/hooks/useSharesAndPlans'
 import { X, Share2, Trash2 } from 'lucide-react'
+import Swal from 'sweetalert2'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useAuth } from '@/hooks/useAuth'
@@ -43,7 +44,28 @@ export default function ShareLinkModal({ isOpen, onClose, link }) {
   }
 
   const handleRemove = async (id) => {
-    await removeShare(id)
+    const result = await Swal.fire({
+      title: "Remove access?",
+      text: "This user will no longer be able to access the link.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, remove!",
+      customClass: {
+        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded ml-2",
+        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded"
+      },
+      buttonsStyling: false
+    });
+
+    if (result.isConfirmed) {
+      await removeShare(id);
+      Swal.fire({
+        title: "Removed!",
+        text: "Access revoked.",
+        icon: "success",
+        confirmButtonColor: "#0b5cff"
+      });
+    }
   }
 
   return (

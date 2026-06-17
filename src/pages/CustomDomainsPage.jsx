@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import {
   Globe,
   Plus,
@@ -51,37 +52,28 @@ export default function CustomDomainsPage() {
   };
 
   const handleDelete = async (id) => {
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-bold text-slate-900">
-            Are you sure you want to remove this domain?
-          </p>
-          <p className="text-xs text-slate-500">
-            All links using this domain will break.
-          </p>
-          <div className="flex gap-2 justify-end mt-2">
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={async () => {
-                toast.dismiss(t.id);
-                await deleteDomain(id);
-                toast.success("Domain removed");
-              }}
-              className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded"
-            >
-              Remove
-            </button>
-          </div>
-        </div>
-      ),
-      { duration: Infinity },
-    );
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "All links using this domain will break!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, remove it!",
+      customClass: {
+        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded ml-2",
+        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded"
+      },
+      buttonsStyling: false
+    });
+
+    if (result.isConfirmed) {
+      await deleteDomain(id);
+      Swal.fire({
+        title: "Deleted!",
+        text: "Domain removed.",
+        icon: "success",
+        confirmButtonColor: "#0b5cff"
+      });
+    }
   };
 
   return (
