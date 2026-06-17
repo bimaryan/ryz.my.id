@@ -3,12 +3,18 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import SEO from '@/components/SEO'
 import { supabase } from '@/lib/supabase'
 
 const resetPasswordSchema = z.object({
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character'),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -20,6 +26,8 @@ export default function ResetPasswordPage() {
   const { updatePassword, isLoading, error: authError } = useAuth()
   const [serverError, setServerError] = useState(null)
   const [isSessionValid, setIsSessionValid] = useState(true)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // Verify that the user arrived here with a valid recovery session
   useEffect(() => {
@@ -107,23 +115,41 @@ export default function ResetPasswordPage() {
             
             <div className="space-y-2">
               <label className="block text-[15px] font-bold text-[#273144]">New Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                className="bitly-input w-full"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...register('password')}
+                  className="bitly-input w-full pr-10"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
               {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
             </div>
 
             <div className="space-y-2">
               <label className="block text-[15px] font-bold text-[#273144]">Confirm New Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                {...register('confirmPassword')}
-                className="bitly-input w-full"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...register('confirmPassword')}
+                  className="bitly-input w-full pr-10"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
               {errors.confirmPassword && <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>}
             </div>
 

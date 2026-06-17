@@ -532,6 +532,14 @@ export default function PageEditor() {
                               onChange={(e) => updateLink(index, 'subtitle', e.target.value)}
                               className="text-sm text-slate-600 border-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 py-2"
                             />
+                            {link.type === 'digital_product' && (
+                              <Input
+                                placeholder="Price (e.g. Rp 50.000)"
+                                value={link.price || ''}
+                                onChange={(e) => updateLink(index, 'price', e.target.value)}
+                                className="font-bold text-orange-600 border-none bg-orange-50 focus:bg-white focus:ring-2 focus:ring-orange-500/20 py-2"
+                              />
+                            )}
                             <Input
                               placeholder="URL (e.g. https://ryz.my.id/site)"
                               value={link.url}
@@ -828,6 +836,49 @@ export default function PageEditor() {
                           <div key={i} className={`w-full pt-8 pb-2 text-center ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
                             <h2 className="text-xl font-black tracking-tight" style={{ color: theme.text_color }}>{link.title}</h2>
                           </div>
+                        )
+                      }
+
+                      if (link.type === 'digital_product') {
+                        return (
+                          <a
+                            key={i}
+                            href={link.url || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-col ${theme.layout === 'grid' ? 'col-span-2' : ''}`}
+                            style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
+                          >
+                            {link.thumbnail_url ? (
+                              <div className="w-full h-32 shrink-0">
+                                <img src={link.thumbnail_url} alt={link.title} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className="w-full h-24 bg-black/5 flex flex-col items-center justify-center text-current opacity-60">
+                                {link.icon && LucideIcons[link.icon] ? (
+                                  (() => {
+                                    const IconComponent = LucideIcons[link.icon];
+                                    return <IconComponent className="w-6 h-6 mb-1" />;
+                                  })()
+                                ) : (
+                                  <ImageIcon className="w-6 h-6 mb-1" />
+                                )}
+                                <span className="text-[10px] font-medium">No Cover Image</span>
+                              </div>
+                            )}
+                            <div className="p-3 flex flex-col justify-between flex-1 w-full">
+                              <div>
+                                <h3 className="font-bold text-sm leading-tight mb-1">{link.title || 'Digital Product'}</h3>
+                                {link.subtitle && <p className="text-[10px] opacity-80 leading-snug mb-2 line-clamp-2">{link.subtitle}</p>}
+                              </div>
+                              <div className="flex items-center justify-between mt-1 pt-2" style={{ borderTop: `1px dashed ${theme.text_color}30` }}>
+                                <span className="font-black text-sm">{link.price || 'Rp 0'}</span>
+                                <div className="bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-md" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#fff' }}>
+                                  Beli
+                                </div>
+                              </div>
+                            </div>
+                          </a>
                         )
                       }
 

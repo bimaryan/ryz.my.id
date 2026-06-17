@@ -127,6 +127,49 @@ export default function PublicPage() {
                 )
               }
 
+              if (link.type === 'digital_product') {
+                return (
+                  <a
+                    key={i}
+                    href={link.url || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-col ${theme.layout === 'grid' ? 'col-span-2' : ''}`}
+                    style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
+                  >
+                    {link.thumbnail_url ? (
+                      <div className="w-full h-40 shrink-0">
+                        <img src={link.thumbnail_url} alt={link.title} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-full h-32 bg-black/5 flex flex-col items-center justify-center text-current opacity-60">
+                        {link.icon && LucideIcons[link.icon] ? (
+                          (() => {
+                            const IconComponent = LucideIcons[link.icon];
+                            return <IconComponent className="w-8 h-8 mb-2" />;
+                          })()
+                        ) : (
+                          <LucideIcons.Image className="w-8 h-8 mb-2" />
+                        )}
+                        <span className="text-xs font-medium">No Cover Image</span>
+                      </div>
+                    )}
+                    <div className="p-4 flex flex-col justify-between flex-1 w-full">
+                      <div>
+                        <h3 className="font-bold text-lg leading-tight mb-1">{link.title || 'Digital Product'}</h3>
+                        {link.subtitle && <p className="text-sm opacity-80 leading-snug mb-3 line-clamp-2">{link.subtitle}</p>}
+                      </div>
+                      <div className="flex items-center justify-between mt-2 pt-3" style={{ borderTop: `1px dashed ${theme.text_color}30` }}>
+                        <span className="font-black text-lg">{link.price || 'Rp 0'}</span>
+                        <div className="bg-black text-white text-xs font-bold px-4 py-2 rounded-lg" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#fff' }}>
+                          Beli
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                )
+              }
+
               return (
                 <a
                   key={i}

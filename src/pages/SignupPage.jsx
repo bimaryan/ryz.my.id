@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import SEO from '@/components/SEO'
 
@@ -10,13 +11,20 @@ const signupSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character'),
+  _bot_catcher: z.string().optional() // Honeypot field
 })
 
 export default function SignupPage() {
   const navigate = useNavigate()
   const { signUp, isLoading, error: authError } = useAuth()
   const [serverError, setServerError] = useState(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -27,13 +35,25 @@ export default function SignupPage() {
   })
 
   const onSubmit = async (data) => {
+    // Honeypot check: If the hidden field is filled, it's a bot.
+    if (data._bot_catcher) {
+      console.warn('Bot detected during signup.')
+      // Simulate success to trick the bot
+      navigate('/login')
+      return
+    }
+
     setServerError(null)
     const result = await signUp(data)
     
     if (result.success) {
       navigate('/dashboard')
     } else {
-      setServerError(result.error)
+      if (result.error?.includes('rate limit')) {
+        setServerError('Too many attempts. Please try again later.')
+      } else {
+        setServerError(result.error)
+      }
     }
   }
 
@@ -101,13 +121,27 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <label className="block text-[15px] font-bold text-[#273144]">Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                className="bitly-input w-full"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...register('password')}
+                  className="bitly-input w-full pr-10"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
               {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
+            </div>
+
+            {/* Honeypot field - hidden from humans, visible to bots reading HTML */}
+            <div className="hidden" aria-hidden="true" style={{ display: 'none' }}>
+              <input type="text" tabIndex="-1" autoComplete="off" {...register('_bot_catcher')} />
             </div>
 
             {(authError || serverError) && (

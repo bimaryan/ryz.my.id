@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import SEO from '@/components/SEO'
 
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { signIn, isLoading, error: authError } = useAuth()
   const [serverError, setServerError] = useState(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -31,7 +33,11 @@ export default function LoginPage() {
     if (result.success) {
       navigate('/dashboard')
     } else {
-      setServerError(result.error)
+      if (result.error?.includes('rate limit')) {
+        setServerError('Too many login attempts. Please try again later.')
+      } else {
+        setServerError(result.error)
+      }
     }
   }
 
@@ -82,12 +88,21 @@ export default function LoginPage() {
                   Forgot your password?
                 </Link>
               </div>
-              <input
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                className="bitly-input w-full"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...register('password')}
+                  className="bitly-input w-full pr-10"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
               {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
             </div>
 
