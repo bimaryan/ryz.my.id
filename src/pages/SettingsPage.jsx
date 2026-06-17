@@ -112,7 +112,7 @@ export default function SettingsPage() {
     <DashboardLayout>
       <SEO title="Settings | RYZ Shortlink" />
 
-      <div className="flex-1 p-6 sm:p-10 max-w-5xl mx-auto w-full">
+      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
         <div className="space-y-8 animate-fade-in-up">
           
           <div>

@@ -1,0 +1,45 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { requireApiKey } from './middleware/auth.js';
+
+// Import Routes
+import linksRouter from './routes/links.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Basic health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'RYZ Shortlink API is running' });
+});
+
+// Protect all /api/v1 routes with API Key auth
+app.use('/api/v1', requireApiKey);
+
+// Mount Routes
+app.use('/api/v1/links', linksRouter);
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    success: false,
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'An unexpected error occurred'
+    }
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ API Server is running on http://localhost:${PORT}`);
+});

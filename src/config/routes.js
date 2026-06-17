@@ -11,12 +11,18 @@ import CustomDomainsPage from '@/pages/CustomDomainsPage'
 import WebhooksPage from '@/pages/WebhooksPage'
 import TeamsPage from '@/pages/TeamsPage'
 import LinksPage from '@/pages/LinksPage'
+import DocsPage from '@/pages/DocsPage'
 
 export const routes = [
   // Public routes
   {
     path: '/',
     element: HomePage,
+    public: true,
+  },
+  {
+    path: '/docs',
+    element: DocsPage,
     public: true,
   },
   {
