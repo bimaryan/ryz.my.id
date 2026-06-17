@@ -146,11 +146,11 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
             {STEPS.map((step, idx) => (
               <div key={step.id} className="flex items-center">
                 <div className={`flex flex-col items-center justify-center gap-1`}>
-                  <div className={`w-4 h-4 rounded-full border-2 ${currentStep >= idx ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300 bg-slate-100'} transition-all`} />
-                  <span className={`text-[10px] font-bold ${currentStep >= idx ? 'text-emerald-600' : 'text-slate-400'}`}>{step.label}</span>
+                  <div className={`w-4 h-4 rounded-full border-2 ${currentStep >= idx ? 'border-[#0b5cff] bg-[#0b5cff]' : 'border-slate-300 bg-slate-100'} transition-all`} />
+                  <span className={`text-[10px] font-bold ${currentStep >= idx ? 'text-blue-700' : 'text-slate-400'}`}>{step.label}</span>
                 </div>
                 {idx < STEPS.length - 1 && (
-                  <div className={`w-16 h-0.5 mx-2 -mt-4 ${currentStep > idx ? 'bg-emerald-500' : 'bg-slate-200'} transition-all`} />
+                  <div className={`w-16 h-0.5 mx-2 -mt-4 ${currentStep > idx ? 'bg-[#0b5cff]' : 'bg-slate-200'} transition-all`} />
                 )}
               </div>
             ))}
@@ -172,13 +172,13 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
               <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-6">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Cover</label>
-                  <label className="w-48 h-48 mx-auto flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl cursor-pointer transition-colors relative overflow-hidden group">
+                  <label className="w-48 h-48 mx-auto flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-[#0b5cff] rounded-xl cursor-pointer transition-colors relative overflow-hidden group">
                     {formData.cover_image_url ? (
                       <img src={formData.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
                     ) : (
                       <>
-                        <ImageIcon className="w-8 h-8 text-slate-300 group-hover:text-emerald-500 transition-colors" />
-                        <span className="text-xs font-medium text-slate-400 group-hover:text-emerald-600">Add Image</span>
+                        <ImageIcon className="w-8 h-8 text-slate-300 group-hover:text-[#0b5cff] transition-colors" />
+                        <span className="text-xs font-medium text-slate-400 group-hover:text-blue-700">Add Image</span>
                       </>
                     )}
                     <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
@@ -196,7 +196,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
 
                 <div className="flex-1 flex flex-col">
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description / Synopsis</label>
-                  <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all bg-white flex-1 flex flex-col">
+                  <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#0b5cff]/20 transition-all bg-white flex-1 flex flex-col">
                     <ReactQuill 
                       theme="snow"
                       value={formData.description || ''}
@@ -224,7 +224,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                   ) : (
                     <div className="w-full flex-1 overflow-y-auto flex flex-col gap-3 mb-6 items-start text-left">
                       {chapters.map((chap, idx) => (
-                        <div key={idx} className="w-full p-4 border border-slate-200 rounded-xl flex items-center justify-between hover:border-emerald-500 transition-colors cursor-pointer" onClick={() => setEditingChapterIndex(idx)}>
+                        <div key={idx} className="w-full p-4 border border-slate-200 rounded-xl flex items-center justify-between hover:border-[#0b5cff] transition-colors cursor-pointer" onClick={() => setEditingChapterIndex(idx)}>
                           <div>
                             <p className="text-xs font-bold text-slate-400">{chap.part_name || `Chapter ${idx+1}`}</p>
                             <p className="font-bold text-slate-800">{chap.title || 'Untitled'}</p>
@@ -241,7 +241,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                       setEditingChapterIndex(chapters.length);
                       setIsChapterModalOpen(true);
                     }}
-                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-[#0b5cff] hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
                   >
                     + Add Content
                   </button>
@@ -262,7 +262,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                       <label className="text-sm font-medium text-slate-700">Set as free content</label>
                       <button 
                         onClick={() => handleUpdate('is_free', !formData.is_free)}
-                        className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                        className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free ? 'bg-[#0b5cff]' : 'bg-slate-200'}`}
                       >
                         <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${formData.is_free ? 'translate-x-6' : 'translate-x-1'}`} />
                       </button>
@@ -274,7 +274,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                           <label className="text-sm font-medium text-slate-700">Allow Customer to pay what they want</label>
                           <button 
                             onClick={() => handleUpdate('allow_pay_what_you_want', !formData.allow_pay_what_you_want)}
-                            className={`w-11 h-6 rounded-full transition-colors relative ${formData.allow_pay_what_you_want ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                            className={`w-11 h-6 rounded-full transition-colors relative ${formData.allow_pay_what_you_want ? 'bg-[#0b5cff]' : 'bg-slate-200'}`}
                           >
                             <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${formData.allow_pay_what_you_want ? 'translate-x-6' : 'translate-x-1'}`} />
                           </button>
@@ -328,7 +328,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                       <label className="text-sm font-medium text-slate-700">Enable Whatsapp Notification</label>
                       <button 
                         onClick={() => handleUpdate('enable_whatsapp_notification', !formData.enable_whatsapp_notification)}
-                        className={`w-11 h-6 rounded-full transition-colors relative ${formData.enable_whatsapp_notification ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                        className={`w-11 h-6 rounded-full transition-colors relative ${formData.enable_whatsapp_notification ? 'bg-[#0b5cff]' : 'bg-slate-200'}`}
                       >
                         <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${formData.enable_whatsapp_notification ? 'translate-x-6' : 'translate-x-1'}`} />
                       </button>
@@ -341,11 +341,11 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                   <p className="text-xs text-slate-500 mb-3">For your customer to fill in during checkout</p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
-                      <input type="checkbox" className="rounded text-emerald-500" />
+                      <input type="checkbox" className="rounded text-[#0b5cff]" />
                       <label className="text-sm font-medium text-slate-700">Name</label>
                     </div>
                     <div className="flex items-center gap-3">
-                      <input type="checkbox" className="rounded text-emerald-500" />
+                      <input type="checkbox" className="rounded text-[#0b5cff]" />
                       <label className="text-sm font-medium text-slate-700">Phone</label>
                     </div>
                   </div>
@@ -380,7 +380,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                     ) : (
                       chapters.map((chap, idx) => (
                         <div key={idx} className="bg-white rounded-xl p-4 flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
                             <PenTool className="w-5 h-5" />
                           </div>
                           <div className="flex-1">
@@ -405,14 +405,14 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
           {currentStep === 0 ? (
             <button 
               onClick={onClose}
-              className="px-6 py-2.5 border-2 border-emerald-500 text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-colors"
+              className="px-6 py-2.5 border-2 border-[#0b5cff] text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-colors"
             >
               Cancel
             </button>
           ) : (
             <button 
               onClick={() => setCurrentStep(prev => prev - 1)}
-              className="px-6 py-2.5 border-2 border-emerald-500 text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-colors flex items-center gap-2"
+              className="px-6 py-2.5 border-2 border-[#0b5cff] text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-2"
             >
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
@@ -426,7 +426,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                 handleSave();
               }
             }}
-            className="px-8 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2"
+            className="px-8 py-2.5 bg-[#0b5cff] hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2"
           >
             {currentStep < STEPS.length - 1 ? (
               <>Next Step <ChevronRight className="w-4 h-4" /></>

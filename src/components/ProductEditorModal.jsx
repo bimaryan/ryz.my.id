@@ -48,7 +48,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
           </button>
           <button 
             onClick={handleSave}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-full transition-colors shadow-md shadow-emerald-500/20"
+            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0b5cff] hover:bg-blue-700 rounded-full transition-colors shadow-md shadow-[#0b5cff]/20"
           >
             <Save className="w-4 h-4" /> Save Options
           </button>
@@ -82,7 +82,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                         </button>
                       </div>
                     ) : (
-                      <label className="w-32 h-32 shrink-0 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500/50 hover:bg-emerald-50 text-slate-400 flex flex-col items-center justify-center cursor-pointer transition-all">
+                      <label className="w-32 h-32 shrink-0 rounded-xl border-2 border-dashed border-slate-300 hover:border-[#0b5cff]/50 hover:bg-blue-50 text-slate-400 flex flex-col items-center justify-center cursor-pointer transition-all">
                         {isUploading ? <Loader2 className="w-6 h-6 animate-spin mb-1" /> : <ImageIcon className="w-6 h-6 mb-1 opacity-50" />}
                         <span className="text-xs font-bold">{isUploading ? 'Uploading...' : 'Add Image'}</span>
                         <input type="file" className="hidden" accept="image/*" disabled={isUploading} onChange={async (e) => {
@@ -106,14 +106,14 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                     placeholder="Product Title"
                     value={formData.title || ''}
                     onChange={(e) => handleUpdate('title', e.target.value)}
-                    className="font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20"
+                    className="font-bold text-slate-800 focus:ring-2 focus:ring-[#0b5cff]/20"
                   />
                 </div>
 
                 {/* Description */}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</label>
-                  <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all bg-white">
+                  <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#0b5cff]/20 transition-all bg-white">
                     <ReactQuill 
                       theme="snow"
                       value={formData.description || ''}
@@ -133,7 +133,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                           placeholder="Paste Google Drive, Dropbox, or any URL here..."
                           value={formData.product_file_url || ''}
                           onChange={(e) => handleUpdate('product_file_url', e.target.value)}
-                          className="w-full text-sm font-medium bg-white focus:ring-emerald-500/20"
+                          className="w-full text-sm font-medium bg-white focus:ring-[#0b5cff]/20"
                         />
                         <p className="text-[10px] text-slate-400 mt-1.5 ml-1">Pembeli akan diarahkan ke link ini atau mengunduh file setelah membayar.</p>
                       </div>
@@ -144,9 +144,9 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                         <div className="flex-grow border-t border-slate-200"></div>
                       </div>
                       
-                      <label className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 rounded-xl cursor-pointer transition-colors group bg-white">
-                        <UploadCloud className="w-6 h-6 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                        <span className="text-xs font-bold text-slate-600 group-hover:text-emerald-600">Click to attach ZIP / PDF file</span>
+                      <label className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-300 hover:border-[#0b5cff] hover:bg-blue-50 rounded-xl cursor-pointer transition-colors group bg-white">
+                        <UploadCloud className="w-6 h-6 text-slate-400 group-hover:text-[#0b5cff] transition-colors" />
+                        <span className="text-xs font-bold text-slate-600 group-hover:text-blue-700">Click to attach ZIP / PDF file</span>
                         <input type="file" className="hidden" accept=".zip,.pdf,.rar" onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if(!file) return;
@@ -255,7 +255,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                     <select 
                       value={formData.event_type || 'offline'} 
                       onChange={(e) => handleUpdate('event_type', e.target.value)}
-                      className="w-full text-sm font-bold text-slate-700 border-slate-200 bg-white focus:ring-2 focus:ring-emerald-500/20 py-2.5 rounded-xl"
+                      className="w-full text-sm font-bold text-slate-700 border-slate-200 bg-white focus:ring-2 focus:ring-[#0b5cff]/20 py-2.5 rounded-xl"
                     >
                       <option value="offline">Offline Venue</option>
                       <option value="online">Online Webinar</option>
@@ -296,7 +296,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                       <select 
                         value={formData.duration || '30'} 
                         onChange={(e) => handleUpdate('duration', e.target.value)}
-                        className="w-full text-sm font-bold text-slate-700 border-slate-200 bg-white focus:ring-2 focus:ring-emerald-500/20 py-2.5 rounded-xl"
+                        className="w-full text-sm font-bold text-slate-700 border-slate-200 bg-white focus:ring-2 focus:ring-[#0b5cff]/20 py-2.5 rounded-xl"
                       >
                         <option value="15">15 Mins</option>
                         <option value="30">30 Mins</option>
@@ -309,7 +309,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                       <select 
                         value={formData.meeting_platform || 'zoom'} 
                         onChange={(e) => handleUpdate('meeting_platform', e.target.value)}
-                        className="w-full text-sm font-bold text-slate-700 border-slate-200 bg-white focus:ring-2 focus:ring-emerald-500/20 py-2.5 rounded-xl"
+                        className="w-full text-sm font-bold text-slate-700 border-slate-200 bg-white focus:ring-2 focus:ring-[#0b5cff]/20 py-2.5 rounded-xl"
                       >
                         <option value="zoom">Zoom</option>
                         <option value="gmeet">Google Meet</option>
@@ -326,7 +326,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Available Days</label>
                     <div className="flex flex-wrap gap-2">
                       {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day => (
-                        <label key={day} className="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 hover:border-emerald-200">
+                        <label key={day} className="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 hover:border-blue-200">
                           <input 
                             type="checkbox" 
                             checked={(formData.available_days || ['Mon','Tue','Wed','Thu','Fri']).includes(day)}
@@ -336,7 +336,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                               else days = days.filter(d => d !== day);
                               handleUpdate('available_days', days);
                             }}
-                            className="rounded text-emerald-500 focus:ring-emerald-500 w-4 h-4"
+                            className="rounded text-[#0b5cff] focus:ring-[#0b5cff] w-4 h-4"
                           /> {day}
                         </label>
                       ))}
@@ -370,7 +370,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                       value={isDigital ? (formData.thank_you_message || '') : (formData.client_note || '')}
                       onChange={(e) => handleUpdate(isDigital ? 'thank_you_message' : 'client_note', e.target.value)}
                       rows={3}
-                      className="w-full text-sm font-medium text-slate-600 bg-white rounded-xl p-3 border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none resize-none"
+                      className="w-full text-sm font-medium text-slate-600 bg-white rounded-xl p-3 border border-slate-200 focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none resize-none"
                     />
                   </div>
                 </div>
@@ -384,23 +384,23 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                 <p className="text-xs text-slate-500 mt-1">Custom fields to fill in during checkout</p>
               </div>
               <div className="p-5 space-y-4">
-                <label className="flex items-center justify-between cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-emerald-200 transition-colors">
+                <label className="flex items-center justify-between cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors">
                   <span className="text-sm font-bold text-slate-700">Require Customer Name</span>
                   <input 
                     type="checkbox" 
                     checked={formData.ask_phone !== false} 
                     onChange={(e) => handleUpdate('ask_phone', e.target.checked)}
-                    className="rounded text-emerald-500 focus:ring-emerald-500 w-5 h-5"
+                    className="rounded text-[#0b5cff] focus:ring-[#0b5cff] w-5 h-5"
                   />
                 </label>
                 {isPhysical && (
-                  <label className="flex items-center justify-between cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-emerald-200 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors">
                     <span className="text-sm font-bold text-slate-700">Require Shipping Address</span>
                     <input 
                       type="checkbox" 
                       checked={formData.require_address !== false} 
                       onChange={(e) => handleUpdate('require_address', e.target.checked)}
-                      className="rounded text-emerald-500 focus:ring-emerald-500 w-5 h-5"
+                      className="rounded text-[#0b5cff] focus:ring-[#0b5cff] w-5 h-5"
                     />
                   </label>
                 )}

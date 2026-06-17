@@ -86,7 +86,7 @@ export default function ChapterEditorModal({ isOpen, onClose, initialData, onSav
             
             <div className="flex-1 flex flex-col min-h-[300px]">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Content Body</label>
-              <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all bg-white flex-1 flex flex-col">
+              <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#0b5cff]/20 transition-all bg-white flex-1 flex flex-col">
                 <ReactQuill 
                   theme="snow"
                   value={formData.content || ''}
@@ -103,14 +103,14 @@ export default function ChapterEditorModal({ isOpen, onClose, initialData, onSav
         <div className="bg-white px-6 py-4 flex items-center justify-between border-t border-slate-200 shrink-0">
           <button 
             onClick={onClose}
-            className="px-8 py-2.5 border-2 border-emerald-500 text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-colors"
+            className="px-8 py-2.5 border-2 border-[#0b5cff] text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-colors"
           >
             Back
           </button>
 
           <button 
             onClick={handleSave}
-            className="px-10 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-sm hover:shadow transition-all"
+            className="px-10 py-2.5 bg-[#0b5cff] hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm hover:shadow transition-all"
           >
             Save
           </button>
