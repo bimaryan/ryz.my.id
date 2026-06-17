@@ -59,10 +59,11 @@ export default function LinksPage() {
     }
   }
 
-  const handleCopy = (shortCode) => {
-    const url = `${window.location.origin}/${shortCode}`
+  const handleCopy = (link) => {
+    const domain = link.custom_domain ? `https://${link.custom_domain}` : window.location.origin
+    const url = `${domain}/${link.short_code}`
     navigator.clipboard.writeText(url)
-    setCopiedId(shortCode)
+    setCopiedId(link.short_code)
     toast.success('Link copied to clipboard!', { position: 'bottom-center' })
     setTimeout(() => setCopiedId(null), 2000)
   }
@@ -106,8 +107,8 @@ export default function LinksPage() {
                     <h3 className="font-bold text-slate-900 text-lg truncate mb-1">{link.title || link.short_code}</h3>
                     
                     <div className="flex items-center gap-3 mb-2">
-                      <a href={`/${link.short_code}`} target="_blank" rel="noreferrer" className="text-[#0b5cff] hover:text-[#094bdd] hover:underline text-sm font-bold flex items-center gap-1 transition-colors">
-                        ryz.my.id/{link.short_code} <ExternalLink className="h-3 w-3" />
+                      <a href={link.custom_domain ? `https://${link.custom_domain}/${link.short_code}` : `/${link.short_code}`} target="_blank" rel="noreferrer" className="text-[#0b5cff] hover:text-[#094bdd] hover:underline text-sm font-bold flex items-center gap-1 transition-colors">
+                        {link.custom_domain || 'ryz.my.id'}/{link.short_code} <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
                     
@@ -138,7 +139,7 @@ export default function LinksPage() {
                       <button onClick={() => setQrCodeLink(link)} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors" title="QR Code">
                         <QrCode className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleCopy(link.short_code)} className={`p-2 rounded transition-colors ${copiedId === link.short_code ? 'text-[#0b5cff] bg-blue-50' : 'text-slate-400 hover:text-[#0b5cff] hover:bg-blue-50'}`} title="Copy Link">
+                      <button onClick={() => handleCopy(link)} className={`p-2 rounded transition-colors ${copiedId === link.short_code ? 'text-[#0b5cff] bg-blue-50' : 'text-slate-400 hover:text-[#0b5cff] hover:bg-blue-50'}`} title="Copy Link">
                         <Copy className="h-4 w-4" />
                       </button>
                       <button onClick={() => handleDelete(link.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete">

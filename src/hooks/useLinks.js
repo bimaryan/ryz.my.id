@@ -51,6 +51,7 @@ export function useLinks() {
         original_url: linkData.original_url,
         short_code: short_code,
         custom_slug: linkData.custom_slug || null,
+        custom_domain: linkData.custom_domain || null,
         title: linkData.title || null,
         description: linkData.description || null,
         tags: linkData.tags ? linkData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],

@@ -36,11 +36,22 @@ export default function RedirectPage() {
   useEffect(() => {
     const fetchLink = async () => {
       try {
-        const { data: link, error: fetchError } = await supabase
+        const currentDomain = window.location.hostname
+        const isMainDomain = currentDomain === 'ryz.my.id' || currentDomain === 'localhost' || currentDomain === '127.0.0.1'
+
+        let query = supabase
           .from('links')
           .select('*')
           .or(`short_code.eq.${slug},custom_slug.eq.${slug}`)
-          .single()
+
+        if (!isMainDomain) {
+          query = query.eq('custom_domain', currentDomain)
+        } else {
+          // Links created before this feature will have null, which is correct for main domain
+          query = query.is('custom_domain', null)
+        }
+
+        const { data: link, error: fetchError } = await query.single()
 
         if (fetchError || !link) {
           setError('Link not found')

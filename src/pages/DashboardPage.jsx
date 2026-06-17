@@ -81,10 +81,11 @@ export default function DashboardPage() {
     }
   };
 
-  const handleCopy = (shortCode) => {
-    const url = `${window.location.origin}/${shortCode}`;
+  const handleCopy = (link) => {
+    const domain = link.custom_domain ? `https://${link.custom_domain}` : window.location.origin;
+    const url = `${domain}/${link.short_code}`;
     navigator.clipboard.writeText(url);
-    setCopiedId(shortCode);
+    setCopiedId(link.short_code);
     toast.success("Link copied to clipboard!", { position: "bottom-center" });
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -281,12 +282,12 @@ export default function DashboardPage() {
 
                     <div className="flex items-center gap-3 mb-2">
                       <a
-                        href={`/${link.short_code}`}
+                        href={link.custom_domain ? `https://${link.custom_domain}/${link.short_code}` : `/${link.short_code}`}
                         target="_blank"
                         rel="noreferrer"
                         className="text-[#0b5cff] hover:text-[#094bdd] hover:underline text-sm font-bold flex items-center gap-1 transition-colors"
                       >
-                        ryz.my.id/{link.short_code}{" "}
+                        {link.custom_domain || 'ryz.my.id'}/{link.short_code}{" "}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
@@ -336,7 +337,7 @@ export default function DashboardPage() {
                         <QrCode className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleCopy(link.short_code)}
+                        onClick={() => handleCopy(link)}
                         className="p-2 text-slate-400 hover:text-[#0b5cff] hover:bg-blue-50 rounded transition-colors"
                         title="Copy Link"
                       >

@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input'
 
 const linkSchema = z.object({
   original_url: z.string().url('Please enter a valid URL'),
+  custom_domain: z.string().optional(),
   title: z.string().optional(),
   custom_slug: z.string().optional(),
   description: z.string().optional(),
@@ -21,8 +22,11 @@ const linkSchema = z.object({
   utm_campaign: z.string().optional(),
 })
 
+import { useCustomDomains } from '@/hooks/useCustomDomains'
+
 export default function CreateLinkModal({ isOpen, onClose, onSuccess }) {
   const { createLink } = useLinks()
+  const { domains } = useCustomDomains()
   const [activeTab, setActiveTab] = useState('basic')
   const [createError, setCreateError] = useState(null)
 
@@ -77,9 +81,18 @@ export default function CreateLinkModal({ isOpen, onClose, onSuccess }) {
             <div className={`space-y-5 animate-fade-in-up ${activeTab === 'basic' ? 'block' : 'hidden'}`}>
               <Input label={<span className="text-slate-700 font-bold">Destination URL <span className="text-red-500">*</span></span>} placeholder="https://example.com/very/long/url" error={errors.original_url?.message} {...register('original_url')} className="bitly-input" />
               <div className="grid grid-cols-2 gap-4">
-                <Input label={<span className="text-slate-700 font-bold">Title (Internal)</span>} placeholder="Summer Campaign 2026" error={errors.title?.message} {...register('title')} className="bitly-input" />
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-slate-700">Domain</label>
+                  <select {...register('custom_domain')} className="bitly-input">
+                    <option value="">ryz.my.id</option>
+                    {domains?.map(d => (
+                      <option key={d.id} value={d.domain}>{d.domain}</option>
+                    ))}
+                  </select>
+                </div>
                 <Input label={<span className="text-slate-700 font-bold">Custom Slug</span>} placeholder="summer26" error={errors.custom_slug?.message} {...register('custom_slug')} className="bitly-input" />
               </div>
+              <Input label={<span className="text-slate-700 font-bold">Title (Internal)</span>} placeholder="Summer Campaign 2026" error={errors.title?.message} {...register('title')} className="bitly-input" />
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-slate-700">Description</label>
                 <textarea {...register('description')} rows={3} className="bitly-input resize-none" placeholder="Brief note about this link..."></textarea>
