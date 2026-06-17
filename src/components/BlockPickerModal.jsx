@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Image as ImageIcon, Link as LinkIcon, Type, Youtube, ShoppingBag, Calendar, Star, DollarSign } from 'lucide-react'
+import { X, Image as ImageIcon, Link as LinkIcon, Type, PlaySquare, ShoppingBag, Calendar, Star, DollarSign } from 'lucide-react'
 
 const BLOCKS = [
   {
@@ -34,7 +34,7 @@ const BLOCKS = [
     id: 'video',
     title: 'Video',
     description: 'Play video from other platform',
-    icon: Youtube,
+    icon: PlaySquare,
     color: 'text-emerald-500',
     bg: 'bg-emerald-50',
     category: 'Basic'
