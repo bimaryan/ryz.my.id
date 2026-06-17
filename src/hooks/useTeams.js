@@ -79,13 +79,21 @@ export function useTeams() {
       if (err) throw err
       
       // Auto-add owner to team_members
-      await supabase
+      const { error: insertErr } = await supabase
         .from('team_members')
         .insert([{
           team_id: data.id,
           user_id: session.user.id,
           role: 'owner'
         }])
+        
+      if (insertErr) {
+        console.error("Failed to add owner to team_members:", insertErr);
+        // We still return success because the team was created, but we notify the console.
+        // Wait, if it fails, we should probably delete the team or throw.
+        // For now, let's throw so the UI shows the error instead of silently failing and hiding the team!
+        throw new Error("Team created, but failed to join as owner. Please check RLS policies.");
+      }
 
       setTeams(prev => [data, ...prev])
       return { success: true, data }

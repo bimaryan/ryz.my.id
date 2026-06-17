@@ -71,6 +71,22 @@ export function useLinks() {
 
       if (err) throw err
       
+      // If a team_id was provided, link it to the team
+      if (linkData.team_id) {
+        const { error: teamLinkErr } = await supabase
+          .from('team_links')
+          .insert([{
+            team_id: linkData.team_id,
+            link_id: data.id
+          }])
+          
+        if (teamLinkErr) {
+          console.error("Failed to add link to team:", teamLinkErr)
+          // Rollback link creation if team_links fails? It's better to just throw an error.
+          throw new Error("Link created, but failed to assign to team. RLS policy issue?");
+        }
+      }
+
       // Update local state
       setLinks(prev => [data, ...prev])
       return { success: true, data }

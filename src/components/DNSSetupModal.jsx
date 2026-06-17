@@ -24,7 +24,7 @@ export default function DNSSetupModal({ isOpen, onClose, domain }) {
   const handleCopy = (text, type) => {
     navigator.clipboard.writeText(text)
     setCopiedType(type)
-    toast.success('Record copied to clipboard!', { position: 'bottom-center' })
+    toast.success('Record copied to clipboard!')
     setTimeout(() => setCopiedType(null), 2000)
   }
 

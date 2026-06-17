@@ -13,6 +13,7 @@ import {
   Webhook,
   Users,
   LogOut,
+  LayoutTemplate
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -68,6 +69,7 @@ export default function DashboardLayout({ children }) {
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { name: "Links", path: "/dashboard/links", icon: Link2 },
     { name: "Analytics", path: "/dashboard/analytics", icon: BarChart3 },
+    { name: "Pages", path: "/dashboard/pages", icon: LayoutTemplate },
     { name: "Custom Domains", path: "/dashboard/domains", icon: Globe },
     { name: "Webhooks", path: "/dashboard/webhooks", icon: Webhook },
     { name: "API Keys", path: "/dashboard/api-keys", icon: Shield },

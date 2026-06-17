@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,6 +10,7 @@ import Input from '@/components/ui/Input'
 const linkSchema = z.object({
   original_url: z.string().url('Please enter a valid URL'),
   custom_domain: z.string().optional(),
+  team_id: z.string().optional(),
   title: z.string().optional(),
   custom_slug: z.string().optional(),
   description: z.string().optional(),
@@ -24,11 +25,20 @@ const linkSchema = z.object({
 
 import { useCustomDomains } from '@/hooks/useCustomDomains'
 
+import { useTeams } from '@/hooks/useTeams'
+
 export default function CreateLinkModal({ isOpen, onClose, onSuccess }) {
   const { createLink } = useLinks()
   const { domains } = useCustomDomains()
+  const { teams, fetchTeams } = useTeams()
   const [activeTab, setActiveTab] = useState('basic')
   const [createError, setCreateError] = useState(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchTeams()
+    }
+  }, [isOpen, fetchTeams])
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(linkSchema),
@@ -81,17 +91,26 @@ export default function CreateLinkModal({ isOpen, onClose, onSuccess }) {
             <div className={`space-y-5 animate-fade-in-up ${activeTab === 'basic' ? 'block' : 'hidden'}`}>
               <Input label={<span className="text-slate-700 font-bold">Destination URL <span className="text-red-500">*</span></span>} placeholder="https://example.com/very/long/url" error={errors.original_url?.message} {...register('original_url')} className="bitly-input" />
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-slate-700">Domain</label>
-                  <select {...register('custom_domain')} className="bitly-input">
-                    <option value="">ryz.my.id</option>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Custom Domain</label>
+                  <select {...register('custom_domain')} className="bitly-input w-full px-4 h-11 rounded-lg border border-slate-300 focus:border-[#0b5cff] bg-white">
+                    <option value="">ryz.my.id (Default)</option>
                     {domains?.map(d => (
                       <option key={d.id} value={d.domain}>{d.domain}</option>
                     ))}
                   </select>
                 </div>
-                <Input label={<span className="text-slate-700 font-bold">Custom Slug</span>} placeholder="summer26" error={errors.custom_slug?.message} {...register('custom_slug')} className="bitly-input" />
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Assign to Team</label>
+                  <select {...register('team_id')} className="bitly-input w-full px-4 h-11 rounded-lg border border-slate-300 focus:border-[#0b5cff] bg-white">
+                    <option value="">Personal (No Team)</option>
+                    {teams?.map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
+              <Input label={<span className="text-slate-700 font-bold">Custom Slug</span>} placeholder="summer26" error={errors.custom_slug?.message} {...register('custom_slug')} className="bitly-input" />
               <Input label={<span className="text-slate-700 font-bold">Title (Internal)</span>} placeholder="Summer Campaign 2026" error={errors.title?.message} {...register('title')} className="bitly-input" />
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-slate-700">Description</label>

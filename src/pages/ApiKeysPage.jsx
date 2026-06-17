@@ -58,7 +58,7 @@ export default function ApiKeysPage() {
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text)
-    toast.success('Key copied to clipboard!', { position: 'bottom-center' })
+    toast.success('Key copied to clipboard!')
   }
 
   const closeAndResetModal = () => {

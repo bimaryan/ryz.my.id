@@ -64,7 +64,7 @@ export default function LinksPage() {
     const url = `${domain}/${link.short_code}`
     navigator.clipboard.writeText(url)
     setCopiedId(link.short_code)
-    toast.success('Link copied to clipboard!', { position: 'bottom-center' })
+    toast.success('Link copied to clipboard!')
     setTimeout(() => setCopiedId(null), 2000)
   }
 

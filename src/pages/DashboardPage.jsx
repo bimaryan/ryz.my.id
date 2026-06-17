@@ -8,11 +8,13 @@ import {
   Link2,
   ExternalLink,
   Copy,
+  Check,
   Trash2,
   QrCode,
   Calendar,
-  ArrowUpRight,
   Share2,
+  MousePointerClick,
+  Activity
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -39,6 +41,7 @@ export default function DashboardPage() {
       (link.original_url && link.original_url.toLowerCase().includes(searchQuery))
     );
   });
+  
   const [qrCodeLink, setQrCodeLink] = useState(null);
   const [shareLink, setShareLink] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
@@ -61,8 +64,8 @@ export default function DashboardPage() {
       showCancelButton: true,
       confirmButtonText: "Yes, delete it!",
       customClass: {
-        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded ml-2",
-        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded"
+        confirmButton: "bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md ml-2 transition-colors",
+        cancelButton: "bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors"
       },
       buttonsStyling: false
     });
@@ -74,7 +77,7 @@ export default function DashboardPage() {
         text: "Your link has been deleted.",
         icon: "success",
         customClass: {
-          confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded"
+          confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded-md transition-colors"
         },
         buttonsStyling: false
       });
@@ -86,8 +89,8 @@ export default function DashboardPage() {
     const url = `${domain}/${link.short_code}`;
     navigator.clipboard.writeText(url);
     setCopiedId(link.short_code);
-    toast.success("Link copied to clipboard!", { position: "bottom-center" });
-    setTimeout(() => setCopiedId(null), 2000);
+    toast.success("Link copied to clipboard!");
+    setTimeout(() => setCopiedId(null), 2000); // Reset copy icon after 2 seconds
   };
 
   const handleQuickCreate = async (e) => {
@@ -111,8 +114,7 @@ export default function DashboardPage() {
       toast.success("Link created successfully!");
       setQuickUrl("");
       if (quickQr) {
-        // Find the newly created link from the links array after refresh, or just show modal with basic data
-        // For simplicity, we can fetch it or trust the real-time update
+        // Implementation logic for quick QR
       }
     }
   };
@@ -121,162 +123,187 @@ export default function DashboardPage() {
     <DashboardLayout>
       <SEO title="Dashboard | RYZ Shortlink" />
 
-      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
-        <div className="space-y-8 animate-fade-in-up">
-          <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              Dashboard
-            </h1>
-            <p className="text-slate-500 font-medium mt-1">
-              Welcome back, {user?.user_metadata?.full_name || "User"}!
-            </p>
-          </div>
+      <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
+        {/* Header Section */}
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-slate-500 font-medium mt-1">
+            Welcome back, <span className="text-slate-700 font-semibold">{user?.user_metadata?.full_name || "User"}</span>!
+          </p>
+        </div>
 
-          {/* Exact Bitly Layout Section */}
-          <div className="flex flex-col lg:flex-row gap-6 mb-8">
-            {/* Quick create: Short link */}
-            <div className="flex-1 bg-white border border-[#e8ebf2] rounded-xl p-8 shadow-[0_2px_4px_rgba(0,0,0,0.02)] relative">
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold text-[#273144]">
+        {/* Top Cards Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          
+          {/* Quick Create Card (Takes 2 Columns on Desktop) */}
+          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
                   Quick create: Short link
                 </h2>
-                <span className="text-[#8290a3] text-sm">
-                  You can create{" "}
-                  <strong className="text-[#273144]">
-                    {100 - (stats?.activeLinks || 0)}
-                  </strong>{" "}
-                  more links this month.
-                </span>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm text-[#273144] mb-2 font-semibold">
-                  Domain:{" "}
-                  <span className="font-normal text-[#5a6872]">ryz.my.id</span>
+                <p className="text-sm text-slate-500 mt-1">
+                  Domain: <span className="font-semibold text-slate-700">ryz.my.id</span>
                 </p>
               </div>
+              <div className="hidden sm:flex bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+                <span className="text-blue-600 text-sm font-semibold">
+                  {100 - (stats?.activeLinks || 0)} links remaining
+                </span>
+              </div>
+            </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-bold text-[#273144] mb-2">
-                  Enter your destination URL
-                </label>
-                <form
-                  onSubmit={handleQuickCreate}
-                  className="flex gap-4 flex-col sm:flex-row"
-                >
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-slate-700 mb-2">
+                Enter your destination URL
+              </label>
+              <form
+                onSubmit={handleQuickCreate}
+                className="flex gap-3 flex-col sm:flex-row"
+              >
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Link2 className="h-5 w-5 text-slate-400" />
+                  </div>
                   <input
-                    type="text"
+                    type="url"
                     value={quickUrl}
                     onChange={(e) => setQuickUrl(e.target.value)}
                     placeholder="https://example.com/my-long-url"
-                    className="bitly-input flex-1"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 transition-all outline-none text-slate-700"
                     disabled={isCreating}
                   />
-                  <Button
-                    type="submit"
-                    className="bitly-button-primary whitespace-nowrap py-3"
-                    disabled={isCreating}
-                  >
-                    {isCreating ? "Creating..." : "Create your short link"}
-                  </Button>
-                </form>
-              </div>
-
-              <div className="flex items-center gap-2 mb-6">
-                <input
-                  type="checkbox"
-                  checked={quickQr}
-                  onChange={(e) => setQuickQr(e.target.checked)}
-                  className="w-4 h-4 border-[#d6dbe5] rounded text-[#0b5cff] focus:ring-[#0b5cff]"
-                />
-                <label className="text-sm text-[#273144]">
-                  Also create a QR Code for this link
-                </label>
-              </div>
+                </div>
+                <Button
+                  type="submit"
+                  className="bg-[#0b5cff] hover:bg-[#094acc] text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-sm hover:shadow whitespace-nowrap"
+                  disabled={isCreating}
+                >
+                  {isCreating ? "Creating..." : "Shorten URL"}
+                </Button>
+              </form>
             </div>
 
-            {/* Monthly usage */}
-            <div className="w-full lg:w-[480px] bg-white border border-[#e8ebf2] rounded-xl p-6 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col">
-              <h2 className="text-xl font-bold text-[#273144] mb-1">
-                Monthly usage
-              </h2>
-              <p className="text-[#5a6872] text-sm mb-6">
-                Current Billing Cycle
-              </p>
-
-              <div className="border border-[#e8ebf2] rounded-lg p-5 space-y-6 flex-1">
-                <div>
-                  <div className="flex justify-between font-bold text-[#273144] mb-2 text-sm">
-                    <span>Short links</span>
-                    <span>{stats?.activeLinks || 0} of 100 used</span>
-                  </div>
-                  <div className="w-full bg-[#f4f6fa] rounded-full h-2">
-                    <div
-                      className="bg-[#0b5cff] h-2 rounded-full"
-                      style={{
-                        width: `${Math.min(((stats?.activeLinks || 0) / 100) * 100, 100)}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between font-bold text-[#273144] mb-2 text-sm">
-                    <span>Total Clicks / Visitors</span>
-                    <span>{stats?.totalClicks || 0} clicks</span>
-                  </div>
-                  <div className="w-full bg-[#f4f6fa] rounded-full h-2">
-                    <div
-                      className="bg-[#008080] h-2 rounded-full"
-                      style={{
-                        width: `${Math.min(((stats?.totalClicks || 0) / 1000) * 100, 100)}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center gap-2.5">
+              <input
+                type="checkbox"
+                id="quickQr"
+                checked={quickQr}
+                onChange={(e) => setQuickQr(e.target.checked)}
+                className="w-4 h-4 text-[#0b5cff] bg-slate-100 border-slate-300 rounded focus:ring-[#0b5cff] focus:ring-2 cursor-pointer"
+              />
+              <label htmlFor="quickQr" className="text-sm font-medium text-slate-600 cursor-pointer select-none">
+                Also generate a QR Code for this link
+              </label>
             </div>
           </div>
 
-          {/* Link List */}
-          <div className="bitly-card overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-900">
-                Your Recent Links
-              </h2>
-              <div className="flex gap-3">
-                <select className="bg-white border border-slate-300 rounded text-sm px-3 py-1.5 text-slate-700 font-medium focus:outline-none focus:border-[#0b5cff]">
-                  <option>Filter</option>
-                  <option>Marketing</option>
-                  <option>Social</option>
-                </select>
-              </div>
-            </div>
+          {/* Monthly Usage Card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col">
+            <h2 className="text-xl font-bold text-slate-800 mb-1">
+              Monthly Usage
+            </h2>
+            <p className="text-slate-500 text-sm mb-6">
+              Current Billing Cycle
+            </p>
 
-            <div className="divide-y divide-slate-100">
-              {linksLoading && (
-                <div className="text-center py-10">
-                  <div className="animate-spin h-6 w-6 border-2 border-[#0b5cff] border-t-transparent rounded-full mx-auto"></div>
-                </div>
-              )}
-              {!linksLoading && filteredLinks.length === 0 && (
-                <div className="py-16 text-center bg-slate-50">
-                  <div className="h-12 w-12 rounded bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4">
-                    <Link2 className="h-6 w-6 text-slate-400" />
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-6 flex-1">
+              
+              {/* Short Links Stat */}
+              <div>
+                <div className="flex justify-between font-bold text-slate-700 mb-2 text-sm items-center">
+                  <div className="flex items-center gap-1.5">
+                    <Link2 className="w-4 h-4 text-[#0b5cff]" />
+                    <span>Short links</span>
                   </div>
-                  <p className="text-slate-600 font-medium mb-4">
-                    {searchQuery ? "No links found matching your search." : "No links found."}
-                  </p>
+                  <span className="text-slate-500">{stats?.activeLinks || 0} / 100</span>
                 </div>
-              )}
+                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-[#0b5cff] h-full rounded-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${Math.min(((stats?.activeLinks || 0) / 100) * 100, 100)}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
 
-              {filteredLinks.map((link) => (
-                <div
-                  key={link.id}
-                  className="p-6 flex flex-col md:flex-row gap-6 md:items-center justify-between hover:bg-slate-50 transition-colors"
-                >
+              {/* Clicks Stat */}
+              <div>
+                <div className="flex justify-between font-bold text-slate-700 mb-2 text-sm items-center">
+                  <div className="flex items-center gap-1.5">
+                    <MousePointerClick className="w-4 h-4 text-emerald-500" />
+                    <span>Total Clicks</span>
+                  </div>
+                  <span className="text-slate-500">{stats?.totalClicks || 0}</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-emerald-500 h-full rounded-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${Math.min(((stats?.totalClicks || 0) / 1000) * 100, 100)}%`, // Assuming 1000 is a mock limit for progress bar
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* Link List Section */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 border-b border-slate-100 bg-white gap-4">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-[#0b5cff]" />
+              Your Recent Links
+            </h2>
+            <div className="flex gap-3 w-full sm:w-auto">
+              <select className="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-2 text-slate-700 font-semibold focus:outline-none focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 transition-all cursor-pointer">
+                <option value="">All Categories</option>
+                <option value="marketing">Marketing</option>
+                <option value="social">Social</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {linksLoading && (
+              <div className="text-center py-12">
+                <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mx-auto"></div>
+                <p className="mt-4 text-slate-500 font-medium">Loading your links...</p>
+              </div>
+            )}
+            
+            {!linksLoading && filteredLinks.length === 0 && (
+              <div className="py-20 text-center bg-slate-50/50">
+                <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <Link2 className="h-8 w-8 text-slate-400" />
+                </div>
+                <p className="text-slate-600 font-semibold mb-1 text-lg">
+                  {searchQuery ? "No results found" : "No links created yet"}
+                </p>
+                <p className="text-slate-500 text-sm">
+                  {searchQuery ? "Try adjusting your search terms." : "Use the form above to create your first short link."}
+                </p>
+              </div>
+            )}
+
+            {filteredLinks.map((link) => (
+              <div
+                key={link.id}
+                className="p-6 flex flex-col lg:flex-row gap-6 lg:items-center justify-between hover:bg-slate-50/80 transition-colors group"
+              >
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  {/* Link Icon Avatar */}
+                  <div className="hidden sm:flex mt-1 h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#0b5cff]">
+                    <Link2 className="h-5 w-5" />
+                  </div>
+                  
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-slate-900 text-lg truncate mb-1">
+                    <h3 className="font-bold text-slate-800 text-lg truncate mb-1">
                       {link.title || link.short_code}
                     </h3>
 
@@ -285,79 +312,83 @@ export default function DashboardPage() {
                         href={link.custom_domain ? `https://${link.custom_domain}/${link.short_code}` : `/${link.short_code}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[#0b5cff] hover:text-[#094bdd] hover:underline text-sm font-bold flex items-center gap-1 transition-colors"
+                        className="text-[#0b5cff] hover:text-[#094bdd] hover:underline text-sm font-bold flex items-center gap-1.5 transition-colors w-fit"
                       >
-                        {link.custom_domain || 'ryz.my.id'}/{link.short_code}{" "}
-                        <ExternalLink className="h-3 w-3" />
+                        {link.custom_domain || 'ryz.my.id'}/{link.short_code}
+                        <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     </div>
 
-                    <p className="text-slate-500 text-sm truncate max-w-xl">
+                    <p className="text-slate-500 text-sm truncate max-w-2xl mb-3">
                       {link.original_url}
                     </p>
 
-                    <div className="flex gap-2 mt-3 items-center">
-                      <span className="flex items-center gap-1 text-xs text-slate-500">
-                        <Calendar className="h-3 w-3" />{" "}
-                        {new Date(link.created_at).toLocaleDateString()}
+                    <div className="flex flex-wrap gap-3 items-center">
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {new Date(link.created_at).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                       {link.category && (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span className="text-xs font-semibold text-slate-600 uppercase">
-                            {link.category}
-                          </span>
-                        </>
+                        <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-md uppercase tracking-wide">
+                          {link.category}
+                        </span>
                       )}
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <p className="font-bold text-slate-900 text-xl">
-                        {link.clicks_count || 0}
-                      </p>
-                      <p className="text-[11px] text-slate-500 uppercase font-semibold">
-                        Engagements
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 border-l border-slate-200 pl-6">
-                      <button
-                        onClick={() => setShareLink(link)}
-                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                        title="Share Access"
-                      >
-                        <Share2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setQrCodeLink(link)}
-                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                        title="QR Code"
-                      >
-                        <QrCode className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleCopy(link)}
-                        className="p-2 text-slate-400 hover:text-[#0b5cff] hover:bg-blue-50 rounded transition-colors"
-                        title="Copy Link"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(link.id)}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                <div className="flex items-center justify-between lg:justify-end gap-6 sm:pl-14 lg:pl-0">
+                  <div className="text-left lg:text-right">
+                    <p className="font-extrabold text-slate-800 text-xl flex items-center gap-1.5 lg:justify-end">
+                      <MousePointerClick className="w-5 h-5 text-slate-400 lg:hidden" />
+                      {link.clicks_count || 0}
+                    </p>
+                    <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">
+                      Engagements
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-1.5 border-l border-slate-200 pl-6">
+                    <button
+                      onClick={() => setShareLink(link)}
+                      className="p-2.5 text-slate-400 hover:text-slate-800 hover:bg-white border border-transparent hover:border-slate-200 shadow-sm hover:shadow rounded-lg transition-all"
+                      title="Share Access"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setQrCodeLink(link)}
+                      className="p-2.5 text-slate-400 hover:text-slate-800 hover:bg-white border border-transparent hover:border-slate-200 shadow-sm hover:shadow rounded-lg transition-all"
+                      title="QR Code"
+                    >
+                      <QrCode className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleCopy(link)}
+                      className={`p-2.5 border border-transparent shadow-sm hover:shadow rounded-lg transition-all ${
+                        copiedId === link.short_code 
+                          ? "bg-green-50 text-green-600 border-green-200" 
+                          : "text-slate-400 hover:text-[#0b5cff] hover:bg-white hover:border-slate-200"
+                      }`}
+                      title="Copy Link"
+                    >
+                      {copiedId === link.short_code ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(link.id)}
+                      className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 shadow-sm hover:shadow rounded-lg transition-all"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
+
       <QRCodeModal
         isOpen={!!qrCodeLink}
         onClose={() => setQrCodeLink(null)}

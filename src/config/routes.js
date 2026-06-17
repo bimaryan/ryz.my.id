@@ -13,6 +13,9 @@ import CustomDomainsPage from '@/pages/CustomDomainsPage'
 import WebhooksPage from '@/pages/WebhooksPage'
 import TeamsPage from '@/pages/TeamsPage'
 import TeamDetailsPage from '@/pages/TeamDetailsPage'
+import PagesPage from '@/pages/PagesPage'
+import PageEditor from '@/pages/PageEditor'
+import PublicPage from '@/pages/PublicPage'
 import LinksPage from '@/pages/LinksPage'
 import DocsPage from '@/pages/DocsPage'
 
@@ -46,6 +49,11 @@ export const routes = [
   {
     path: '/reset-password',
     element: ResetPasswordPage,
+    public: true,
+  },
+  {
+    path: '/p/:slug',
+    element: PublicPage,
     public: true,
   },
   {
@@ -98,6 +106,16 @@ export const routes = [
   {
     path: '/dashboard/settings',
     element: SettingsPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/pages',
+    element: PagesPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/pages/:id',
+    element: PageEditor,
     protected: true,
   },
 
