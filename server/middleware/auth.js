@@ -32,7 +32,7 @@ export const requireApiKey = async (req, res, next) => {
     const { data: keyData, error } = await supabase
       .from('api_keys')
       .select('user_id, is_active')
-      .eq('key_value', apiKey)
+      .eq('key_hash', apiKey)
       .single();
 
     if (error || !keyData) {
@@ -58,7 +58,7 @@ export const requireApiKey = async (req, res, next) => {
     // Update last_used_at securely without blocking the request
     supabase.from('api_keys')
       .update({ last_used_at: new Date().toISOString() })
-      .eq('key_value', apiKey)
+      .eq('key_hash', apiKey)
       .then();
 
     next();

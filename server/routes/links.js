@@ -14,7 +14,7 @@ const sendError = (res, status, code, message) => {
 // POST /api/v1/links - Create a short link
 router.post('/', async (req, res) => {
   try {
-    const { original_url, short_code, domain, title, category } = req.body;
+    const { original_url, short_code, custom_domain, title, category } = req.body;
     
     if (!original_url) {
       return sendError(res, 400, 'INVALID_INPUT', 'original_url is required');
@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
 
     // Auto-generate short code if not provided
     const finalShortCode = short_code || Math.random().toString(36).substring(2, 8);
-    const finalDomain = domain || 'ryz.my.id';
+    const finalDomain = custom_domain || null;
 
     const { data, error } = await supabase
       .from('links')
@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
         {
           original_url,
           short_code: finalShortCode,
-          domain: finalDomain,
+          custom_domain: finalDomain,
           title: title || null,
           category: category || null,
           user_id: req.user.id
@@ -52,8 +52,8 @@ router.post('/', async (req, res) => {
         id: data.id,
         short_code: data.short_code,
         original_url: data.original_url,
-        domain: data.domain,
-        short_url: `https://${data.domain}/${data.short_code}`,
+        custom_domain: data.custom_domain,
+        short_url: data.custom_domain ? `https://${data.custom_domain}/${data.short_code}` : `https://ryz.my.id/${data.short_code}`,
         created_at: data.created_at
       }
     });
@@ -73,7 +73,7 @@ router.get('/', async (req, res) => {
 
     const { data, error, count } = await supabase
       .from('links')
-      .select('id, short_code, original_url, domain, title, clicks_count, created_at', { count: 'exact' })
+      .select('id, short_code, original_url, custom_domain, title, clicks_count, created_at', { count: 'exact' })
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -84,7 +84,7 @@ router.get('/', async (req, res) => {
       success: true,
       data: data.map(link => ({
         ...link,
-        short_url: `https://${link.domain}/${link.short_code}`
+        short_url: link.custom_domain ? `https://${link.custom_domain}/${link.short_code}` : `https://ryz.my.id/${link.short_code}`
       })),
       pagination: {
         page,
