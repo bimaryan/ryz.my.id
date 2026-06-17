@@ -49,7 +49,7 @@ export default function DocsPage() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f26d21] text-white">
-              <span className="font-bold text-lg font-serif leading-none mt-0.5">b</span>
+              <span className="font-extrabold text-lg font-sans tracking-wide">R</span>
             </div>
             <span className="font-extrabold text-xl tracking-tight text-slate-900">RYZ Docs</span>
           </Link>
