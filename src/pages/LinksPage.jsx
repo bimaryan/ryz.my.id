@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import Swal from 'sweetalert2'
 import { useLinks } from '@/hooks/useLinks'
 import { Link2, ExternalLink, Copy, Trash2, QrCode, Calendar, Share2 } from 'lucide-react'
 import SEO from '@/components/SEO'
@@ -17,20 +19,44 @@ export default function LinksPage() {
     fetchLinks()
   }, [fetchLinks])
 
+  const [searchParams] = useSearchParams();
+  const searchQuery = (searchParams.get("q") || "").toLowerCase();
+
+  const filteredLinks = links.filter(link => {
+    if (!searchQuery) return true;
+    return (
+      (link.title && link.title.toLowerCase().includes(searchQuery)) ||
+      (link.short_code && link.short_code.toLowerCase().includes(searchQuery)) ||
+      (link.original_url && link.original_url.toLowerCase().includes(searchQuery))
+    );
+  });
+
   const handleDelete = async (id) => {
-    toast((t) => (
-      <div className="flex flex-col gap-3">
-        <p className="text-sm font-bold text-slate-900">Are you sure you want to delete this link?</p>
-        <div className="flex gap-2 justify-end">
-          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded">Cancel</button>
-          <button onClick={async () => {
-            toast.dismiss(t.id)
-            await deleteLink(id)
-            toast.success('Link deleted successfully')
-          }} className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded">Delete</button>
-        </div>
-      </div>
-    ), { duration: Infinity })
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      customClass: {
+        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded ml-2",
+        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded"
+      },
+      buttonsStyling: false
+    });
+
+    if (result.isConfirmed) {
+      await deleteLink(id);
+      Swal.fire({
+        title: "Deleted!",
+        text: "Your link has been deleted.",
+        icon: "success",
+        customClass: {
+          confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded"
+        },
+        buttonsStyling: false
+      });
+    }
   }
 
   const handleCopy = (shortCode) => {
@@ -67,14 +93,14 @@ export default function LinksPage() {
             
             <div className="divide-y divide-slate-100">
               {linksLoading && <div className="text-center py-10"><div className="animate-spin h-6 w-6 border-2 border-[#0b5cff] border-t-transparent rounded-full mx-auto"></div></div>}
-              {!linksLoading && links.length === 0 && (
+              {!linksLoading && filteredLinks.length === 0 && (
                 <div className="py-16 text-center bg-slate-50">
                   <div className="h-12 w-12 rounded bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4"><Link2 className="h-6 w-6 text-slate-400" /></div>
-                  <p className="text-slate-600 font-medium mb-4">No links found.</p>
+                  <p className="text-slate-600 font-medium mb-4">{searchQuery ? "No links found matching your search." : "No links found."}</p>
                 </div>
               )}
               
-              {links.map(link => (
+              {filteredLinks.map(link => (
                 <div key={link.id} className="p-6 flex flex-col md:flex-row gap-6 md:items-center justify-between hover:bg-slate-50 transition-colors">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-slate-900 text-lg truncate mb-1">{link.title || link.short_code}</h3>

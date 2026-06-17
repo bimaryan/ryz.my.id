@@ -59,9 +59,12 @@ export default function DashboardPage() {
       text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#566b8f",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonText: "Yes, delete it!",
+      customClass: {
+        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded ml-2",
+        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded"
+      },
+      buttonsStyling: false
     });
 
     if (result.isConfirmed) {
@@ -70,7 +73,10 @@ export default function DashboardPage() {
         title: "Deleted!",
         text: "Your link has been deleted.",
         icon: "success",
-        confirmButtonColor: "#0b5cff"
+        customClass: {
+          confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded"
+        },
+        buttonsStyling: false
       });
     }
   };
