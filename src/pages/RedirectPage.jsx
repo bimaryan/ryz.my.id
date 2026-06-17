@@ -91,29 +91,41 @@ export default function RedirectPage() {
 
   const executeRedirect = async (link) => {
     try {
-      // 1. Increment click count
-      await supabase
-        .from('links')
-        .update({ clicks_count: (link.clicks_count || 0) + 1 })
-        .eq('id', link.id)
+      // 1. Fetch IP Info (Optional, won't block redirect if fails)
+      let ip_address = null
+      let country = null
+      try {
+        const ipRes = await fetch('https://ipapi.co/json/')
+        if (ipRes.ok) {
+          const ipData = await ipRes.json()
+          ip_address = ipData.ip || null
+          country = ipData.country_name || null
+        }
+      } catch (e) {
+        console.warn('Could not fetch IP data', e)
+      }
 
-      // 2. Record analytics (with expanded OS/Browser parsing)
+      // 2. Record analytics and increment click count securely via RPC
       const { browser, os } = parseUserAgent(navigator.userAgent)
       const device_type = /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : /Tablet|iPad/i.test(navigator.userAgent) ? 'tablet' : 'desktop'
 
-      await supabase
-        .from('analytics')
-        .insert([{
-          link_id: link.id,
-          referrer: document.referrer || '(direct)',
-          user_agent: navigator.userAgent,
-          device_type,
-          browser,
-          os,
-          utm_source: link.utm_source,
-          utm_medium: link.utm_medium,
-          utm_campaign: link.utm_campaign
-        }])
+      const { error: rpcError } = await supabase.rpc('record_link_click', {
+        p_link_id: link.id,
+        p_referrer: document.referrer || '(direct)',
+        p_user_agent: navigator.userAgent,
+        p_device_type: device_type,
+        p_browser: browser,
+        p_os: os,
+        p_utm_source: link.utm_source || null,
+        p_utm_medium: link.utm_medium || null,
+        p_utm_campaign: link.utm_campaign || null,
+        p_ip_address: ip_address,
+        p_country: country
+      })
+
+      if (rpcError) {
+        console.error('Failed to record click:', rpcError)
+      }
 
       // 3. Append UTM parameters to URL if they exist
       let finalUrl = link.original_url
