@@ -12,6 +12,7 @@ import SettingsPage from '@/pages/SettingsPage'
 import CustomDomainsPage from '@/pages/CustomDomainsPage'
 import WebhooksPage from '@/pages/WebhooksPage'
 import TeamsPage from '@/pages/TeamsPage'
+import TeamDetailsPage from '@/pages/TeamDetailsPage'
 import LinksPage from '@/pages/LinksPage'
 import DocsPage from '@/pages/DocsPage'
 
@@ -87,6 +88,11 @@ export const routes = [
   {
     path: '/dashboard/teams',
     element: TeamsPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/teams/:id',
+    element: TeamDetailsPage,
     protected: true,
   },
   {
