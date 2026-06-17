@@ -7,6 +7,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import IconPicker from '@/components/IconPicker'
+import BlockPickerModal from '@/components/BlockPickerModal'
 import SEO from '@/components/SEO'
 import toast from 'react-hot-toast'
 
@@ -117,6 +118,7 @@ export default function PageEditor() {
   })
   const [links, setLinks] = useState([])
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false)
+  const [isBlockPickerOpen, setIsBlockPickerOpen] = useState(false)
   const [currentEditingLinkIndex, setCurrentEditingLinkIndex] = useState(null)
 
   useEffect(() => {
@@ -220,12 +222,16 @@ export default function PageEditor() {
     }
   }
 
-  const addLink = () => {
-    setLinks([...links, { id: Date.now().toString(), type: 'link', title: '', subtitle: '', url: '', icon: '', thumbnail_url: '' }])
-  }
-
-  const addHeader = () => {
-    setLinks([...links, { id: Date.now().toString(), type: 'header', title: 'New Section' }])
+  const handleAddBlock = (blockId) => {
+    setIsBlockPickerOpen(false)
+    if (blockId === 'header') {
+      setLinks([...links, { id: Date.now().toString(), type: 'header', title: 'New Section' }])
+    } else if (blockId === 'link') {
+      setLinks([...links, { id: Date.now().toString(), type: 'link', title: '', subtitle: '', url: '', icon: '', thumbnail_url: '' }])
+    } else {
+      // For now, other blocks behave exactly like links but maybe with a pre-filled title/icon
+      setLinks([...links, { id: Date.now().toString(), type: blockId, title: `New ${blockId}`, subtitle: 'Coming soon feature', url: '', icon: '', thumbnail_url: '' }])
+    }
   }
 
   const updateLink = (index, field, value) => {
@@ -436,16 +442,10 @@ export default function PageEditor() {
                 <h2 className="text-xl font-bold text-slate-900 flex items-center">
                   Links & Blocks
                 </h2>
-                <div className="flex gap-2">
-                  <Button type="button" onClick={addHeader} className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg px-4 py-2 text-sm font-bold">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Header
-                  </Button>
-                  <Button type="button" onClick={addLink} className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-2 text-sm font-bold">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Link
-                  </Button>
-                </div>
+                <Button type="button" onClick={() => setIsBlockPickerOpen(true)} className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-2 text-sm font-bold">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Block
+                </Button>
               </div>
 
               <div className="space-y-4">
@@ -819,32 +819,52 @@ export default function PageEditor() {
                   </div>
                 )}
 
-                {/* Links */}
-                <div className="w-full space-y-4">
+                {/* Links & Blocks */}
+                <div className={`w-full ${theme.layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
                   {links.length > 0 ? (
-                    links.map((link, i) => (
-                      <a
-                        key={i}
-                        href={link.url || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`block w-full py-4 px-6 font-bold transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-95 ${theme.button_style} ${theme.button_shadow} ${theme.button_border} border relative overflow-hidden`}
-                        style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
-                      >
-                        <div className={`flex items-center gap-3 relative z-10 w-full ${theme.button_align || 'justify-center'}`}>
-                          {link.icon && LucideIcons[link.icon] && (
-                            (() => {
-                              const IconComponent = LucideIcons[link.icon];
-                              return <IconComponent className="w-5 h-5 shrink-0" />;
-                            })()
-                          )}
-                          <span className="truncate">{link.title || 'Link Title'}</span>
-                        </div>
-                      </a>
-                    ))
+                    links.map((link, i) => {
+                      if (link.type === 'header') {
+                        return (
+                          <div key={i} className={`w-full pt-8 pb-2 text-center ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
+                            <h2 className="text-xl font-black tracking-tight" style={{ color: theme.text_color }}>{link.title}</h2>
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <a
+                          key={i}
+                          href={link.url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`block w-full font-bold transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-95 ${theme.button_style} border relative overflow-hidden ${theme.layout === 'grid' ? 'aspect-square p-4 flex flex-col items-center justify-center text-center gap-2' : 'py-4 px-6 text-sm'}`}
+                          style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
+                        >
+                          <div className={`flex relative z-10 w-full ${theme.layout === 'grid' ? 'flex-col items-center justify-center' : `items-center gap-3 ${theme.button_align || 'justify-center'}`}`}>
+                            {link.thumbnail_url ? (
+                              <div className="shrink-0">
+                                <img src={link.thumbnail_url} alt="thumbnail" className={`${theme.layout === 'grid' ? 'w-12 h-12 mb-2' : 'w-8 h-8'} rounded-lg object-cover shadow-sm`} />
+                              </div>
+                            ) : (link.icon && LucideIcons[link.icon]) && (
+                              <div className="flex items-center justify-center shrink-0">
+                                {(() => {
+                                  const IconComponent = LucideIcons[link.icon];
+                                  return <IconComponent className={`${theme.layout === 'grid' ? 'w-8 h-8 mb-2' : 'w-5 h-5'}`} />;
+                                })()}
+                              </div>
+                            )}
+                            
+                            <div className={`flex flex-col w-full ${theme.layout === 'grid' ? 'items-center text-center' : (theme.button_align === 'justify-start' ? 'items-start text-left' : 'items-center text-center')}`}>
+                              <span className="truncate w-full leading-tight">{link.title || 'Link Title'}</span>
+                              {link.subtitle && <span className="text-[11px] font-medium opacity-80 truncate w-full mt-1 leading-none">{link.subtitle}</span>}
+                            </div>
+                          </div>
+                        </a>
+                      )
+                    })
                   ) : (
                     <div 
-                      className={`block w-full text-center py-4 px-6 font-bold opacity-50 ${theme.button_style} ${theme.button_shadow} ${theme.button_border} border`}
+                      className={`block w-full text-center py-4 px-6 font-bold opacity-50 ${theme.button_style} border ${theme.layout === 'grid' ? 'col-span-2' : ''}`}
                       style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
                     >
                       Sample Link
@@ -874,6 +894,12 @@ export default function PageEditor() {
             updateLink(currentEditingLinkIndex, 'icon', iconName);
           }
         }}
+      />
+      
+      <BlockPickerModal 
+        isOpen={isBlockPickerOpen}
+        onClose={() => setIsBlockPickerOpen(false)}
+        onSelect={handleAddBlock}
       />
     </DashboardLayout>
   )
