@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Users, Link2, Plus, ArrowLeft, Trash2, Shield, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
-import Swal from 'sweetalert2'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import SEO from '@/components/SEO'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
@@ -26,6 +26,7 @@ export default function TeamDetailsPage() {
   const [inviteRole, setInviteRole] = useState('member')
   const [isInviting, setIsInviting] = useState(false)
   const [inviteError, setInviteError] = useState(null)
+  const [memberToRemove, setMemberToRemove] = useState(null)
 
   const loadData = async () => {
     setIsLoading(true)
@@ -60,35 +61,8 @@ export default function TeamDetailsPage() {
     setIsInviting(false)
   }
 
-  const handleRemoveMember = async (userId) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You want to remove this member?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, remove!",
-      customClass: {
-        actions: "flex gap-3",
-        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded m-0",
-        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded m-0"
-      },
-      buttonsStyling: false
-    });
-
-    if (result.isConfirmed) {
-      const res = await removeTeamMember(id, userId)
-      if (res.success) {
-        Swal.fire({
-          title: "Removed!",
-          text: "Member removed from team.",
-          icon: "success",
-          confirmButtonColor: "#0b5cff"
-        });
-        setMembers(prev => prev.filter(m => m.users?.id !== userId))
-      } else {
-        toast.error('Failed to remove member')
-      }
-    }
+  const handleRemoveMember = (userId) => {
+    setMemberToRemove(userId);
   }
 
   if (isLoading) {
@@ -274,6 +248,24 @@ export default function TeamDetailsPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={memberToRemove !== null}
+        onClose={() => setMemberToRemove(null)}
+        onConfirm={async () => {
+          if (memberToRemove) {
+            const res = await removeTeamMember(id, memberToRemove)
+            if (res.success) {
+              toast.success("Member removed from team.")
+              setMembers(prev => prev.filter(m => m.users?.id !== memberToRemove))
+            } else {
+              toast.error('Failed to remove member')
+            }
+            setMemberToRemove(null)
+          }
+        }}
+        title="Remove Member"
+        message="Are you sure you want to remove this member from the team?"
+      />
     </DashboardLayout>
   )
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Swal from "sweetalert2";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { Webhook, Plus, Search, Trash2, Power, Activity } from "lucide-react";
 import SEO from "@/components/SEO";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -18,6 +18,7 @@ export default function WebhooksPage() {
     isLoading,
   } = useWebhooks();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [webhookToDelete, setWebhookToDelete] = useState(null);
 
   const [urlInput, setUrlInput] = useState("");
   const [eventInput, setEventInput] = useState("link.clicked");
@@ -49,33 +50,8 @@ export default function WebhooksPage() {
     setIsSubmitting(false);
   };
 
-  const handleDelete = async (id) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You want to delete this webhook?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      customClass: {
-        actions: "flex gap-3",
-        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded m-0",
-        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded m-0"
-      },
-      buttonsStyling: false
-    });
-
-    if (result.isConfirmed) {
-      await deleteWebhook(id);
-      Swal.fire({
-        title: "Deleted!",
-        text: "Webhook deleted.",
-        icon: "success",
-        customClass: {
-          confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded"
-        },
-        buttonsStyling: false
-      });
-    }
+  const handleDelete = (id) => {
+    setWebhookToDelete(id);
   };
 
   return (
@@ -268,6 +244,19 @@ export default function WebhooksPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={webhookToDelete !== null}
+        onClose={() => setWebhookToDelete(null)}
+        onConfirm={async () => {
+          if (webhookToDelete) {
+            await deleteWebhook(webhookToDelete);
+            toast.success("Webhook deleted");
+            setWebhookToDelete(null);
+          }
+        }}
+        title="Delete Webhook"
+        message="Are you sure you want to delete this webhook?"
+      />
     </DashboardLayout>
   );
 }

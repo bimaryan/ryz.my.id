@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Swal from "sweetalert2";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import {
   Globe,
   Plus,
@@ -25,6 +25,7 @@ export default function CustomDomainsPage() {
   const [domainInput, setDomainInput] = useState("");
   const [addError, setAddError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [domainToDelete, setDomainToDelete] = useState(null);
 
   useEffect(() => {
     fetchDomains();
@@ -51,30 +52,8 @@ export default function CustomDomainsPage() {
     setIsSubmitting(false);
   };
 
-  const handleDelete = async (id) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "All links using this domain will break!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, remove it!",
-      customClass: {
-        actions: "flex gap-3",
-        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded m-0",
-        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded m-0"
-      },
-      buttonsStyling: false
-    });
-
-    if (result.isConfirmed) {
-      await deleteDomain(id);
-      Swal.fire({
-        title: "Deleted!",
-        text: "Domain removed.",
-        icon: "success",
-        confirmButtonColor: "#0b5cff"
-      });
-    }
+  const handleDelete = (id) => {
+    setDomainToDelete(id);
   };
 
   return (
@@ -282,6 +261,20 @@ export default function CustomDomainsPage() {
         isOpen={!!selectedDnsDomain}
         onClose={() => setSelectedDnsDomain(null)}
         domain={selectedDnsDomain}
+      />
+      
+      <ConfirmModal
+        isOpen={domainToDelete !== null}
+        onClose={() => setDomainToDelete(null)}
+        onConfirm={async () => {
+          if (domainToDelete) {
+            await deleteDomain(domainToDelete);
+            toast.success("Domain removed.");
+            setDomainToDelete(null);
+          }
+        }}
+        title="Remove Domain"
+        message="All links using this domain will break! Are you sure you want to remove it?"
       />
     </DashboardLayout>
   );

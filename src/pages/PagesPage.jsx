@@ -7,7 +7,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import SEO from '@/components/SEO'
-import Swal from 'sweetalert2'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 export default function PagesPage() {
   const { pages, isLoading, fetchPages, createPage, deletePage } = usePages()
@@ -19,6 +19,7 @@ export default function PagesPage() {
   const [newTitle, setNewTitle] = useState('')
   const [createError, setCreateError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [pageToDelete, setPageToDelete] = useState(null)
 
   useEffect(() => {
     fetchPages()
@@ -56,33 +57,8 @@ export default function PagesPage() {
     }
   }
 
-  const handleDelete = async (id) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this! The page will be deleted permanently.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, delete it!',
-      customClass: {
-        actions: "flex gap-3",
-        confirmButton: "bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors m-0",
-        cancelButton: "bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors m-0"
-      },
-      buttonsStyling: false
-    });
-
-    if (result.isConfirmed) {
-      await deletePage(id)
-      Swal.fire({
-        title: 'Deleted!',
-        text: 'The page has been deleted.',
-        icon: 'success',
-        customClass: {
-          confirmButton: "bg-[#0b5cff] hover:bg-[#004cd9] text-white font-bold py-2 px-4 rounded-md"
-        },
-        buttonsStyling: false
-      })
-    }
+  const handleDelete = (id) => {
+    setPageToDelete(id)
   }
 
   return (
@@ -235,6 +211,20 @@ export default function PagesPage() {
           </div>
         </div>
       )}
+      {/* Delete Modal */}
+      <ConfirmModal
+        isOpen={pageToDelete !== null}
+        onClose={() => setPageToDelete(null)}
+        onConfirm={async () => {
+          if (pageToDelete) {
+            await deletePage(pageToDelete)
+            setPageToDelete(null)
+            import('react-hot-toast').then(({ default: toast }) => toast.success('The page has been deleted.'))
+          }
+        }}
+        title="Delete Page"
+        message="You won't be able to revert this! The page will be deleted permanently. Are you sure?"
+      />
     </DashboardLayout>
   )
 }

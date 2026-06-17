@@ -44,6 +44,8 @@ export default function BlogPublicPage() {
     }
   }, [blogId]);
 
+  const [selectedChapter, setSelectedChapter] = useState(null);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -61,10 +63,41 @@ export default function BlogPublicPage() {
     );
   }
 
+  if (selectedChapter) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col font-sans text-slate-900">
+        <div className="flex items-center justify-between p-4 sticky top-0 bg-white/90 backdrop-blur-md z-10 border-b border-slate-100">
+          <button 
+            onClick={() => setSelectedChapter(null)}
+            className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-all"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="font-bold text-sm text-slate-600 line-clamp-1">{blog.title}</div>
+          <button className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-all">
+            <Share2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="max-w-2xl mx-auto w-full px-6 py-10">
+          <div className="mb-8">
+            <div className="text-[#0b5cff] font-black text-xs uppercase tracking-widest mb-2">{selectedChapter.part_name}</div>
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">{selectedChapter.title}</h1>
+          </div>
+          
+          <div 
+            className="prose prose-slate prose-lg max-w-none text-slate-700 prose-p:leading-loose prose-headings:font-bold prose-a:text-[#0b5cff]"
+            dangerouslySetInnerHTML={{ __html: selectedChapter.content || '<em>No content available.</em>' }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative pb-24 font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative pb-10 font-sans text-slate-900">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 sticky top-0 bg-slate-50/80 backdrop-blur-md z-10 border-b border-slate-200">
+      <div className="flex items-center justify-between p-4 sticky top-0 bg-slate-50/90 backdrop-blur-md z-10 border-b border-slate-200">
         <button 
           onClick={() => navigate(-1)}
           className="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-all"
@@ -72,36 +105,28 @@ export default function BlogPublicPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         
-        <div className="flex items-center gap-3">
-          <button className="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-all">
-            <Share2 className="w-4 h-4" />
-          </button>
-          <button className="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-all relative">
-            <ShoppingCart className="w-4 h-4" />
-            <div className="absolute -top-1 -right-1 bg-[#0b5cff] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-              0
-            </div>
-          </button>
-        </div>
+        <button className="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-all">
+          <Share2 className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Content */}
       <div className="flex-1 px-6 pt-6">
-        <div className="flex items-start justify-between mb-8">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{blog.title || 'adada'}</h1>
-          <div className="text-base font-black text-[#0b5cff] whitespace-nowrap ml-4 bg-blue-50 px-3 py-1 rounded-lg">
-            {blog.currency || 'IDR'} {blog.price || '0'}
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{blog.title || 'Untitled Blog'}</h1>
         </div>
 
-        <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <span className="w-4 h-px bg-slate-300"></span> DESCRIPTION
-        </div>
-
-        <div 
-          className="prose prose-slate max-w-none text-slate-600 prose-p:leading-relaxed prose-headings:font-bold"
-          dangerouslySetInnerHTML={{ __html: blog.description || 'No description provided.' }}
-        />
+        {blog.description && (
+          <>
+            <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span className="w-4 h-px bg-slate-300"></span> DESCRIPTION
+            </div>
+            <div 
+              className="prose prose-slate max-w-none text-slate-600 prose-p:leading-relaxed prose-headings:font-bold"
+              dangerouslySetInnerHTML={{ __html: blog.description }}
+            />
+          </>
+        )}
         
         {/* If there are chapters, list them */}
         {blog.chapters && blog.chapters.length > 0 && (
@@ -111,34 +136,25 @@ export default function BlogPublicPage() {
             </div>
             <div className="space-y-3">
               {blog.chapters.map((chap, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold mb-1 uppercase tracking-widest">{chap.part_name}</div>
-                    <div className="font-bold text-slate-800">{chap.title}</div>
+                <button 
+                  key={idx} 
+                  onClick={() => setSelectedChapter(chap)}
+                  className="w-full text-left p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between shadow-sm hover:shadow-md hover:border-[#0b5cff]/30 transition-all group"
+                >
+                  <div className="pr-4">
+                    <div className="text-[10px] text-[#0b5cff] font-bold mb-1 uppercase tracking-widest">{chap.part_name}</div>
+                    <div className="font-bold text-slate-800 text-lg group-hover:text-[#0b5cff] transition-colors">{chap.title}</div>
                   </div>
                   {chap.is_free ? (
-                    <span className="text-xs font-bold px-3 py-1.5 bg-[#0b5cff]/10 text-[#0b5cff] rounded-lg">Free</span>
+                    <span className="text-xs font-bold px-3 py-1.5 bg-blue-50 text-[#0b5cff] rounded-lg shrink-0">Read</span>
                   ) : (
-                    <span className="text-xs font-bold px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg">Locked</span>
+                    <span className="text-xs font-bold px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg shrink-0">Locked</span>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </div>
         )}
-      </div>
-
-      {/* Bottom Sticky Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-5 bg-white border-t border-slate-200 flex items-center gap-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-        <button className="w-[54px] h-[54px] rounded-2xl border-2 border-[#0b5cff] text-[#0b5cff] flex items-center justify-center shrink-0 hover:bg-blue-50 transition-colors shadow-sm">
-          <div className="relative flex items-center justify-center">
-            <span className="absolute -left-3 -top-1 text-xs font-black">+</span>
-            <ShoppingCart className="w-5 h-5" />
-          </div>
-        </button>
-        <button className="flex-1 h-[54px] bg-[#0b5cff] hover:bg-blue-700 text-white font-black text-lg rounded-2xl transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
-          Buy Now
-        </button>
       </div>
 
     </div>

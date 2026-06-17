@@ -10,7 +10,6 @@ import { supabase } from '@/lib/supabase';
 
 const STEPS = [
   { id: 'layout', label: 'Layout', icon: LayoutIcon },
-  { id: 'settings', label: 'Settings', icon: SettingsIcon },
   { id: 'finish', label: 'Finish', icon: CheckCircle },
 ];
 
@@ -24,14 +23,30 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
   const [isChapterModalOpen, setIsChapterModalOpen] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
-      setChapters(initialData.chapters || []);
+    const loadFullData = async () => {
+      if (initialData && initialData.id && initialData.id.length === 36) {
+        // Fetch full blog data
+        const { data: blogData } = await supabase.from('blogs').select('*').eq('id', initialData.id).single();
+        const { data: chaptersData } = await supabase.from('blog_chapters').select('*').eq('blog_id', initialData.id).order('order_index', { ascending: true });
+        
+        if (blogData) {
+          setFormData({ ...initialData, ...blogData });
+        } else {
+          setFormData(initialData);
+        }
+        setChapters(chaptersData || []);
+      } else if (initialData) {
+        setFormData(initialData);
+        setChapters([]);
+      } else {
+        setFormData({ type: 'blog' });
+        setChapters([]);
+      }
       setCurrentStep(0);
-    } else {
-      setFormData({ type: 'blog' });
-      setChapters([]);
-      setCurrentStep(0);
+    };
+
+    if (isOpen) {
+      loadFullData();
     }
   }, [initialData, isOpen]);
 
@@ -54,12 +69,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
         title: formData.title || 'Untitled Blog',
         description: formData.description || '',
         cover_image_url: formData.cover_image_url || null,
-        payment_type: formData.payment_type || 'One Time',
-        price: formData.price || 0,
-        currency: formData.currency || 'IDR',
-        is_free: formData.is_free || false,
-        allow_pay_what_you_want: formData.allow_pay_what_you_want || false,
-        enable_whatsapp_notification: formData.enable_whatsapp_notification || false
+        is_free: true // Enforced to true for pure blogs
       };
 
       if (isUUID) {
@@ -82,7 +92,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
             title: chap.title || 'Untitled',
             part_name: chap.part_name || `Chapter ${idx + 1}`,
             content: chap.content || '',
-            is_free: chap.is_free || false,
+            is_free: chap.is_free !== undefined ? chap.is_free : false,
             order_index: idx
           };
           if (chap.id && chap.id.length === 36) {
@@ -105,27 +115,24 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
         id: savedBlog.id,
         type: 'blog',
         title: savedBlog.title,
-        price: savedBlog.price,
+        price: 0,
         cover_image_url: savedBlog.cover_image_url,
         chapters_count: chapters.length
       });
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to save blog.", { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Failed to save blog.", { id: toastId });
     }
   };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     setIsUploading(true);
-    toast.loading("Uploading image...", { id: "upload" });
-    const res = await uploadImage(file);
-    if (res.success) {
-      handleUpdate('cover_image_url', res.url);
-      toast.success("Image uploaded", { id: "upload" });
-    } else {
-      toast.error("Upload failed", { id: "upload" });
+    const url = await uploadImage(file);
+    if (url) {
+      handleUpdate('cover_image_url', url);
     }
     setIsUploading(false);
   };
@@ -251,112 +258,8 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
           )}
 
           {currentStep === 1 && (
-            <div className="max-w-4xl mx-auto h-full grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column Settings */}
-              <div className="flex flex-col gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Pricing</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-slate-700">Set as free content</label>
-                      <button 
-                        onClick={() => handleUpdate('is_free', !formData.is_free)}
-                        className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free ? 'bg-[#0b5cff]' : 'bg-slate-200'}`}
-                      >
-                        <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${formData.is_free ? 'translate-x-6' : 'translate-x-1'}`} />
-                      </button>
-                    </div>
-
-                    {!formData.is_free && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm font-medium text-slate-700">Allow Customer to pay what they want</label>
-                          <button 
-                            onClick={() => handleUpdate('allow_pay_what_you_want', !formData.allow_pay_what_you_want)}
-                            className={`w-11 h-6 rounded-full transition-colors relative ${formData.allow_pay_what_you_want ? 'bg-[#0b5cff]' : 'bg-slate-200'}`}
-                          >
-                            <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${formData.allow_pay_what_you_want ? 'translate-x-6' : 'translate-x-1'}`} />
-                          </button>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-xs font-bold text-slate-500 mb-1">Payment Type</label>
-                          <select 
-                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium"
-                            value={formData.payment_type || 'One Time'}
-                            onChange={(e) => handleUpdate('payment_type', e.target.value)}
-                          >
-                            <option value="One Time">One Time</option>
-                            <option value="Subscription">Subscription</option>
-                          </select>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Price</label>
-                            <Input type="number" value={formData.price || 0} onChange={(e) => handleUpdate('price', e.target.value)} />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Currency</label>
-                            <select 
-                              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium"
-                              value={formData.currency || 'IDR'}
-                              onChange={(e) => handleUpdate('currency', e.target.value)}
-                            >
-                              <option value="IDR">IDR</option>
-                              <option value="USD">USD</option>
-                            </select>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column Settings */}
-              <div className="flex flex-col gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Advanced Option</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-slate-700">Set Release Time</label>
-                      <button className="w-11 h-6 rounded-full bg-slate-200"><div className="w-4 h-4 rounded-full bg-white absolute translate-x-1 mt-1" /></button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-slate-700">Enable Whatsapp Notification</label>
-                      <button 
-                        onClick={() => handleUpdate('enable_whatsapp_notification', !formData.enable_whatsapp_notification)}
-                        className={`w-11 h-6 rounded-full transition-colors relative ${formData.enable_whatsapp_notification ? 'bg-[#0b5cff]' : 'bg-slate-200'}`}
-                      >
-                        <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${formData.enable_whatsapp_notification ? 'translate-x-6' : 'translate-x-1'}`} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Question for Customer</h3>
-                  <p className="text-xs text-slate-500 mb-3">For your customer to fill in during checkout</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <input type="checkbox" className="rounded text-[#0b5cff]" />
-                      <label className="text-sm font-medium text-slate-700">Name</label>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <input type="checkbox" className="rounded text-[#0b5cff]" />
-                      <label className="text-sm font-medium text-slate-700">Phone</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
             <div className="max-w-md mx-auto h-full flex flex-col items-center">
-              <p className="text-sm text-slate-500 mb-4 text-center">Your product detail will look like this.</p>
+              <p className="text-sm text-slate-500 mb-4 text-center">Your blog details will look like this.</p>
               
               <div className="w-full bg-slate-800 rounded-2xl overflow-hidden shadow-2xl relative min-h-[500px]">
                 <div className="p-4 flex items-center text-white bg-black/20">
@@ -383,12 +286,9 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                           <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
                             <PenTool className="w-5 h-5" />
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{chap.part_name || `Chapter ${idx+1}`}</p>
-                              <span className="text-[10px] text-slate-400">{new Date().toLocaleDateString('en-GB')}</span>
-                            </div>
-                            <p className="font-bold text-slate-800">{chap.title || 'Untitled'}</p>
+                          <div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{chap.part_name || `Chapter ${idx+1}`}</div>
+                            <div className="font-bold text-slate-800">{chap.title || 'Untitled'}</div>
                           </div>
                         </div>
                       ))
@@ -445,16 +345,30 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
           setEditingChapterIndex(null);
         }}
         initialData={editingChapterIndex !== null && editingChapterIndex < chapters.length ? chapters[editingChapterIndex] : null}
-        onSave={(chapterData) => {
-          setChapters(prev => {
-            const next = [...prev];
-            if (editingChapterIndex !== null && editingChapterIndex < next.length) {
-              next[editingChapterIndex] = chapterData;
-            } else {
-              next.push(chapterData);
+        onSave={async (chapterData) => {
+          if (chapterData._delete) {
+            // Check if it's already in DB
+            if (chapterData.id && chapterData.id.length === 36) {
+              const toastId = toast.loading("Deleting chapter...");
+              const { error } = await supabase.from('blog_chapters').delete().eq('id', chapterData.id);
+              if (error) {
+                toast.error("Failed to delete chapter.", { id: toastId });
+                return;
+              }
+              toast.success("Chapter deleted", { id: toastId });
             }
-            return next;
-          });
+            setChapters(prev => prev.filter((_, i) => i !== editingChapterIndex));
+          } else {
+            setChapters(prev => {
+              const next = [...prev];
+              if (editingChapterIndex !== null && editingChapterIndex < next.length) {
+                next[editingChapterIndex] = chapterData;
+              } else {
+                next.push(chapterData);
+              }
+              return next;
+            });
+          }
           setIsChapterModalOpen(false);
           setEditingChapterIndex(null);
         }}

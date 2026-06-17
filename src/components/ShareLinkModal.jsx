@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLinkShares } from '@/hooks/useSharesAndPlans'
 import { X, Share2, Trash2 } from 'lucide-react'
-import Swal from 'sweetalert2'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useAuth } from '@/hooks/useAuth'
@@ -11,6 +11,7 @@ export default function ShareLinkModal({ isOpen, onClose, link }) {
   const { shares, fetchShares, addShare, removeShare, isLoading } = useLinkShares()
   const [emailInput, setEmailInput] = useState('')
   const [error, setError] = useState(null)
+  const [shareToRemove, setShareToRemove] = useState(null)
 
   useEffect(() => {
     if (isOpen && link) {
@@ -43,30 +44,8 @@ export default function ShareLinkModal({ isOpen, onClose, link }) {
     }
   }
 
-  const handleRemove = async (id) => {
-    const result = await Swal.fire({
-      title: "Remove access?",
-      text: "This user will no longer be able to access the link.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, remove!",
-      customClass: {
-        actions: "flex gap-3",
-        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded m-0",
-        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded m-0"
-      },
-      buttonsStyling: false
-    });
-
-    if (result.isConfirmed) {
-      await removeShare(id);
-      Swal.fire({
-        title: "Removed!",
-        text: "Access revoked.",
-        icon: "success",
-        confirmButtonColor: "#0b5cff"
-      });
-    }
+  const handleRemove = (id) => {
+    setShareToRemove(id)
   }
 
   return (
@@ -143,6 +122,20 @@ export default function ShareLinkModal({ isOpen, onClose, link }) {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={shareToRemove !== null}
+        onClose={() => setShareToRemove(null)}
+        onConfirm={async () => {
+          if (shareToRemove) {
+            await removeShare(shareToRemove);
+            import('react-hot-toast').then(({ default: toast }) => toast.success("Access revoked."));
+            setShareToRemove(null);
+          }
+        }}
+        title="Remove access?"
+        message="This user will no longer be able to access the link. Are you sure you want to remove access?"
+        confirmText="Remove"
+      />
     </div>
   )
 }

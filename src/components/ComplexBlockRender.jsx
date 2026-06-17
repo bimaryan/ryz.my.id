@@ -86,24 +86,25 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
           </p>
         )}
 
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-black/5">
-          <div className="flex flex-col">
-            {discount_price && (
-              <span className="text-[10px] line-through opacity-40 mb-[-2px]">{discount_price}</span>
-            )}
-            <span className={`font-black ${isFree ? 'text-[#0b5cff]' : 'text-slate-800'}`}>
-              {isFree ? 'FREE' : `Rp ${parseInt(price).toLocaleString('id-ID')}`}
-            </span>
+        {type !== 'blog' && (
+          <div className="flex items-center justify-between mt-auto pt-3 border-t border-black/5">
+            <div className="flex flex-col">
+              {discount_price && (
+                <span className="text-[10px] line-through opacity-40 mb-[-2px]">{discount_price}</span>
+              )}
+              <span className={`font-black ${isFree ? 'text-[#0b5cff]' : 'text-slate-800'}`}>
+                {isFree ? 'FREE' : `Rp ${parseInt(price).toLocaleString('id-ID')}`}
+              </span>
+            </div>
+            
+            <div 
+              className="text-[10px] sm:text-xs font-black px-4 py-2 rounded-lg shadow-sm transition-transform hover:scale-105" 
+              style={{ backgroundColor: actionBg, color: actionText }}
+            >
+              {button_text || 'Beli Sekarang'}
+            </div>
           </div>
-          
-          <div 
-            className="text-[10px] sm:text-xs font-black px-4 py-2 rounded-lg shadow-sm transition-transform hover:scale-105" 
-            style={{ backgroundColor: actionBg, color: actionText }}
-          >
-            {button_text || 'Beli Sekarang'}
-          </div>
-        </div>
-
+        )}
       </div>
     </button>
   );

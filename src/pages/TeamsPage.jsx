@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Users, Plus, Settings, UserPlus } from 'lucide-react'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import SEO from '@/components/SEO'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
@@ -12,6 +13,7 @@ export default function TeamsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editTeamData, setEditTeamData] = useState(null)
   const [inviteTeamData, setInviteTeamData] = useState(null)
+  const [teamToDelete, setTeamToDelete] = useState(null)
   
   const [nameInput, setNameInput] = useState('')
   const [descInput, setDescInput] = useState('')
@@ -78,40 +80,13 @@ export default function TeamsPage() {
     setIsSubmitting(false)
   }
 
-  const handleDeleteTeamConfirm = async (teamId) => {
-    import('sweetalert2').then(async ({ default: Swal }) => {
-      const result = await Swal.fire({
-        title: "Delete Team?",
-        text: "This action cannot be undone.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Yes, delete!",
-        customClass: {
-          actions: "flex gap-3",
-          confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded m-0",
-          cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded m-0"
-        },
-        buttonsStyling: false
-      })
-
-      if (result.isConfirmed) {
-        await deleteTeam(teamId)
-        setEditTeamData(null)
-        Swal.fire({
-          title: "Deleted!",
-          text: "Team has been deleted.",
-          icon: "success",
-          customClass: {
-            confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded"
-          },
-          buttonsStyling: false
-        })
-      }
-    })
+  const handleDeleteTeamConfirm = (teamId) => {
+    setTeamToDelete(teamId)
   }
 
   return (
-    <DashboardLayout>
+    <>
+      <DashboardLayout>
       <SEO title="Teams & Collaboration | RYZ Shortlink" />
 
       <div className="flex-1 w-full max-w-7xl mx-auto animate-fade-in-up">
@@ -325,5 +300,20 @@ export default function TeamsPage() {
       )}
 
     </DashboardLayout>
+      <ConfirmModal
+        isOpen={teamToDelete !== null}
+        onClose={() => setTeamToDelete(null)}
+        onConfirm={async () => {
+          if (teamToDelete) {
+            await deleteTeam(teamToDelete)
+            setEditTeamData(null)
+            import('react-hot-toast').then(({ default: toast }) => toast.success('Team has been deleted.'))
+            setTeamToDelete(null)
+          }
+        }}
+        title="Delete Team"
+        message="This action cannot be undone. Are you sure you want to delete this team?"
+      />
+    </>
   )
 }

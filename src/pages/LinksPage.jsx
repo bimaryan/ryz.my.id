@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import Swal from 'sweetalert2'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import { useLinks } from '@/hooks/useLinks'
 import { Link2, ExternalLink, Copy, Trash2, QrCode, Calendar, Share2, MousePointerClick, Check } from 'lucide-react'
 import SEO from '@/components/SEO'
@@ -14,6 +14,7 @@ export default function LinksPage() {
   const [qrCodeLink, setQrCodeLink] = useState(null)
   const [shareLink, setShareLink] = useState(null)
   const [copiedId, setCopiedId] = useState(null)
+  const [linkToDelete, setLinkToDelete] = useState(null)
 
   useEffect(() => {
     fetchLinks()
@@ -37,33 +38,8 @@ export default function LinksPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleDelete = async (id) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      customClass: {
-        actions: "flex gap-3",
-        confirmButton: "bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors m-0",
-        cancelButton: "bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors m-0"
-      },
-      buttonsStyling: false
-    });
-
-    if (result.isConfirmed) {
-      await deleteLink(id);
-      Swal.fire({
-        title: "Deleted!",
-        text: "Your link has been deleted.",
-        icon: "success",
-        customClass: {
-          confirmButton: "bg-[#0b5cff] hover:bg-[#094bdd] text-white font-bold py-2 px-4 rounded-md transition-colors"
-        },
-        buttonsStyling: false
-      });
-    }
+  const handleDelete = (id) => {
+    setLinkToDelete(id)
   }
 
   const handleCopy = (link) => {
@@ -238,6 +214,19 @@ export default function LinksPage() {
       </div>
       <QRCodeModal isOpen={!!qrCodeLink} onClose={() => setQrCodeLink(null)} link={qrCodeLink} />
       <ShareLinkModal isOpen={!!shareLink} onClose={() => setShareLink(null)} link={shareLink} />
+      <ConfirmModal
+        isOpen={linkToDelete !== null}
+        onClose={() => setLinkToDelete(null)}
+        onConfirm={async () => {
+          if (linkToDelete) {
+            await deleteLink(linkToDelete);
+            toast.success("Your link has been deleted.");
+            setLinkToDelete(null);
+          }
+        }}
+        title="Delete Link"
+        message="You won't be able to revert this! Are you sure you want to delete this link?"
+      />
     </DashboardLayout>
   )
 }

@@ -5,7 +5,7 @@ import SEO from '@/components/SEO'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import toast from 'react-hot-toast'
-import Swal from 'sweetalert2'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import { Shield, Key, Copy, Plus, Trash2, X, AlertCircle } from 'lucide-react'
 
 export default function ApiKeysPage() {
@@ -14,6 +14,7 @@ export default function ApiKeysPage() {
   const [newKeyName, setNewKeyName] = useState('')
   const [generatedToken, setGeneratedToken] = useState(null)
   const [error, setError] = useState(null)
+  const [keyToDelete, setKeyToDelete] = useState(null)
 
   useEffect(() => {
     fetchApiKeys()
@@ -31,30 +32,8 @@ export default function ApiKeysPage() {
     }
   }
 
-  const handleDelete = async (id) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "Applications using it will immediately lose access!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, revoke it!",
-      customClass: {
-        actions: "flex gap-3",
-        confirmButton: "bg-[#d33] hover:bg-[#b32b2b] text-white font-bold py-2 px-4 rounded m-0",
-        cancelButton: "bg-[#566b8f] hover:bg-[#435574] text-white font-bold py-2 px-4 rounded m-0"
-      },
-      buttonsStyling: false
-    });
-
-    if (result.isConfirmed) {
-      await deleteApiKey(id);
-      Swal.fire({
-        title: "Revoked!",
-        text: "API key revoked.",
-        icon: "success",
-        confirmButtonColor: "#0b5cff"
-      });
-    }
+  const handleDelete = (id) => {
+    setKeyToDelete(id)
   }
 
   const handleCopy = (text) => {
@@ -213,6 +192,21 @@ export default function ApiKeysPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={keyToDelete !== null}
+        onClose={() => setKeyToDelete(null)}
+        onConfirm={async () => {
+          if (keyToDelete) {
+            await deleteApiKey(keyToDelete);
+            toast.success("API key revoked.");
+            setKeyToDelete(null);
+          }
+        }}
+        title="Revoke API Key"
+        message="Applications using it will immediately lose access! Are you sure you want to revoke this key?"
+        confirmText="Revoke"
+      />
     </DashboardLayout>
   )
 }
