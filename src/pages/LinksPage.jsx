@@ -72,17 +72,15 @@ export default function LinksPage() {
     <DashboardLayout>
       <SEO title="Links | RYZ Shortlink" />
 
-      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
-        <div className="space-y-6 animate-fade-in-up">
-          
-          <div>
+      <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
+        <div>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Links</h1>
             <p className="text-slate-500 font-medium mt-1">Manage and track all your created shortlinks.</p>
           </div>
 
           {/* Link List */}
-          <div className="bitly-card overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm relative overflow-hidden">
+            <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-200 bg-slate-50/50">
               <h2 className="text-lg font-bold text-slate-900">All Links</h2>
               <div className="flex gap-3">
                 <select className="bg-white border border-slate-300 rounded text-sm px-3 py-1.5 text-slate-700 font-medium focus:outline-none focus:border-[#0b5cff]">
@@ -151,8 +149,6 @@ export default function LinksPage() {
               ))}
             </div>
           </div>
-
-        </div>
       </div>
       <QRCodeModal isOpen={!!qrCodeLink} onClose={() => setQrCodeLink(null)} link={qrCodeLink} />
       <ShareLinkModal isOpen={!!shareLink} onClose={() => setShareLink(null)} link={shareLink} />

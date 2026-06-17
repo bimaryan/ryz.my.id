@@ -53,7 +53,7 @@ export function usePages() {
     } finally {
       setIsLoading(false)
     }
-  }, [session])
+  }, [session?.user?.id])
 
   const getPage = useCallback(async (id) => {
     try {
@@ -121,7 +121,7 @@ export function usePages() {
     } finally {
       setIsLoading(false)
     }
-  }, [session])
+  }, [session?.user?.id])
 
   const updatePage = useCallback(async (id, updates) => {
     try {
@@ -187,7 +187,7 @@ export function usePages() {
     } catch (error) {
       return { success: false, error: error.message }
     }
-  }, [session])
+  }, [session?.user?.id])
 
   return {
     pages,

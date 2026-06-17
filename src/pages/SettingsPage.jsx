@@ -10,7 +10,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePlanLimits } from '@/hooks/useSharesAndPlans'
 import { useLinks } from '@/hooks/useLinks'
 import { useCustomDomains } from '@/hooks/useCustomDomains'
-import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard } from 'lucide-react'
+import { usePages } from '@/hooks/usePages'
+import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2 } from 'lucide-react'
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -30,9 +31,12 @@ export default function SettingsPage() {
   const { plans, fetchPlans, isLoading: isPlansLoading } = usePlanLimits()
   const { links, fetchLinks } = useLinks()
   const { domains, fetchDomains } = useCustomDomains()
+  const { uploadImage } = usePages()
+  
   const [activeTab, setActiveTab] = useState('profile')
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
 
   useEffect(() => {
     fetchPlans()
@@ -99,6 +103,34 @@ export default function SettingsPage() {
     }
   }
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMsg('Image size must be less than 2MB')
+      return
+    }
+
+    setSuccessMsg('')
+    setErrorMsg('')
+    setIsUploadingAvatar(true)
+    
+    const res = await uploadImage(file)
+    setIsUploadingAvatar(false)
+
+    if (res.success) {
+      const updateRes = await updateProfile({ avatar_url: res.url })
+      if (updateRes.success) {
+        setSuccessMsg('Avatar updated successfully!')
+      } else {
+        setErrorMsg(updateRes.error || 'Failed to update avatar in profile')
+      }
+    } else {
+      setErrorMsg(res.error || 'Failed to upload avatar')
+    }
+  }
+
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
@@ -112,10 +144,8 @@ export default function SettingsPage() {
     <DashboardLayout>
       <SEO title="Settings | RYZ Shortlink" />
 
-      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
-        <div className="space-y-8 animate-fade-in-up">
-          
-          <div>
+      <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
+        <div>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Settings</h1>
             <p className="text-slate-500 font-medium mt-1">Manage your account settings and preferences.</p>
           </div>
@@ -151,7 +181,7 @@ export default function SettingsPage() {
 
             {/* Main Content Area */}
             <div className="flex-1">
-              <div className="bitly-card overflow-hidden">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm relative overflow-hidden">
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/50">
                   <h2 className="text-xl font-extrabold text-slate-900">
@@ -175,12 +205,20 @@ export default function SettingsPage() {
                   {activeTab === 'profile' && (
                     <form onSubmit={handleSubmitProfile(onProfileSubmit)} className="space-y-6 max-w-md">
                       <div className="flex items-center gap-6 mb-8">
-                        <div className="h-20 w-20 rounded-full bg-slate-200 flex items-center justify-center text-3xl font-bold text-slate-500 uppercase">
-                          {user?.user_metadata?.full_name?.[0] || user?.email?.[0] || 'U'}
+                        <div className="h-20 w-20 rounded-full bg-slate-200 flex items-center justify-center text-3xl font-bold text-slate-500 uppercase overflow-hidden shadow-sm border border-slate-200">
+                          {user?.user_metadata?.avatar_url ? (
+                            <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            user?.user_metadata?.full_name?.[0] || user?.email?.[0] || 'U'
+                          )}
                         </div>
                         <div>
-                          <Button type="button" variant="ghost" className="text-sm font-bold border border-slate-200 hover:bg-slate-50 text-slate-700">Change Avatar</Button>
-                          <p className="text-xs text-slate-500 mt-2 font-medium">Recommended size: 256x256px</p>
+                          <label className={`inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold border rounded-lg cursor-pointer transition-colors ${isUploadingAvatar ? 'bg-slate-100 text-slate-400 border-slate-200' : 'border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+                            {isUploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                            {isUploadingAvatar ? 'Uploading...' : 'Change Avatar'}
+                            <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploadingAvatar} />
+                          </label>
+                          <p className="text-xs text-slate-500 mt-2 font-medium">Recommended size: 256x256px. Max: 2MB.</p>
                         </div>
                       </div>
 
@@ -377,8 +415,6 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-
-        </div>
       </div>
     </DashboardLayout>
   )

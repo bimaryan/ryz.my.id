@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,7 +13,9 @@ import {
   Webhook,
   Users,
   LogOut,
-  LayoutTemplate
+  LayoutTemplate,
+  Settings,
+  User
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,8 +30,20 @@ export default function DashboardLayout({ children }) {
   const currentPath = location.pathname;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const searchQuery = searchParams.get("q") || "";
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -155,30 +169,6 @@ export default function DashboardLayout({ children }) {
             );
           })}
         </div>
-
-        {/* User Profile & Logout Section */}
-        <div className="p-4 border-t border-[#e8ebf2] bg-gray-50/50">
-          <Link
-            to="/dashboard/settings"
-            className="flex items-center gap-3 p-2 mb-2 cursor-pointer hover:bg-white hover:shadow-sm rounded-md transition-all group border border-transparent hover:border-[#e8ebf2]"
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#273144] to-[#4a5568] flex items-center justify-center text-xs font-bold text-white uppercase shadow-inner">
-              {user?.email?.[0] || "U"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-[#273144] truncate group-hover:text-[#0b5cff] transition-colors">
-                {user?.user_metadata?.full_name || "Account Settings"}
-              </p>
-            </div>
-          </Link>
-          <button
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-[#5c6b81] hover:bg-red-50 hover:text-red-600 transition-colors font-semibold text-sm group"
-          >
-            <LogOut className="h-[18px] w-[18px] group-hover:text-red-500" />
-            <span>Sign Out</span>
-          </button>
-        </div>
       </aside>
 
       {/* Main Content Wrapper */}
@@ -222,8 +212,55 @@ export default function DashboardLayout({ children }) {
             <button className="md:hidden p-2 text-[#8290a3] hover:text-[#273144] hover:bg-[#f4f6fa] rounded-full transition-colors">
               <Search className="h-5 w-5" />
             </button>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#273144] to-[#4a5568] hidden sm:flex items-center justify-center text-xs font-bold text-white uppercase shadow-sm cursor-pointer hover:opacity-90 transition-opacity">
-              {user?.email?.[0] || "U"}
+            
+            <div className="relative" ref={profileMenuRef}>
+              <button 
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#273144] to-[#4a5568] flex items-center justify-center text-xs font-bold text-white uppercase shadow-sm cursor-pointer hover:ring-2 hover:ring-[#0b5cff]/50 transition-all overflow-hidden border-2 border-white"
+              >
+                {user?.user_metadata?.avatar_url ? (
+                  <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  user?.user_metadata?.full_name?.[0] || user?.email?.[0] || "U"
+                )}
+              </button>
+
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-fade-in-up origin-top-right">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-sm font-bold text-slate-900 truncate">
+                      {user?.user_metadata?.full_name || "User"}
+                    </p>
+                    <p className="text-xs font-medium text-slate-500 truncate mt-0.5">
+                      {user?.email}
+                    </p>
+                  </div>
+                  
+                  <div className="py-2">
+                    <Link 
+                      to="/dashboard/settings" 
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0b5cff] transition-colors"
+                    >
+                      <User className="h-4 w-4" />
+                      Profile & Settings
+                    </Link>
+                  </div>
+                  
+                  <div className="border-t border-slate-100 py-2">
+                    <button
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        handleSignOut();
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>

@@ -72,8 +72,8 @@ export default function ApiKeysPage() {
     <DashboardLayout>
       <SEO title="API Keys | RYZ Shortlink" />
       
-      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
-        <div className="space-y-8 animate-fade-in-up">
+      <div className="flex-1 w-full max-w-7xl mx-auto animate-fade-in-up">
+        <div className="space-y-8">
           
           <div className="bitly-card p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="max-w-2xl">

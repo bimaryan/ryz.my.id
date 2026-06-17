@@ -80,8 +80,8 @@ export default function CustomDomainsPage() {
     <DashboardLayout>
       <SEO title="Custom Domains | RYZ Shortlink" />
 
-      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
-        <div className="space-y-8 animate-fade-in-up">
+      <div className="flex-1 w-full max-w-7xl mx-auto animate-fade-in-up">
+        <div className="space-y-8">
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -101,7 +101,7 @@ export default function CustomDomainsPage() {
           </div>
 
           {/* Intro Card */}
-          <div className="bitly-card p-8 bg-gradient-to-br from-[#0b1021] to-[#1c2237] text-white">
+          <div className="bitly-card p-8 bg-gradient-to-br from-[#0b1021] to-[#1c2237] text-white mt-6">
             <div className="max-w-2xl">
               <div className="h-12 w-12 rounded-lg bg-[#0b5cff]/20 flex items-center justify-center text-[#0b5cff] mb-4 border border-[#0b5cff]/30">
                 <Globe className="h-6 w-6" />

@@ -119,8 +119,8 @@ export default function TeamDetailsPage() {
     <DashboardLayout>
       <SEO title={`${team.name} | RYZ Shortlink`} />
 
-      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
-        <div className="space-y-6 animate-fade-in-up">
+      <div className="flex-1 w-full max-w-7xl mx-auto animate-fade-in-up">
+        <div className="space-y-8">
           
           <div className="flex items-center gap-4 text-slate-500 text-sm font-bold">
             <Link to="/dashboard/teams" className="hover:text-[#0b5cff] flex items-center gap-1"><ArrowLeft className="h-4 w-4" /> Back to Teams</Link>

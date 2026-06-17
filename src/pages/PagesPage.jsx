@@ -77,8 +77,8 @@ export default function PagesPage() {
     <DashboardLayout>
       <SEO title="Pages | RYZ Shortlink" />
 
-      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Pages</h1>
             <p className="text-slate-500 font-medium mt-1">Create beautiful Link-in-Bio pages to share multiple links.</p>
@@ -89,7 +89,7 @@ export default function PagesPage() {
           </Button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-[#e8ebf2] p-4 sm:p-6 mb-8">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input
@@ -109,7 +109,7 @@ export default function PagesPage() {
         ) : filteredPages.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPages.map(page => (
-              <div key={page.id} className="bg-white rounded-2xl border border-[#e8ebf2] overflow-hidden hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 group flex flex-col">
+              <div key={page.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col hover:border-[#0b5cff]/30 hover:shadow-md transition-all duration-300 group">
                 <div className="h-32 bg-gradient-to-br from-blue-50 to-indigo-50 relative flex items-center justify-center p-6 border-b border-[#e8ebf2]/50">
                   {page.avatar_url ? (
                     <img src={page.avatar_url} alt={page.title} className="w-20 h-20 rounded-full border-4 border-white shadow-md object-cover" />

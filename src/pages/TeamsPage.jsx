@@ -110,8 +110,8 @@ export default function TeamsPage() {
     <DashboardLayout>
       <SEO title="Teams & Collaboration | RYZ Shortlink" />
 
-      <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto w-full">
-        <div className="space-y-8 animate-fade-in-up">
+      <div className="flex-1 w-full max-w-7xl mx-auto animate-fade-in-up">
+        <div className="space-y-8">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
