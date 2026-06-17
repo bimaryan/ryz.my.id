@@ -219,10 +219,10 @@ export default function SettingsPage() {
                           <div>
                             <div className="flex justify-between text-sm font-bold mb-1.5">
                               <span>Links Created</span>
-                              <span>{links.length} / {user?.user_metadata?.max_links || 50}</span>
+                              <span>{links.length} / {user?.user_metadata?.max_links || 100}</span>
                             </div>
                             <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden">
-                              <div className="h-full bg-white rounded-full" style={{ width: `${Math.min(100, (links.length / (user?.user_metadata?.max_links || 50)) * 100)}%` }}></div>
+                              <div className="h-full bg-white rounded-full" style={{ width: `${Math.min(100, (links.length / (user?.user_metadata?.max_links || 100)) * 100)}%` }}></div>
                             </div>
                           </div>
                           <div>

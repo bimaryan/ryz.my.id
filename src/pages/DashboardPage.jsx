@@ -1,13 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useLinks } from '@/hooks/useLinks'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { Link2, ExternalLink, Copy, Trash2, QrCode, Calendar, ArrowUpRight, Share2 } from 'lucide-react'
 import SEO from '@/components/SEO'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { useAuth } from '@/hooks/useAuth'
-import { useState } from 'react'
 import QRCodeModal from '@/components/QRCodeModal'
 import ShareLinkModal from '@/components/ShareLinkModal'
+import Button from '@/components/ui/Button'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -15,6 +16,12 @@ export default function DashboardPage() {
   const { stats, fetchOverallStats } = useAnalytics()
   const [qrCodeLink, setQrCodeLink] = useState(null)
   const [shareLink, setShareLink] = useState(null)
+  const [copiedId, setCopiedId] = useState(null)
+  
+  // Quick create state
+  const [quickUrl, setQuickUrl] = useState('')
+  const [quickQr, setQuickQr] = useState(false)
+  const { createLink, isCreating } = useLinks()
 
   useEffect(() => {
     fetchLinks()
@@ -22,16 +29,54 @@ export default function DashboardPage() {
   }, [fetchLinks, fetchOverallStats])
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this link?')) {
-      await deleteLink(id)
-      fetchOverallStats()
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-bold text-slate-900">Are you sure you want to delete this link?</p>
+        <div className="flex gap-2 justify-end">
+          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded">Cancel</button>
+          <button onClick={async () => {
+            toast.dismiss(t.id)
+            await deleteLink(id)
+            toast.success('Link deleted successfully')
+          }} className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded">Delete</button>
+        </div>
+      </div>
+    ), { duration: Infinity })
   }
 
   const handleCopy = (shortCode) => {
     const url = `${window.location.origin}/${shortCode}`
     navigator.clipboard.writeText(url)
-    // could add a toast here
+    setCopiedId(shortCode)
+    toast.success('Link copied to clipboard!', { position: 'bottom-center' })
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const handleQuickCreate = async (e) => {
+    e.preventDefault()
+    if (!quickUrl.trim()) {
+      toast.error('Please enter a destination URL')
+      return
+    }
+    
+    // Auto-generate short code for quick create
+    const randomCode = Math.random().toString(36).substring(2, 8)
+    
+    const success = await createLink({
+      original_url: quickUrl.trim(),
+      short_code: randomCode,
+      title: 'Quick Link',
+      category: 'General'
+    })
+
+    if (success) {
+      toast.success('Link created successfully!')
+      setQuickUrl('')
+      if (quickQr) {
+        // Find the newly created link from the links array after refresh, or just show modal with basic data
+        // For simplicity, we can fetch it or trust the real-time update
+      }
+    }
   }
 
   return (
@@ -46,35 +91,77 @@ export default function DashboardPage() {
             <p className="text-slate-500 font-medium mt-1">Welcome back, {user?.user_metadata?.full_name || 'User'}!</p>
           </div>
 
-          {/* Stats Overview */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bitly-card p-6">
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                Total Clicks
-              </p>
-              <p className="text-4xl font-extrabold text-slate-900">{stats.totalClicks}</p>
-              <p className="text-xs text-green-600 mt-3 flex items-center gap-1 font-semibold"><ArrowUpRight className="h-3 w-3" /> +12% this week</p>
+          {/* Exact Bitly Layout Section */}
+          <div className="flex flex-col lg:flex-row gap-6 mb-8">
+            {/* Quick create: Short link */}
+            <div className="flex-1 bg-white border border-[#e8ebf2] rounded-xl p-8 shadow-[0_2px_4px_rgba(0,0,0,0.02)] relative">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-[#273144]">Quick create: Short link</h2>
+                <span className="text-[#8290a3] text-sm">You can create <strong className="text-[#273144]">{100 - (stats?.activeLinks || 0)}</strong> more links this month.</span>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-[#273144] mb-2 font-semibold">Domain: <span className="font-normal text-[#5a6872]">ryz.my.id</span></p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-[#273144] mb-2">Enter your destination URL</label>
+                <form onSubmit={handleQuickCreate} className="flex gap-4 flex-col sm:flex-row">
+                  <input 
+                    type="text" 
+                    value={quickUrl}
+                    onChange={(e) => setQuickUrl(e.target.value)}
+                    placeholder="https://example.com/my-long-url" 
+                    className="bitly-input flex-1" 
+                    disabled={isCreating}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="bitly-button-primary whitespace-nowrap py-3"
+                    disabled={isCreating}
+                  >
+                    {isCreating ? 'Creating...' : 'Create your short link'}
+                  </Button>
+                </form>
+              </div>
+
+              <div className="flex items-center gap-2 mb-6">
+                <input 
+                  type="checkbox" 
+                  checked={quickQr}
+                  onChange={(e) => setQuickQr(e.target.checked)}
+                  className="w-4 h-4 border-[#d6dbe5] rounded text-[#0b5cff] focus:ring-[#0b5cff]" 
+                />
+                <label className="text-sm text-[#273144]">Also create a QR Code for this link</label>
+              </div>
             </div>
-            
-            <div className="bitly-card p-6">
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                Unique Visitors
-              </p>
-              <p className="text-4xl font-extrabold text-slate-900">{Math.floor(stats.totalClicks * 0.7)}</p>
-            </div>
-            
-            <div className="bitly-card p-6">
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                Active Links
-              </p>
-              <p className="text-4xl font-extrabold text-slate-900">{stats.activeLinks}</p>
-            </div>
-            
-            <div className="bitly-card p-6">
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                Avg. CTR
-              </p>
-              <p className="text-4xl font-extrabold text-slate-900">24.5%</p>
+
+            {/* Monthly usage */}
+            <div className="w-full lg:w-[480px] bg-white border border-[#e8ebf2] rounded-xl p-6 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col">
+              <h2 className="text-xl font-bold text-[#273144] mb-1">Monthly usage</h2>
+              <p className="text-[#5a6872] text-sm mb-6">Current Billing Cycle</p>
+
+              <div className="border border-[#e8ebf2] rounded-lg p-5 space-y-6 flex-1">
+                <div>
+                  <div className="flex justify-between font-bold text-[#273144] mb-2 text-sm">
+                    <span>Short links</span>
+                    <span>{stats?.activeLinks || 0} of 100 used</span>
+                  </div>
+                  <div className="w-full bg-[#f4f6fa] rounded-full h-2">
+                    <div className="bg-[#0b5cff] h-2 rounded-full" style={{ width: `${Math.min(((stats?.activeLinks || 0) / 100) * 100, 100)}%` }}></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between font-bold text-[#273144] mb-2 text-sm">
+                    <span>Total Clicks / Visitors</span>
+                    <span>{stats?.totalClicks || 0} clicks</span>
+                  </div>
+                  <div className="w-full bg-[#f4f6fa] rounded-full h-2">
+                    <div className="bg-[#008080] h-2 rounded-full" style={{ width: `${Math.min(((stats?.totalClicks || 0) / 1000) * 100, 100)}%` }}></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useLinks } from '@/hooks/useLinks'
 import { Link2, ExternalLink, Copy, Trash2, QrCode, Calendar, Share2 } from 'lucide-react'
 import SEO from '@/components/SEO'
@@ -10,20 +11,34 @@ export default function LinksPage() {
   const { links, fetchLinks, deleteLink, isLoading: linksLoading } = useLinks()
   const [qrCodeLink, setQrCodeLink] = useState(null)
   const [shareLink, setShareLink] = useState(null)
+  const [copiedId, setCopiedId] = useState(null)
 
   useEffect(() => {
     fetchLinks()
   }, [fetchLinks])
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this link?')) {
-      await deleteLink(id)
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-bold text-slate-900">Are you sure you want to delete this link?</p>
+        <div className="flex gap-2 justify-end">
+          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded">Cancel</button>
+          <button onClick={async () => {
+            toast.dismiss(t.id)
+            await deleteLink(id)
+            toast.success('Link deleted successfully')
+          }} className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded">Delete</button>
+        </div>
+      </div>
+    ), { duration: Infinity })
   }
 
   const handleCopy = (shortCode) => {
     const url = `${window.location.origin}/${shortCode}`
     navigator.clipboard.writeText(url)
+    setCopiedId(shortCode)
+    toast.success('Link copied to clipboard!', { position: 'bottom-center' })
+    setTimeout(() => setCopiedId(null), 2000)
   }
 
   return (
@@ -97,7 +112,7 @@ export default function LinksPage() {
                       <button onClick={() => setQrCodeLink(link)} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors" title="QR Code">
                         <QrCode className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleCopy(link.short_code)} className="p-2 text-slate-400 hover:text-[#0b5cff] hover:bg-blue-50 rounded transition-colors" title="Copy Link">
+                      <button onClick={() => handleCopy(link.short_code)} className={`p-2 rounded transition-colors ${copiedId === link.short_code ? 'text-[#0b5cff] bg-blue-50' : 'text-slate-400 hover:text-[#0b5cff] hover:bg-blue-50'}`} title="Copy Link">
                         <Copy className="h-4 w-4" />
                       </button>
                       <button onClick={() => handleDelete(link.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete">

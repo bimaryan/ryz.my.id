@@ -4,78 +4,61 @@
 
 @layer base {
   body {
-    @apply antialiased bg-[#f4f6fa] text-slate-800 overflow-x-hidden;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-  }
-  
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    @apply antialiased bg-[#f4f6fa] text-[#273144] overflow-x-hidden min-h-screen relative;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
 }
 
 @layer components {
   /* Clean Corporate Cards */
   .bitly-card {
-    @apply bg-white border border-slate-200 rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition-shadow duration-200;
+    @apply bg-white border border-[#e8ebf2] rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition-shadow duration-200 overflow-hidden;
   }
   
   .bitly-card-hover {
-    @apply hover:shadow-md;
+    @apply hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)];
   }
 
+  /* Vibrant Buttons */
   .bitly-button {
-    @apply inline-flex items-center justify-center font-bold rounded text-sm px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center font-bold rounded text-sm px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
   
   .bitly-button-primary {
-    @apply bitly-button bg-[#0b5cff] text-white hover:bg-[#094bdd] focus:ring-[#0b5cff];
+    @apply bitly-button bg-[#0b5cff] text-white border border-[#0b5cff] hover:bg-[#004cd9] hover:border-[#004cd9] focus:ring-[#0b5cff];
   }
   
   .bitly-button-secondary {
-    @apply bitly-button bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus:ring-slate-300;
+    @apply bitly-button bg-white text-[#273144] border border-[#d6dbe5] hover:bg-[#f4f6fa] hover:border-[#cbd3e1] focus:ring-slate-300;
+  }
+
+  .bitly-button-upgrade {
+    @apply bitly-button bg-[#008080] text-white border border-[#008080] hover:bg-[#006666] hover:border-[#006666] focus:ring-[#008080];
+  }
+
+  .bitly-button-sidebar {
+    @apply bitly-button bg-[#0b239b] text-white border border-[#0b239b] hover:bg-[#07176b] hover:border-[#07176b] w-full justify-center;
   }
   
+  /* Modern Inputs */
   .bitly-input {
-    @apply w-full bg-white border border-slate-300 rounded px-4 py-2 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0b5cff] focus:ring-1 focus:ring-[#0b5cff] transition-all;
+    @apply w-full bg-white border border-[#d6dbe5] rounded px-4 py-2.5 text-[#273144] placeholder:text-[#8290a3] focus:outline-none focus:border-[#0b5cff] focus:ring-1 focus:ring-[#0b5cff] transition-all;
   }
 }
 
 @layer utilities {
   .animate-fade-in-up {
-    animation: fadeInUp 0.3s ease-out forwards;
+    animation: fadeInUp 0.2s ease-out forwards;
   }
 
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
-  }
-  
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
   }
 }

@@ -1,6 +1,7 @@
 import { X, Copy, CheckCircle2 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 export default function DNSSetupModal({ isOpen, onClose, domain }) {
   const [copiedType, setCopiedType] = useState(null)
@@ -23,6 +24,7 @@ export default function DNSSetupModal({ isOpen, onClose, domain }) {
   const handleCopy = (text, type) => {
     navigator.clipboard.writeText(text)
     setCopiedType(type)
+    toast.success('Record copied to clipboard!', { position: 'bottom-center' })
     setTimeout(() => setCopiedType(null), 2000)
   }
 

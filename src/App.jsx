@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { HelmetProvider } from 'react-helmet-async'
+import { Toaster } from 'react-hot-toast'
 import { routes } from '@/config/routes'
 
 const queryClient = new QueryClient({
@@ -17,6 +18,7 @@ function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <Toaster position="top-right" />
           <Routes>
             {routes.map((route) => (
               <Route

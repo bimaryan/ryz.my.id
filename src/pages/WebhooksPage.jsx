@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Webhook, Plus, Search, Trash2, Power, Activity } from 'lucide-react'
 import SEO from '@/components/SEO'
 import DashboardLayout from '@/components/layout/DashboardLayout'
@@ -41,9 +42,19 @@ export default function WebhooksPage() {
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this webhook?')) {
-      await deleteWebhook(id)
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-bold text-slate-900">Are you sure you want to delete this webhook?</p>
+        <div className="flex gap-2 justify-end mt-2">
+          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded">Cancel</button>
+          <button onClick={async () => {
+            toast.dismiss(t.id)
+            await deleteWebhook(id)
+            toast.success('Webhook deleted')
+          }} className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded">Delete</button>
+        </div>
+      </div>
+    ), { duration: Infinity })
   }
 
   return (

@@ -29,16 +29,15 @@ export default function DashboardLayout({ children }) {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f4f6fa] text-slate-800 font-sans flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#f4f6fa] text-[#273144] font-sans flex flex-col md:flex-row">
       {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between bg-[#0b1021] p-4 text-white z-50">
+      <div className="md:hidden flex items-center justify-between bg-white border-b border-[#e8ebf2] p-4 z-50">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-[#ebf3ff] text-[#0b5cff]">
-            <Link2 className="h-4 w-4 font-bold" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f26d21] text-white">
+            <span className="font-bold text-lg font-serif">b</span>
           </div>
-          <span className="text-xl font-black tracking-tight">RYZ<span className="font-light text-slate-400">Link</span></span>
         </Link>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-1">
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-1 text-[#273144]">
           {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
@@ -46,23 +45,23 @@ export default function DashboardLayout({ children }) {
       {/* Sidebar Navigation */}
       <aside className={`
         ${isMobileMenuOpen ? 'flex' : 'hidden'} 
-        md:flex flex-col w-full md:w-[260px] bg-[#0b1021] text-white flex-shrink-0 z-40 fixed md:sticky top-14 md:top-0 h-[calc(100vh-56px)] md:h-screen overflow-y-auto transition-all
+        md:flex flex-col w-full md:w-[260px] bg-white border-r border-[#e8ebf2] flex-shrink-0 z-40 fixed md:sticky top-[65px] md:top-0 h-[calc(100vh-65px)] md:h-screen overflow-y-auto transition-all
       `}>
-        <div className="hidden md:flex h-16 items-center px-6 mb-4">
+        <div className="hidden md:flex h-16 items-center px-6 mb-2">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-[#ebf3ff] text-[#0b5cff]">
-              <Link2 className="h-5 w-5 font-bold" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f26d21] text-white">
+              <span className="font-bold text-lg font-serif leading-none mt-0.5">b</span>
             </div>
-            <span className="text-2xl font-black tracking-tight">
-              RYZ<span className="font-light text-slate-400">Link</span>
-            </span>
           </Link>
         </div>
 
-        <div className="py-2 px-4 space-y-1 flex-1">
-          <div className="mb-4 px-2 hidden md:block">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Dashboard</span>
-          </div>
+        <div className="px-4 mb-4 mt-2">
+          <Button onClick={() => setIsCreateModalOpen(true)} className="bitly-button-sidebar text-base py-3">
+            Create new
+          </Button>
+        </div>
+
+        <div className="py-2 px-3 space-y-1 flex-1">
           {navItems.map((item) => {
             const Icon = item.icon
             // For Bitly clone: active if paths match exactly or starts with
@@ -72,37 +71,33 @@ export default function DashboardLayout({ children }) {
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded transition-colors relative font-semibold text-sm ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded transition-colors font-bold text-sm ${
                   isActive
-                    ? 'bg-[#1c2237] text-white'
-                    : 'text-slate-400 hover:bg-[#1c2237] hover:text-white'
+                    ? 'bg-[#ebf3ff] text-[#0b5cff]'
+                    : 'text-[#273144] hover:bg-[#f4f6fa]'
                 }`}
               >
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#0b5cff] rounded-r-full"></div>
-                )}
-                <Icon className={`h-5 w-5 ${isActive ? 'text-[#0b5cff]' : 'text-slate-400'}`} />
+                <Icon className={`h-4 w-4 ${isActive ? 'text-[#0b5cff]' : 'text-[#8290a3]'}`} />
                 <span>{item.name}</span>
               </Link>
             )
           })}
         </div>
 
-        <div className="p-4 border-t border-[#1c2237] mt-auto">
-          <Link to="/dashboard/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-2 py-2 mb-3 cursor-pointer hover:bg-[#1c2237] rounded transition-colors group">
-            <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-white uppercase group-hover:bg-[#0b5cff] transition-colors">
+        <div className="p-4 border-t border-[#e8ebf2] mt-auto">
+          <Link to="/dashboard/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-2 py-2 mb-3 cursor-pointer hover:bg-[#f4f6fa] rounded transition-colors group">
+            <div className="w-8 h-8 rounded-full bg-[#273144] flex items-center justify-center text-xs font-bold text-white uppercase group-hover:bg-[#0b5cff] transition-colors">
               {user?.email?.[0] || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-white truncate">{user?.user_metadata?.full_name || 'User'}</p>
-              <p className="text-xs text-slate-400 truncate group-hover:text-slate-300">Settings & Profile</p>
+              <p className="text-sm font-bold text-[#273144] truncate">{user?.user_metadata?.full_name || 'Settings'}</p>
             </div>
           </Link>
           <button
             onClick={handleSignOut}
-            className="flex w-full items-center gap-3 px-3 py-2 rounded text-slate-400 hover:text-white hover:bg-[#1c2237] transition-colors font-semibold text-sm"
+            className="flex w-full items-center gap-3 px-3 py-2 rounded text-[#273144] hover:bg-[#f4f6fa] transition-colors font-bold text-sm"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4 text-[#8290a3]" />
             <span>Sign Out</span>
           </button>
         </div>
@@ -112,19 +107,22 @@ export default function DashboardLayout({ children }) {
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         
         {/* Global Top Navbar */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 shrink-0">
-          <div className="relative w-full max-w-md hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input type="text" placeholder="Search links, tags, or campaigns..." className="bitly-input pl-10 h-10 bg-slate-50 border-transparent focus:bg-white" />
+        <header className="h-16 bg-white border-b border-[#e8ebf2] flex items-center justify-between px-4 sm:px-6 shrink-0 z-30">
+          <div className="relative w-full max-w-md hidden md:block mx-auto ml-10">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8290a3]" />
+            <input type="text" placeholder="Search..." className="bitly-input pl-10 h-10 bg-[#f4f6fa] border-transparent focus:bg-white" />
           </div>
           
-          <div className="flex items-center gap-2 sm:gap-4 ml-auto">
-            <button className="text-slate-400 hover:text-slate-600 hidden sm:block p-2">
+          <div className="flex items-center gap-4 ml-auto">
+            <Button size="md" className="bitly-button-upgrade text-sm px-5 py-2 hidden sm:flex">
+              Upgrade
+            </Button>
+            <button className="text-[#273144] hover:text-black hidden sm:block p-2 rounded-full hover:bg-[#f4f6fa]">
               <HelpCircle className="h-5 w-5" />
             </button>
-            <Button size="md" onClick={() => setIsCreateModalOpen(true)} className="bitly-button-primary">
-              <Plus className="h-4 w-4 mr-1.5" /> Create new
-            </Button>
+            <div className="w-8 h-8 rounded-full bg-[#273144] flex items-center justify-center text-xs font-bold text-white uppercase">
+              {user?.email?.[0] || 'U'}
+            </div>
           </div>
         </header>
 
