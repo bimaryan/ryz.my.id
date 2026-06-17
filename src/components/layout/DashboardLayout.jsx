@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard,
   Link2,
@@ -22,9 +22,25 @@ import CreateLinkModal from "@/components/CreateLinkModal";
 export default function DashboardLayout({ children }) {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const currentPath = location.pathname;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const searchQuery = searchParams.get("q") || "";
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    if (value) {
+      setSearchParams({ q: value });
+      if (currentPath !== "/dashboard") {
+        navigate(`/dashboard?q=${encodeURIComponent(value)}`);
+      }
+    } else {
+      setSearchParams({});
+    }
+  };
 
   // Otomatis menutup menu mobile saat rute (URL) berubah
   useEffect(() => {
@@ -192,6 +208,8 @@ export default function DashboardLayout({ children }) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#8290a3]" />
             <input
               type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
               placeholder="Search links, domains, or tags..."
               className="w-full pl-10 pr-4 py-2 bg-[#f4f6fa] border border-transparent focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-md text-sm transition-all outline-none"
             />

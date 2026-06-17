@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { useLinks } from "@/hooks/useLinks";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import {
@@ -23,6 +25,20 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const { links, fetchLinks, deleteLink, isLoading: linksLoading } = useLinks();
   const { stats, fetchOverallStats } = useAnalytics();
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedLinkForShare, setSelectedLinkForShare] = useState(null);
+
+  const [searchParams] = useSearchParams();
+  const searchQuery = (searchParams.get("q") || "").toLowerCase();
+
+  const filteredLinks = links.filter(link => {
+    if (!searchQuery) return true;
+    return (
+      (link.title && link.title.toLowerCase().includes(searchQuery)) ||
+      (link.short_code && link.short_code.toLowerCase().includes(searchQuery)) ||
+      (link.original_url && link.original_url.toLowerCase().includes(searchQuery))
+    );
+  });
   const [qrCodeLink, setQrCodeLink] = useState(null);
   const [shareLink, setShareLink] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
@@ -38,34 +54,25 @@ export default function DashboardPage() {
   }, [fetchLinks, fetchOverallStats]);
 
   const handleDelete = async (id) => {
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-bold text-slate-900">
-            Are you sure you want to delete this link?
-          </p>
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={async () => {
-                toast.dismiss(t.id);
-                await deleteLink(id);
-                toast.success("Link deleted successfully");
-              }}
-              className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ),
-      { duration: Infinity },
-    );
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#566b8f",
+      confirmButtonText: "Yes, delete it!"
+    });
+
+    if (result.isConfirmed) {
+      await deleteLink(id);
+      Swal.fire({
+        title: "Deleted!",
+        text: "Your link has been deleted.",
+        icon: "success",
+        confirmButtonColor: "#0b5cff"
+      });
+    }
   };
 
   const handleCopy = (shortCode) => {
@@ -245,18 +252,18 @@ export default function DashboardPage() {
                   <div className="animate-spin h-6 w-6 border-2 border-[#0b5cff] border-t-transparent rounded-full mx-auto"></div>
                 </div>
               )}
-              {!linksLoading && links.length === 0 && (
+              {!linksLoading && filteredLinks.length === 0 && (
                 <div className="py-16 text-center bg-slate-50">
                   <div className="h-12 w-12 rounded bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4">
                     <Link2 className="h-6 w-6 text-slate-400" />
                   </div>
                   <p className="text-slate-600 font-medium mb-4">
-                    No links found.
+                    {searchQuery ? "No links found matching your search." : "No links found."}
                   </p>
                 </div>
               )}
 
-              {links.map((link) => (
+              {filteredLinks.map((link) => (
                 <div
                   key={link.id}
                   className="p-6 flex flex-col md:flex-row gap-6 md:items-center justify-between hover:bg-slate-50 transition-colors"
