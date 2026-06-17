@@ -78,9 +78,9 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="block text-[15px] font-bold text-[#273144]">Password</label>
-                <a href="#" className="text-sm text-[#0b5cff] hover:underline font-medium">
+                <Link to="/forgot-password" className="text-sm text-[#0b5cff] hover:underline font-medium">
                   Forgot your password?
-                </a>
+                </Link>
               </div>
               <input
                 type="password"
@@ -107,19 +107,6 @@ export default function LoginPage() {
               {isLoading ? 'Signing in...' : 'Log in'}
             </button>
           </form>
-
-          <div className="mt-8 relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#e8ebf2]" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-white text-[#566b8f]">or continue with</span>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center text-sm text-[#566b8f]">
-            <p>Single Sign-On (SSO) coming soon.</p>
-          </div>
         </div>
       </div>
     </div>

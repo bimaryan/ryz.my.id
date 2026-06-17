@@ -1,6 +1,8 @@
 import HomePage from '@/pages/HomePage'
 import LoginPage from '@/pages/LoginPage'
 import SignupPage from '@/pages/SignupPage'
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
+import ResetPasswordPage from '@/pages/ResetPasswordPage'
 import DashboardPage from '@/pages/DashboardPage'
 import RedirectPage from '@/pages/RedirectPage'
 import NotFoundPage from '@/pages/NotFoundPage'
@@ -33,6 +35,16 @@ export const routes = [
   {
     path: '/signup',
     element: SignupPage,
+    public: true,
+  },
+  {
+    path: '/forgot-password',
+    element: ForgotPasswordPage,
+    public: true,
+  },
+  {
+    path: '/reset-password',
+    element: ResetPasswordPage,
     public: true,
   },
   {
