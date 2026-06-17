@@ -47,6 +47,24 @@ export default function PublicPage() {
     setIsCheckoutOpen(false);
   };
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: page?.title || `@${slug}`,
+          text: page?.description || `Check out ${page?.title || slug}`,
+          url: url,
+        });
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+  };
+
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return null;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -112,7 +130,7 @@ export default function PublicPage() {
 
   return (
     <div 
-      className={`min-h-screen w-full flex flex-col items-center py-16 px-4 ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''}`}
+      className={`min-h-screen w-full flex flex-col items-center py-16 px-4 ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
       style={{ 
         fontFamily: theme.font_family || 'Inter',
         background: theme.bg_type === 'gradient' ? theme.bg_value : theme.bg_type === 'image' ? `url(${theme.bg_value}) center/cover` : theme.bg_value || theme.bg_color,
@@ -127,27 +145,51 @@ export default function PublicPage() {
         {avatar_url && <meta property="og:image" content={avatar_url} />}
         {/* Dynamic Google Font Loader */}
         {theme.font_family && theme.font_family !== 'Inter' && (
-          <link href={`https://fonts.googleapis.com/css2?family=${theme.font_family.replace(/ /g, '+')}:wght@400;600;700;800&display=swap`} rel="stylesheet" />
+          <link href={`https://fonts.googleapis.com/css2?family=${theme.font_family.replace(/ /g, '+')}:wght@400;500;600;700;800;900&display=swap`} rel="stylesheet" />
         )}
       </Helmet>
 
-      <div className="w-full max-w-[600px] flex flex-col items-center animate-fade-in-up">
-        {/* Avatar */}
-        {avatar_url ? (
-          <img src={avatar_url} alt={title || slug} className={`w-24 h-24 md:w-28 md:h-28 object-cover mb-6 shadow-xl border-4 border-white/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'}`} />
-        ) : (
-          <div className={`w-24 h-24 md:w-28 md:h-28 bg-black/5 mb-6 shadow-xl border-4 border-white/20 flex items-center justify-center text-black/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'}`}>
-            {LucideIcons.Image && <LucideIcons.Image className="h-10 w-10" />}
+      {/* Top Navbar */}
+      {theme.navbar_enabled && (
+        <div className={`fixed top-0 inset-x-0 z-50 px-6 py-4 flex items-center justify-between transition-colors
+          ${theme.navbar_style === 'solid' ? 'bg-white text-slate-900 border-b border-slate-200 shadow-sm' : 
+            theme.navbar_style === 'transparent' ? 'bg-transparent' : 
+            'bg-white/70 backdrop-blur-md text-slate-900 border-b border-white/20 shadow-sm'}`}
+          style={theme.navbar_style === 'transparent' ? { color: theme.text_color } : {}}
+        >
+          <div className="font-bold text-base truncate pr-4 max-w-xl mx-auto w-full flex items-center justify-between">
+            <span>{theme.navbar_title || title || `@${slug}`}</span>
+            <button onClick={handleShare} className={`p-2 rounded-full transition-colors ${theme.navbar_style === 'transparent' ? 'hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}>
+              <LucideIcons.Share2 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className={`w-full max-w-[600px] flex flex-col items-center animate-fade-in-up ${theme.navbar_enabled ? 'pt-24' : 'pt-12'}`}>
+        {/* Profile Layout Logic */}
+        {theme.profile_layout !== 'hidden' && (
+          <div className={`w-full flex ${theme.profile_layout === 'side-by-side' ? 'flex-row items-center text-left gap-6 mb-10 px-4' : 'flex-col items-center mb-10'}`}>
+            {/* Avatar */}
+            {avatar_url ? (
+              <img src={avatar_url} alt={title || slug} className={`object-cover shadow-xl border-4 border-white/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'} ${theme.profile_layout === 'compact' ? 'w-20 h-20' : theme.profile_layout === 'side-by-side' ? 'w-24 h-24 md:w-28 md:h-28 shrink-0' : 'w-24 h-24 md:w-28 md:h-28 mb-6'}`} />
+            ) : (
+              <div className={`bg-black/5 shadow-xl border-4 border-white/20 flex items-center justify-center text-black/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'} ${theme.profile_layout === 'compact' ? 'w-20 h-20' : theme.profile_layout === 'side-by-side' ? 'w-24 h-24 md:w-28 md:h-28 shrink-0' : 'w-24 h-24 md:w-28 md:h-28 mb-6'}`}>
+                {LucideIcons.Image && <LucideIcons.Image className={`${theme.profile_layout === 'compact' ? 'w-8 h-8' : 'h-10 w-10'}`} />}
+              </div>
+            )}
+            
+            {/* Profile Info */}
+            <div className={`${theme.profile_layout === 'side-by-side' ? 'flex-1' : 'w-full'}`}>
+              <h1 className={`${theme.profile_layout === 'compact' ? 'text-xl md:text-2xl mt-4' : 'text-2xl md:text-3xl'} font-extrabold mb-3 ${theme.profile_layout === 'side-by-side' ? 'text-left' : 'text-center'} tracking-tight`} style={{ color: theme.text_color }}>
+                {title || `@${slug}`}
+              </h1>
+              <p className={`text-base md:text-lg opacity-90 leading-relaxed ${theme.profile_layout === 'side-by-side' ? 'text-left' : 'text-center mx-auto max-w-md'} ${theme.profile_layout === 'compact' ? 'mb-6' : ''}`} style={{ color: theme.text_color }}>
+                {description}
+              </p>
+            </div>
           </div>
         )}
-        
-        {/* Profile Info */}
-        <h1 className="text-2xl md:text-3xl font-extrabold mb-3 text-center tracking-tight" style={{ color: theme.text_color }}>
-          {title || `@${slug}`}
-        </h1>
-        <p className="text-base md:text-lg text-center mb-10 opacity-90 max-w-md leading-relaxed" style={{ color: theme.text_color }}>
-          {description}
-        </p>
 
         {/* Social Links */}
         {(theme.social_links?.instagram || theme.social_links?.twitter || theme.social_links?.github || theme.social_links?.linkedin || theme.social_links?.youtube || theme.social_links?.tiktok) && (
@@ -236,7 +278,7 @@ export default function PublicPage() {
                   href={link.url || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`block w-full text-lg font-bold transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden ${theme.layout === 'grid' ? 'aspect-square p-4 flex flex-col items-center justify-center text-center gap-3' : 'py-4 px-6'}`}
+                  className={`block w-full text-lg font-bold transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} relative overflow-hidden ${theme.layout === 'grid' ? 'aspect-square p-4 flex flex-col items-center justify-center text-center gap-3' : 'py-4 px-6'}`}
                   style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
                 >
                   <div className={`flex relative z-10 w-full ${theme.layout === 'grid' ? 'flex-col items-center justify-center' : `items-center gap-4 ${theme.button_align || 'justify-center'}`}`}>
@@ -266,18 +308,29 @@ export default function PublicPage() {
           )}
         </div>
         
-        {/* Footer Brand */}
-        <a 
-          href="/" 
-          className="mt-20 opacity-40 hover:opacity-100 transition-opacity flex flex-col items-center gap-2 group" 
-          style={{ color: theme.text_color }}
-        >
-          <div className="text-xs font-bold uppercase tracking-widest mb-1">Powered by</div>
-          <div className="flex items-center gap-2 font-black text-xl tracking-tighter">
-            <div className="w-6 h-6 rounded-md flex items-center justify-center text-sm" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#000' }}>R</div>
-            RYZLink
+        {/* Custom Footer */}
+        {theme.footer_enabled && (
+          <div className="w-full mt-16 mb-4 text-center">
+            <p className="text-sm font-medium opacity-70" style={{ color: theme.text_color }}>
+              {theme.footer_text || `© ${new Date().getFullYear()} ${title || 'RYZ Shortlink'}`}
+            </p>
           </div>
-        </a>
+        )}
+
+        {/* Footer Brand */}
+        {!theme.hide_branding && (
+          <a 
+            href="/" 
+            className="mt-12 mb-12 opacity-40 hover:opacity-100 transition-opacity flex flex-col items-center gap-2 group" 
+            style={{ color: theme.text_color }}
+          >
+            <div className="text-xs font-bold uppercase tracking-widest mb-1">Powered by</div>
+            <div className="flex items-center gap-2 font-black text-xl tracking-tighter">
+              <div className="w-6 h-6 rounded-md flex items-center justify-center text-sm" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#000' }}>R</div>
+              RYZLink
+            </div>
+          </a>
+        )}
       </div>
 
       {isCheckoutOpen && selectedProduct && (

@@ -27,7 +27,7 @@ const getYouTubeEmbedUrl = (url) => {
     : null;
 };
 
-const FONTS = ['Inter', 'Roboto', 'Playfair Display', 'Outfit', 'Space Grotesk', 'Poppins', 'Montserrat', 'Lora']
+const FONTS = ['Inter', 'Roboto', 'Playfair Display', 'Outfit', 'Space Grotesk', 'Poppins', 'Montserrat', 'Lora', 'Plus Jakarta Sans', 'DM Sans', 'Syne', 'Oswald', 'Bebas Neue']
 
 const BRAND_COLORS = {
   instagram: '#E1306C',
@@ -62,11 +62,11 @@ const TEMPLATES = [
   },
   {
     name: 'Cyberpunk',
-    theme: { font_family: 'Space Grotesk', bg_type: 'color', bg_value: '#000000', text_color: '#00ff00', button_bg: '#000000', button_text: '#00ff00', button_style: 'rounded-none', button_shadow: 'shadow-[4px_4px_0_#00ff00]', button_border: 'border-[#00ff00]', button_animation: 'hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all' }
+    theme: { font_family: 'Space Grotesk', bg_type: 'color', bg_value: '#000000', text_color: '#00ff00', button_bg: '#000000', button_text: '#00ff00', button_style: 'rounded-none', button_shadow: 'shadow-[4px_4px_0_#00ff00]', button_border: 'border border-[#00ff00]', button_animation: 'hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all' }
   },
   {
     name: 'Elegant',
-    theme: { font_family: 'Playfair Display', bg_type: 'color', bg_value: '#fdfbf7', text_color: '#2c3e50', button_bg: '#ffffff', button_text: '#2c3e50', button_style: 'rounded-none', button_shadow: 'shadow-none', button_border: 'border-slate-300', button_animation: 'hover:bg-slate-50 transition-colors' }
+    theme: { font_family: 'Playfair Display', bg_type: 'color', bg_value: '#fdfbf7', text_color: '#2c3e50', button_bg: '#ffffff', button_text: '#2c3e50', button_style: 'rounded-none', button_shadow: 'shadow-none', button_border: 'border border-slate-300', button_animation: 'hover:bg-slate-50 transition-colors' }
   },
   {
     name: 'Neon Cyber',
@@ -74,19 +74,27 @@ const TEMPLATES = [
   },
   {
     name: 'Pastel Dream',
-    theme: { font_family: 'Outfit', bg_type: 'gradient', bg_value: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)', text_color: '#475569', button_bg: '#ffffff', button_text: '#334155', button_style: 'rounded-full', button_shadow: 'shadow-xl', button_border: 'border-transparent', button_animation: 'hover:-translate-y-1 transition-transform' }
+    theme: { font_family: 'Outfit', bg_type: 'gradient', bg_value: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)', text_color: '#475569', button_bg: '#ffffff', button_text: '#334155', button_style: 'rounded-full', button_shadow: 'shadow-xl', button_border: 'border border-transparent', button_animation: 'hover:-translate-y-1 transition-transform' }
   },
   {
     name: 'Emerald Glass',
-    theme: { font_family: 'Inter', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #11998e, #38ef7d)', text_color: '#ffffff', button_bg: 'rgba(255, 255, 255, 0.2)', button_text: '#ffffff', button_style: 'rounded-2xl backdrop-blur-lg', button_shadow: 'shadow-lg', button_border: 'border border-white/30', button_animation: 'hover:bg-white/30 transition-colors' }
+    theme: { font_family: 'Plus Jakarta Sans', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #11998e, #38ef7d)', text_color: '#ffffff', button_bg: 'rgba(255, 255, 255, 0.2)', button_text: '#ffffff', button_style: 'rounded-2xl backdrop-blur-lg', button_shadow: 'shadow-lg', button_border: 'border border-white/30', button_animation: 'hover:bg-white/30 transition-colors' }
   },
   {
-    name: 'Monochrome Pro',
-    theme: { font_family: 'Roboto', bg_type: 'color', bg_value: '#ffffff', text_color: '#000000', button_bg: '#000000', button_text: '#ffffff', button_style: 'rounded-none', button_shadow: 'shadow-none', button_border: 'border-2 border-black', button_animation: 'hover:bg-gray-800 transition-colors' }
+    name: 'Brutalist Neo',
+    theme: { font_family: 'Syne', bg_type: 'color', bg_value: '#f4f4f0', text_color: '#111111', button_bg: '#e8ff5a', button_text: '#111111', button_style: 'rounded-none', button_shadow: 'shadow-[6px_6px_0_#111111]', button_border: 'border-2 border-[#111111]', button_animation: 'hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0_#111111] transition-all' }
   },
   {
-    name: 'Ocean Wave',
-    theme: { font_family: 'Playfair Display', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)', text_color: '#ffffff', button_bg: '#ffffff', button_text: '#0284c7', button_style: 'rounded-full', button_shadow: 'shadow-md', button_border: 'border-transparent', button_animation: 'hover:shadow-xl transition-shadow' }
+    name: 'Monochrome Noir',
+    theme: { font_family: 'DM Sans', bg_type: 'color', bg_value: '#111111', text_color: '#fdfdfd', button_bg: '#fdfdfd', button_text: '#111111', button_style: 'rounded-full', button_shadow: 'shadow-none', button_border: 'border border-transparent', button_animation: 'hover:scale-95 transition-transform' }
+  },
+  {
+    name: 'Retro Pop',
+    theme: { font_family: 'Oswald', bg_type: 'color', bg_value: '#ff90e8', text_color: '#000000', button_bg: '#fff200', button_text: '#000000', button_style: 'rounded-full', button_shadow: 'shadow-[4px_4px_0_#000000]', button_border: 'border-2 border-black', button_animation: 'hover:-translate-y-1 hover:shadow-[6px_6px_0_#000000] transition-all' }
+  },
+  {
+    name: 'Ocean Depth',
+    theme: { font_family: 'Plus Jakarta Sans', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)', text_color: '#ffffff', button_bg: '#ffffff', button_text: '#0284c7', button_style: 'rounded-full', button_shadow: 'shadow-md', button_border: 'border border-transparent', button_animation: 'hover:shadow-xl transition-shadow' }
   }
 ]
 
@@ -701,8 +709,78 @@ export default function PageEditor() {
                 </div>
               </div>
 
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="col-span-1 md:col-span-2">
+                  <h3 className="text-lg font-bold text-slate-900 mb-2 border-b border-slate-200 pb-2">Layout & Structure</h3>
+                </div>
+
+                {/* Navbar Settings */}
+                <div className="col-span-1 md:col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-bold text-slate-700">Enable Top Navbar</label>
+                    <button 
+                      type="button"
+                      onClick={() => setTheme({...theme, navbar_enabled: !theme.navbar_enabled})}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${theme.navbar_enabled ? 'bg-[#0b5cff]' : 'bg-slate-300'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${theme.navbar_enabled ? 'translate-x-7' : 'translate-x-1'}`}></div>
+                    </button>
+                  </div>
+                  {theme.navbar_enabled && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-xl border border-slate-200 mt-2">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Navbar Title</label>
+                        <Input value={theme.navbar_title || ''} onChange={e => setTheme({...theme, navbar_title: e.target.value})} placeholder="e.g. My Link in Bio" className="text-sm px-3 py-2 h-9" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Navbar Style</label>
+                        <select value={theme.navbar_style || 'glass'} onChange={e => setTheme({...theme, navbar_style: e.target.value})} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-[#0b5cff] focus:outline-none">
+                          <option value="solid">Solid Color</option>
+                          <option value="transparent">Transparent</option>
+                          <option value="glass">Glassmorphism</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Profile Layout */}
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Profile Layout</label>
+                  <select 
+                    value={theme.profile_layout || 'classic'} 
+                    onChange={(e) => setTheme({...theme, profile_layout: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0b5cff]/20 focus:border-[#0b5cff]"
+                  >
+                    <option value="classic">Classic (Avatar top, Bio below)</option>
+                    <option value="compact">Compact (Smaller avatar, tight spacing)</option>
+                    <option value="side-by-side">Side by Side (Avatar left, Bio right)</option>
+                    <option value="hidden">Hidden (Don't show profile info)</option>
+                  </select>
+                </div>
+
+                {/* Footer Settings */}
+                <div className="col-span-1 md:col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-bold text-slate-700">Enable Footer</label>
+                    <button 
+                      type="button"
+                      onClick={() => setTheme({...theme, footer_enabled: !theme.footer_enabled})}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${theme.footer_enabled ? 'bg-[#0b5cff]' : 'bg-slate-300'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${theme.footer_enabled ? 'translate-x-7' : 'translate-x-1'}`}></div>
+                    </button>
+                  </div>
+                  {theme.footer_enabled && (
+                    <div className="p-4 bg-white rounded-xl border border-slate-200 mt-2">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Footer Text</label>
+                      <Input value={theme.footer_text || ''} onChange={e => setTheme({...theme, footer_text: e.target.value})} placeholder={`e.g. © ${new Date().getFullYear()} My Business`} className="text-sm px-3 py-2 h-9" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                
                 {/* Font Family */}
                 <div className="col-span-1 md:col-span-2">
                   <label className="block text-sm font-bold text-slate-700 mb-2">Font Family</label>
@@ -793,6 +871,18 @@ export default function PageEditor() {
                   )}
                 </div>
 
+                {/* Background Pattern */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Background Pattern</label>
+                  <select value={theme.bg_pattern || 'none'} onChange={(e) => setTheme({...theme, bg_pattern: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0b5cff]/20 focus:border-[#0b5cff]">
+                    <option value="none">None</option>
+                    <option value="grid">Grid</option>
+                    <option value="dots">Polka Dots</option>
+                    <option value="topography">Topography</option>
+                    <option value="noise">Noise Texture</option>
+                  </select>
+                </div>
+
                 {/* Text & Button Colors */}
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Text Color</label>
@@ -870,6 +960,17 @@ export default function PageEditor() {
                     <option value="shadow-[4px_4px_0_#00ff00]">Neon Shadow</option>
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Button Border</label>
+                  <select value={theme.button_border || 'border-transparent'} onChange={(e) => setTheme({...theme, button_border: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0b5cff]/20 focus:border-[#0b5cff]">
+                    <option value="border-transparent">None</option>
+                    <option value="border border-white/20">Thin Glass</option>
+                    <option value="border border-slate-300">Thin Solid</option>
+                    <option value="border-2 border-black">Thick Dark</option>
+                    <option value="border-2 border-[#0b5cff]">Accent Color</option>
+                  </select>
+                </div>
                 
                 <div className="col-span-1 md:col-span-2 flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl">
                   <div className="font-bold text-slate-700">Enable Glassmorphism</div>
@@ -897,9 +998,24 @@ export default function PageEditor() {
               <div className="w-24 h-5 bg-black rounded-b-xl"></div>
             </div>
 
+            {/* Navbar Preview */}
+            {theme.navbar_enabled && (
+              <div className={`absolute top-0 inset-x-0 z-30 px-4 py-3 flex items-center justify-between transition-colors
+                ${theme.navbar_style === 'solid' ? 'bg-white text-slate-900 border-b border-slate-200' : 
+                  theme.navbar_style === 'transparent' ? 'bg-transparent' : 
+                  'bg-white/70 backdrop-blur-md text-slate-900 border-b border-white/20'}`}
+                style={theme.navbar_style === 'transparent' ? { color: theme.text_color } : {}}
+              >
+                <div className="font-bold text-sm truncate pr-4">{theme.navbar_title || title || '@' + page?.slug}</div>
+                <button className={`p-1 rounded-full transition-colors ${theme.navbar_style === 'transparent' ? 'hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}>
+                  <LucideIcons.Share2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Actual Preview Content */}
             <div 
-              className={`absolute inset-0 z-10 overflow-y-auto no-scrollbar ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''}`}
+              className={`absolute inset-0 z-10 overflow-y-auto no-scrollbar ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.navbar_enabled ? 'pt-14' : ''} ${theme.bg_pattern ? 'bg-pattern-' + theme.bg_pattern : ''}`}
               style={{ 
                 fontFamily: theme.font_family || 'Inter',
                 background: theme.bg_type === 'gradient' ? theme.bg_value : theme.bg_type === 'image' ? `url(${theme.bg_value}) center/cover` : theme.bg_value || theme.bg_color,
@@ -907,22 +1023,29 @@ export default function PageEditor() {
               }}
             >
               <div className="px-6 py-12 flex flex-col items-center">
-                {/* Avatar */}
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className={`w-24 h-24 object-cover mb-4 shadow-md border-2 border-white/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'}`} />
-                ) : (
-                  <div className={`w-24 h-24 bg-slate-200 mb-4 shadow-md flex items-center justify-center text-slate-400 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'}`}>
-                    <ImageIcon className="h-8 w-8" />
+                {/* Profile Layout Logic */}
+                {theme.profile_layout !== 'hidden' && (
+                  <div className={`w-full flex ${theme.profile_layout === 'side-by-side' ? 'flex-row items-center text-left gap-4 mb-8' : 'flex-col items-center mb-8'}`}>
+                    {/* Avatar */}
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar" className={`object-cover shadow-md border-2 border-white/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'} ${theme.profile_layout === 'compact' ? 'w-16 h-16' : theme.profile_layout === 'side-by-side' ? 'w-20 h-20 shrink-0' : 'w-24 h-24 mb-4'}`} />
+                    ) : (
+                      <div className={`bg-slate-200 shadow-md flex items-center justify-center text-slate-400 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'} ${theme.profile_layout === 'compact' ? 'w-16 h-16' : theme.profile_layout === 'side-by-side' ? 'w-20 h-20 shrink-0' : 'w-24 h-24 mb-4'}`}>
+                        <ImageIcon className={`${theme.profile_layout === 'compact' ? 'w-6 h-6' : 'w-8 h-8'}`} />
+                      </div>
+                    )}
+                    
+                    {/* Profile Text */}
+                    <div className={`${theme.profile_layout === 'side-by-side' ? 'flex-1' : 'w-full'}`}>
+                      <h1 className={`${theme.profile_layout === 'compact' ? 'text-lg mt-3' : 'text-xl'} font-bold mb-1 ${theme.profile_layout === 'side-by-side' ? 'text-left' : 'text-center'}`} style={{ color: theme.text_color }}>
+                        {title || '@your_username'}
+                      </h1>
+                      <p className={`text-sm opacity-80 ${theme.profile_layout === 'side-by-side' ? 'text-left' : 'text-center'} ${theme.profile_layout === 'compact' ? 'mt-1' : 'mt-2'}`} style={{ color: theme.text_color }}>
+                        {description || 'Your bio goes here. Tell people about what you do.'}
+                      </p>
+                    </div>
                   </div>
                 )}
-                
-                {/* Profile Info */}
-                <h1 className="text-xl font-bold mb-2 text-center" style={{ color: theme.text_color }}>
-                  {title || '@your_username'}
-                </h1>
-                <p className="text-sm text-center mb-8 opacity-80" style={{ color: theme.text_color }}>
-                  {description || 'Your bio goes here. Tell people about what you do.'}
-                </p>
 
                 {/* Social Links */}
                 {(theme.social_links?.instagram || theme.social_links?.twitter || theme.social_links?.github || theme.social_links?.linkedin || theme.social_links?.youtube || theme.social_links?.tiktok) && (
@@ -1000,7 +1123,7 @@ export default function PageEditor() {
                           href={link.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`block w-full font-bold transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-95 ${theme.button_style} border relative overflow-hidden ${theme.layout === 'grid' ? 'aspect-square p-4 flex flex-col items-center justify-center text-center gap-2' : 'py-4 px-6 text-sm'}`}
+                          className={`block w-full font-bold transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-95 ${theme.button_style} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} relative overflow-hidden ${theme.layout === 'grid' ? 'aspect-square p-4 flex flex-col items-center justify-center text-center gap-2' : 'py-4 px-6 text-sm'}`}
                           style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
                         >
                           <div className={`flex relative z-10 w-full ${theme.layout === 'grid' ? 'flex-col items-center justify-center' : `items-center gap-3 ${theme.button_align || 'justify-center'}`}`}>
@@ -1025,20 +1148,30 @@ export default function PageEditor() {
                         </a>
                       )
                     })
-                  ) : (
-                    <div 
-                      className={`block w-full text-center py-4 px-6 font-bold opacity-50 ${theme.button_style} border ${theme.layout === 'grid' ? 'col-span-2' : ''}`}
-                      style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
-                    >
-                      Sample Link
+                  ) : null}
+                  {links.length === 0 && (
+                    <div className="w-full text-center p-6 bg-black/5 rounded-xl text-sm font-medium opacity-60 text-current">
+                      No blocks yet.
                     </div>
                   )}
                 </div>
+
+                {/* Footer Preview */}
+                {theme.footer_enabled && (
+                  <div className="w-full mt-12 mb-6 text-center">
+                    <p className="text-xs font-medium opacity-60" style={{ color: theme.text_color }}>
+                      {theme.footer_text || `© ${new Date().getFullYear()} ${title || 'RYZ Shortlink'}`}
+                    </p>
+                  </div>
+                )}
                 
-                <div className="mt-12 opacity-50 text-xs font-medium tracking-wider flex items-center gap-1" style={{ color: theme.text_color }}>
-                  <div className="w-4 h-4 rounded-sm flex items-center justify-center font-bold text-[10px]" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#000' }}>R</div>
-                  RYZLink
-                </div>
+                {/* Watermark (Always below footer) */}
+                {!theme.hide_branding && (
+                  <a href="/" target="_blank" rel="noopener noreferrer" className="mt-8 text-xs font-bold uppercase tracking-wider opacity-50 hover:opacity-100 transition-opacity flex items-center gap-1.5" style={{ color: theme.text_color }}>
+                    <div className="w-4 h-4 rounded bg-current opacity-20"></div>
+                    Powered by RYZ
+                  </a>
+                )}
               </div>
             </div>
           </div>
