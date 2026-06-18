@@ -70,33 +70,32 @@ export default function PublicPage() {
 
       if (orderError) throw orderError;
 
-      // 2. Minta Token Snap dari Midtrans (Lewat Backend Serverless Function)
-      const response = await fetch('/api/midtrans', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          transaction_details: {
-            order_id: orderData.id,
-            gross_amount: parseInt(finalPrice)
-          },
-          customer_details: {
-            first_name: checkoutForm.name,
-            phone: checkoutForm.phone || '08123456789',
-            billing_address: {
-              address: checkoutForm.address || ''
-            }
-          }
-        })
+      // 2. Minta Token Snap dari Midtrans (Lewat Supabase RPC Backend)
+      const { data: result, error: rpcError } = await supabase.rpc('get_midtrans_token', {
+        p_order_id: orderData.id,
+        p_gross_amount: parseInt(finalPrice),
+        p_first_name: checkoutForm.name,
+        p_phone: checkoutForm.phone || '08123456789',
+        p_address: checkoutForm.address || '',
+        p_server_key: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'SB-Mid-server-0TGPuhniptPemYTjz0tJl9K8',
+        p_is_production: import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true'
       });
 
-      const result = await response.json();
+      if (rpcError) {
+        console.error("Supabase RPC Error:", rpcError);
+        toast.error("Gagal terhubung ke server pembayaran.");
+        return;
+      }
 
-      if (!response.ok) {
+      if (result && result.error) {
         console.error("Midtrans Error:", result);
-        toast.error("Gagal memulai pembayaran: " + (result.error_messages ? result.error_messages[0] : "Kesalahan tidak diketahui"));
+        const errorMsgs = result.message?.error_messages;
+        toast.error("Gagal memulai pembayaran: " + (errorMsgs ? errorMsgs[0] : "Kesalahan Konfigurasi"));
+        return;
+      }
+
+      if (!result || !result.token) {
+        toast.error("Gagal mendapatkan token pembayaran.");
         return;
       }
 
