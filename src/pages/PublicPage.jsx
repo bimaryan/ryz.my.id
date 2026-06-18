@@ -70,13 +70,12 @@ export default function PublicPage() {
 
       if (orderError) throw orderError;
 
-      // 2. Minta Token Snap dari Midtrans (Lewat Proxy lokal)
-      const response = await fetch('/api/midtrans/snap/v1/transactions', {
+      // 2. Minta Token Snap dari Midtrans (Lewat Backend Serverless Function)
+      const response = await fetch('/api/midtrans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Basic ' + btoa(import.meta.env.VITE_MIDTRANS_SERVER_KEY + ':')
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           transaction_details: {
