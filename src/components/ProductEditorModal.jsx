@@ -81,49 +81,28 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
   const isAppointment = formData.type === 'appointment';
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-slate-50/95 backdrop-blur-sm animate-fade-in-up overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-col bg-white border-b border-slate-200 shadow-sm shrink-0 pt-4 px-6 pb-0">
-        <div className="flex items-center justify-between pb-4">
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-2xl bg-slate-50 shadow-2xl h-full flex flex-col animate-slide-in-right overflow-hidden border-l border-slate-200">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 px-6 bg-white border-b border-slate-200 shrink-0">
           <h2 className="text-xl font-bold text-slate-800">
             {formData?.id ? 'Edit' : 'Add'} {formData?.type ? formData.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Product'}
           </h2>
           <div className="flex items-center gap-3">
             <button 
               onClick={onClose}
-              className="px-4 py-2 text-sm font-bold text-green-600 border border-green-600 hover:bg-green-50 rounded-full transition-colors"
+              className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-colors"
             >
-              Options
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
-        
-        {/* Tabs */}
-        <div className="flex items-center gap-2 mt-2">
-          <button 
-            onClick={() => setActiveTab('content')}
-            className={`px-6 py-2 text-sm font-bold rounded-t-lg border-t border-x transition-colors ${activeTab === 'content' ? 'bg-white border-slate-200 text-green-500' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700'}`}
-          >
-            Content
-          </button>
-          <button 
-            onClick={() => setActiveTab('integrations')}
-            className={`px-6 py-2 text-sm font-bold rounded-t-lg border-t border-x transition-colors ${activeTab === 'integrations' ? 'bg-white border-slate-200 text-green-500' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700'}`}
-          >
-            Integrations
-          </button>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-8 bg-slate-100">
-        {activeTab === 'content' && (
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50">
+          <div className="w-full space-y-6 pb-8">
           
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-6 space-y-6">
-            
-            {/* Details */}
+          {/* Details */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
               <h3 className="font-bold text-slate-500 mb-6 uppercase tracking-wider text-sm">Details</h3>
               <div className="space-y-5">
@@ -616,6 +595,15 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
                   </label>
                 </div>
+                {formData.set_release_time && (
+                  <div className="mt-2">
+                    <Input 
+                      type="datetime-local" 
+                      value={formData.release_time || ''} 
+                      onChange={(e) => handleUpdate('release_time', e.target.value)}
+                    />
+                  </div>
+                )}
 
                 <div className="pt-2">
                   <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
@@ -641,6 +629,17 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                       <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
                     </label>
                   </div>
+                  {formData.custom_message_email && (
+                    <div className="mt-2">
+                      <textarea 
+                        className="w-full text-sm border border-slate-300 rounded-md focus:ring-green-500 py-2 px-3 outline-none focus:border-green-500"
+                        rows="3"
+                        placeholder="Terima kasih atas pesanan Anda..."
+                        value={formData.custom_message_text || ''}
+                        onChange={(e) => handleUpdate('custom_message_text', e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -714,7 +713,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                   </label>
                 </div>
 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input 
                       type="checkbox" 
@@ -731,8 +730,69 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                 </div>
                 <p className="text-[10px] text-slate-400">Required to activate follow up text feature</p>
 
-                <div className="pt-4 text-center">
-                  <button className="text-sm font-bold text-green-500 hover:text-green-600 flex items-center gap-1 justify-center w-full">
+                <div className="flex justify-between items-center mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={isPhysical ? true : (formData.ask_address || false)}
+                      disabled={isPhysical}
+                      onChange={(e) => handleUpdate('ask_address', e.target.checked)}
+                      className="rounded text-green-500 focus:ring-green-500 w-4 h-4"
+                    />
+                    <span className="text-sm text-slate-700">Address {isPhysical && <span className="text-xs text-slate-400">(Required for physical product)</span>}</span>
+                  </label>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={isPhysical ? true : (formData.require_address || false)} disabled={isPhysical} onChange={(e) => handleUpdate('require_address', e.target.checked)} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                  </label>
+                </div>
+
+                {/* Dynamic Custom Questions */}
+                {formData.custom_questions && formData.custom_questions.map((cq, idx) => (
+                  <div key={cq.id} className="pt-4 border-t border-slate-100 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <Input 
+                        placeholder="Question Label (e.g. T-Shirt Size)" 
+                        value={cq.label || ''} 
+                        onChange={(e) => {
+                          const newQ = [...formData.custom_questions];
+                          newQ[idx] = { ...newQ[idx], label: e.target.value };
+                          handleUpdate('custom_questions', newQ);
+                        }}
+                        className="text-sm h-10 w-full"
+                      />
+                      <button 
+                        onClick={() => {
+                          const newQ = formData.custom_questions.filter((_, i) => i !== idx);
+                          handleUpdate('custom_questions', newQ);
+                        }}
+                        className="ml-3 p-2 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      <span className="text-xs text-slate-500 font-medium">Required</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={cq.required || false} onChange={(e) => {
+                          const newQ = [...formData.custom_questions];
+                          newQ[idx] = { ...newQ[idx], required: e.target.checked };
+                          handleUpdate('custom_questions', newQ);
+                        }} />
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                      </label>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="pt-4 text-center border-t border-slate-100 mt-2">
+                  <button 
+                    onClick={() => {
+                      const current = formData.custom_questions || [];
+                      handleUpdate('custom_questions', [...current, { id: Date.now().toString(), label: '', required: false }]);
+                    }}
+                    className="text-sm font-bold text-green-500 hover:text-green-600 flex items-center gap-1 justify-center w-full"
+                  >
                     <Plus className="w-4 h-4" /> Add Another Question
                   </button>
                 </div>
@@ -740,16 +800,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
             </div>
 
           </div>
-          </div>
-        )}
-
-        {activeTab === 'integrations' && (
-          <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-6 text-center text-slate-500 py-20 mt-8">
-            <h3 className="text-lg font-bold text-slate-700 mb-2">No Integrations Configured</h3>
-            <p className="text-sm">Additional integrations and webhooks for this product type will appear here.</p>
-          </div>
-        )}
-      </div>
+        </div>
 
       {/* Sticky Footer */}
       <div className="bg-white border-t border-slate-200 p-4 px-6 flex items-center justify-end gap-3 shrink-0">
@@ -760,6 +811,7 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
             Save
          </button>
       </div>
+    </div>
     </div>
   );
 }

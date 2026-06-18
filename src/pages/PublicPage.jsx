@@ -6,6 +6,7 @@ import * as LucideIcons from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import ComplexBlockRender from '@/components/ComplexBlockRender'
 import { toast } from 'react-hot-toast'
+import { useBiteship } from '@/hooks/useBiteship'
 
 const BRAND_COLORS = {
   instagram: '#E1306C',
@@ -24,20 +25,79 @@ export default function PublicPage() {
   const [error, setError] = useState(null)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', address: '' })
+  const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', address: '', email: '', customAnswers: {} })
   const [creatorWA, setCreatorWA] = useState('')
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
+
+  // Biteship States
+  const { areas, searchArea, isSearchingArea, calculateRates, isLoadingRates, createOrder } = useBiteship()
+  const [biteshipOrigin, setBiteshipOrigin] = useState(null)
+  const [areaSearchInput, setAreaSearchInput] = useState('')
+  const [showAreaResults, setShowAreaResults] = useState(false)
+  const [selectedDestinationArea, setSelectedDestinationArea] = useState(null)
+  const [shippingRates, setShippingRates] = useState([])
+  const [selectedRate, setSelectedRate] = useState(null)
+
+  const handleCalculateRates = async (destId) => {
+    if (!biteshipOrigin?.origin_area_id || !destId || !selectedProduct) return;
+    
+    let weightGrams = 1000;
+    if (selectedProduct.weight) {
+      weightGrams = parseFloat(selectedProduct.weight) * 1000;
+    }
+    
+    const items = [{
+      name: selectedProduct.title,
+      description: selectedProduct.description || "Barang",
+      value: parseInt(selectedProduct.price || 0),
+      length: parseInt(selectedProduct.length || 10),
+      width: parseInt(selectedProduct.width || 10),
+      height: parseInt(selectedProduct.height || 10),
+      weight: weightGrams,
+      quantity: 1
+    }];
+
+    const res = await calculateRates(biteshipOrigin.origin_area_id, destId, items);
+    if (res.success) {
+      setShippingRates(res.rates);
+      if (res.rates.length > 0) {
+        setSelectedRate(res.rates[0]);
+      } else {
+        setSelectedRate(null);
+      }
+    } else {
+      toast.error(res.error || "Gagal menghitung ongkos kirim.");
+      setShippingRates([]);
+      setSelectedRate(null);
+    }
+  }
 
   const handleCheckout = async (e) => {
     e.preventDefault();
     if (!selectedProduct) return;
-    if (selectedProduct.ask_phone !== false && !checkoutForm.name) {
+    if (selectedProduct.require_name && !checkoutForm.name) {
       toast.error("Please fill in your Name.");
+      return;
+    }
+    if (selectedProduct.ask_phone !== false && selectedProduct.require_phone !== false && !checkoutForm.phone) {
+      toast.error("Please fill in your Phone Number.");
       return;
     }
     if (selectedProduct.require_address && !checkoutForm.address) {
       toast.error("Please fill in your Shipping Address.");
       return;
+    }
+    if (selectedProduct.custom_message_email && !checkoutForm.email) {
+      toast.error("Please fill in your Email.");
+      return;
+    }
+    if (selectedProduct.custom_questions) {
+      for (const q of selectedProduct.custom_questions) {
+        if (q.required && !checkoutForm.customAnswers[q.id]) {
+          toast.error(`Please fill in: ${q.label}`);
+          return;
+        }
+      }
     }
 
     let variantName = '';
@@ -49,6 +109,24 @@ export default function PublicPage() {
         if (variant.price) finalPrice = variant.price;
       }
     }
+
+    if (selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id) {
+      if (!selectedDestinationArea) {
+        toast.error("Silakan pilih Kecamatan Tujuan pengiriman.");
+        return;
+      }
+      if (!selectedRate) {
+        toast.error("Silakan pilih Kurir Pengiriman.");
+        return;
+      }
+    }
+
+    let shippingCost = 0;
+    if (selectedRate) {
+      shippingCost = selectedRate.price;
+    }
+
+    const grandTotal = parseInt(finalPrice) + parseInt(shippingCost);
 
     try {
       // 1. Simpan order ke database
@@ -62,7 +140,9 @@ export default function PublicPage() {
           amount: finalPrice,
           customer_name: checkoutForm.name,
           customer_phone: checkoutForm.phone || null,
+          customer_email: checkoutForm.email || null,
           customer_address: checkoutForm.address || null,
+          custom_answers: checkoutForm.customAnswers || null,
           status: 'pending'
         })
         .select()
@@ -73,7 +153,7 @@ export default function PublicPage() {
       // 2. Minta Token Snap dari Midtrans (Lewat Supabase RPC Backend)
       const { data: result, error: rpcError } = await supabase.rpc('get_midtrans_token', {
         p_order_id: orderData.id,
-        p_gross_amount: parseInt(finalPrice),
+        p_gross_amount: parseInt(grandTotal),
         p_first_name: checkoutForm.name,
         p_phone: checkoutForm.phone || '08123456789',
         p_address: checkoutForm.address || '',
@@ -103,7 +183,55 @@ export default function PublicPage() {
       window.snap.pay(result.token, {
         onSuccess: async function(snapResult) {
           await supabase.from('orders').update({ status: 'paid', midtrans_order_id: snapResult.order_id }).eq('id', orderData.id);
-          toast.success("Pembayaran Berhasil!");
+          
+          if (selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id && selectedDestinationArea && selectedRate) {
+            toast.loading("Menerbitkan Resi otomatis...", { id: "resi_toast" });
+            
+            let weightGrams = 1000;
+            if (selectedProduct.weight) weightGrams = parseFloat(selectedProduct.weight) * 1000;
+
+            const payload = {
+              shipper_contact_name: biteshipOrigin.full_name || "Seller",
+              shipper_contact_phone: biteshipOrigin.whatsapp_number || "081234567890",
+              origin_contact_name: biteshipOrigin.full_name || "Seller",
+              origin_contact_phone: biteshipOrigin.whatsapp_number || "081234567890",
+              origin_address: biteshipOrigin.origin_address || "Toko",
+              origin_area_id: biteshipOrigin.origin_area_id,
+              destination_area_id: selectedDestinationArea.id,
+              destination_contact_name: checkoutForm.name,
+              destination_contact_phone: checkoutForm.phone || "081234567890",
+              destination_contact_email: checkoutForm.email || "",
+              destination_address: checkoutForm.address,
+              courier_company: selectedRate.company,
+              courier_type: selectedRate.type,
+              delivery_type: "now",
+              reference_id: orderData.id,
+              items: [{
+                name: selectedProduct.title,
+                description: selectedProduct.description || "Barang",
+                value: parseInt(finalPrice),
+                length: parseInt(selectedProduct.length || 10),
+                width: parseInt(selectedProduct.width || 10),
+                height: parseInt(selectedProduct.height || 10),
+                weight: weightGrams,
+                quantity: 1
+              }]
+            };
+
+            const biteshipRes = await createOrder(payload);
+            if (biteshipRes.success) {
+              await supabase.from('orders').update({ 
+                tracking_number: biteshipRes.order.waybill_id,
+                shipping_courier: selectedRate.courier_name
+              }).eq('id', orderData.id);
+              toast.success(`Berhasil! Resi: ${biteshipRes.order.waybill_id}`, { id: "resi_toast" });
+            } else {
+              toast.error("Resi otomatis gagal, harap buat manual di dashboard Biteship.", { id: "resi_toast" });
+            }
+          } else {
+            toast.success("Pembayaran Berhasil!");
+          }
+
           setIsCheckoutOpen(false);
         },
         onPending: function(snapResult) {
@@ -192,6 +320,15 @@ export default function PublicPage() {
             }
           } catch (e) {
             console.error('Failed to fetch WA:', e)
+          }
+
+          try {
+            const { data: originData } = await supabase.rpc('get_page_shipping_origin', { page_slug: slug })
+            if (originData) {
+              setBiteshipOrigin(originData);
+            }
+          } catch (e) {
+            console.error('Failed to fetch shipping origin:', e)
           }
         }
       } catch (err) {
@@ -363,7 +500,7 @@ export default function PublicPage() {
                         setSelectedProduct(product);
                         setSelectedVariantIndex(0);
                         setIsCheckoutOpen(true);
-                        setCheckoutForm({ name: '', phone: '', address: '' });
+                        setCheckoutForm({ name: '', phone: '', address: '', email: '', customAnswers: {} });
                       }
                     }} 
                   />
@@ -432,31 +569,37 @@ export default function PublicPage() {
       </div>
 
       {isCheckoutOpen && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex flex-col items-center p-6 text-center border-b border-slate-100 shrink-0">
-              <h3 className="text-xl font-black text-slate-900 mb-1">{selectedProduct.title || 'Checkout'}</h3>
-              <p className="text-sm font-bold text-slate-500">
-                {(() => {
-                  let p = selectedProduct.price;
-                  if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
-                    p = selectedProduct.variants[selectedVariantIndex].price;
-                  }
-                  return p ? `Rp ${parseInt(p).toLocaleString('id-ID')}` : 'FREE';
-                })()}
-              </p>
-            </div>
-            
-            <form onSubmit={handleCheckout} className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-6 flex flex-col gap-4">
+        <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col animate-fade-in-up overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between shrink-0 shadow-sm">
+            <button 
+              type="button" 
+              onClick={() => setIsCheckoutOpen(false)} 
+              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
+            >
+              <LucideIcons.ArrowLeft className="w-5 h-5" /> Back
+            </button>
+            <h3 className="text-lg font-black text-slate-900 hidden sm:block">Secure Checkout</h3>
+            <div className="w-20"></div> {/* Spacer for centering */}
+          </div>
+
+          <div className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+            <form onSubmit={handleCheckout} className="flex flex-col-reverse lg:flex-row gap-6 lg:gap-10">
+              
+              {/* Left Column: Form Fields */}
+              <div className="flex-1 flex flex-col gap-6">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-5">
+                  <h4 className="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3 flex items-center gap-2">
+                    <LucideIcons.User className="w-5 h-5 text-slate-400" /> Customer Details
+                  </h4>
+                  
                   {selectedProduct.variants?.length > 0 && (
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Select Variant</label>
                       <select 
                         value={selectedVariantIndex}
                         onChange={(e) => setSelectedVariantIndex(parseInt(e.target.value))}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
                       >
                         {selectedProduct.variants.map((v, i) => (
                           <option key={i} value={i}>{v.name} {v.price ? `- Rp ${parseInt(v.price).toLocaleString('id-ID')}` : ''}</option>
@@ -464,73 +607,278 @@ export default function PublicPage() {
                       </select>
                     </div>
                   )}
-                  {selectedProduct.ask_phone !== false ? (
-                    <>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
-                        <input 
-                          required
-                          type="text" 
-                          placeholder="e.g. John Doe"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900"
-                          value={checkoutForm.name}
-                          onChange={(e) => setCheckoutForm({...checkoutForm, name: e.target.value})}
-                        />
-                        <p className="text-[11px] text-slate-500 mt-2">Pesan akan diteruskan ke WhatsApp kreator.</p>
-                      </div>
-                      {selectedProduct.require_address && (
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Shipping Address</label>
-                          <textarea 
-                            required
-                            placeholder="Alamat lengkap (Jalan, RT/RW, Kecamatan, Kota, Kode Pos)"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
-                            rows={3}
-                            value={checkoutForm.address}
-                            onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
-                          />
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-center text-sm font-bold text-slate-500 py-4">
-                      Proceed to complete your transaction via WhatsApp.
+
+                  {/* Name */}
+                  {selectedProduct.ask_name !== false && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
+                      <input 
+                        required={selectedProduct.require_name !== false}
+                        type="text" 
+                        placeholder="e.g. John Doe"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+                        value={checkoutForm.name}
+                        onChange={(e) => setCheckoutForm({...checkoutForm, name: e.target.value})}
+                      />
                     </div>
                   )}
-                </div>
 
-                {/* Reviews Section */}
-                {selectedProduct.reviews?.length > 0 && (
-                  <div className="border-t border-slate-100 bg-slate-50 p-6">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center justify-between">
-                      <span>Customer Reviews ({selectedProduct.reviews.length})</span>
-                      <span className="text-yellow-500">⭐ {(selectedProduct.reviews.reduce((acc, curr) => acc + curr.rating, 0) / selectedProduct.reviews.length).toFixed(1)}</span>
-                    </h4>
-                    <div className="space-y-4">
-                      {selectedProduct.reviews.map((r, i) => (
-                        <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-sm text-slate-800">{r.reviewer_name || 'Anonymous'}</span>
-                            <span className="text-yellow-400 text-xs">{'⭐'.repeat(r.rating || 5)}</span>
-                          </div>
-                          {r.comment && <p className="text-sm text-slate-600 leading-relaxed mt-2">{r.comment}</p>}
+                  {/* Phone */}
+                  {selectedProduct.ask_phone !== false && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Phone Number</label>
+                      <input 
+                        required={selectedProduct.require_phone !== false}
+                        type="tel" 
+                        placeholder="e.g. 081234567890"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+                        value={checkoutForm.phone || ''}
+                        onChange={(e) => setCheckoutForm({...checkoutForm, phone: e.target.value})}
+                      />
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  {selectedProduct.custom_message_email && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Email Address</label>
+                      <input 
+                        required
+                        type="email" 
+                        placeholder="your@email.com"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+                        value={checkoutForm.email || ''}
+                        onChange={(e) => setCheckoutForm({...checkoutForm, email: e.target.value})}
+                      />
+                    </div>
+                  )}
+
+                  {/* Address */}
+                  {(selectedProduct.type === 'physical_product' || selectedProduct.ask_address || selectedProduct.require_address) && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Shipping Address</label>
+                      
+                      {(selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id) ? (
+                        <div className="space-y-4">
+                           <div className="relative">
+                              <label className="block text-sm font-medium text-slate-600 mb-1">Kecamatan Tujuan</label>
+                              <div className="relative">
+                                <LucideIcons.Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                                <input
+                                  type="text"
+                                  placeholder="Cari kecamatan (min 3 huruf)"
+                                  className="w-full pl-10 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+                                  value={areaSearchInput}
+                                  onChange={(e) => {
+                                    setAreaSearchInput(e.target.value);
+                                    if (e.target.value.length >= 3) {
+                                      searchArea(e.target.value);
+                                      setShowAreaResults(true);
+                                    } else {
+                                      setShowAreaResults(false);
+                                    }
+                                  }}
+                                />
+                              </div>
+                              {isSearchingArea && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 text-center text-sm text-slate-500">
+                                  Mencari...
+                                </div>
+                              )}
+                              {showAreaResults && areas.length > 0 && !isSearchingArea && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                  {areas.map(area => (
+                                    <button
+                                      key={area.id}
+                                      type="button"
+                                      className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-sm transition-colors"
+                                      onClick={() => {
+                                        setSelectedDestinationArea(area);
+                                        setAreaSearchInput(area.name);
+                                        setShowAreaResults(false);
+                                        handleCalculateRates(area.id);
+                                      }}
+                                    >
+                                      <span className="font-bold text-slate-800 block">{area.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                           </div>
+                           
+                           {/* Shipping Rates */}
+                           {isLoadingRates ? (
+                              <div className="text-sm font-medium text-slate-500 animate-pulse bg-slate-50 p-4 rounded-xl border border-slate-200">Menghitung tarif ongkos kirim...</div>
+                           ) : shippingRates.length > 0 ? (
+                              <div className="space-y-2 mt-4">
+                                 <label className="block text-sm font-medium text-slate-600 mb-2">Pilih Kurir</label>
+                                 <div className="max-h-56 overflow-y-auto space-y-2 pr-2">
+                                   {shippingRates.map((rate, i) => (
+                                     <label key={i} className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${selectedRate?.courier_service_code === rate.courier_service_code ? 'border-[#0b5cff] bg-blue-50/50 ring-1 ring-[#0b5cff]/50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                        <div className="flex items-center gap-3">
+                                          <input 
+                                            type="radio" 
+                                            name="shipping_rate"
+                                            checked={selectedRate?.courier_service_code === rate.courier_service_code}
+                                            onChange={() => setSelectedRate(rate)}
+                                            className="w-4 h-4 text-[#0b5cff]"
+                                          />
+                                          <div>
+                                            <div className="font-bold text-slate-800 text-sm uppercase">{rate.courier_name} - {rate.courier_service_name}</div>
+                                            <div className="text-xs font-medium text-slate-500 mt-0.5">{rate.duration}</div>
+                                          </div>
+                                        </div>
+                                        <div className="font-bold text-slate-900">
+                                          Rp {rate.price.toLocaleString('id-ID')}
+                                        </div>
+                                     </label>
+                                   ))}
+                                 </div>
+                              </div>
+                           ) : selectedDestinationArea && !isLoadingRates && (
+                              <div className="text-sm font-medium text-red-600 bg-red-50 p-4 rounded-xl border border-red-200">Tidak ada kurir tersedia untuk rute ini.</div>
+                           )}
+
+                           <div>
+                             <label className="block text-sm font-medium text-slate-600 mb-1">Detail Alamat Lengkap</label>
+                             <textarea 
+                                required={selectedProduct.require_address}
+                                placeholder="Jalan, RT/RW, Blok, No Rumah..."
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
+                                rows={2}
+                                value={checkoutForm.address}
+                                onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
+                              />
+                           </div>
                         </div>
-                      ))}
+                      ) : (
+                        <textarea 
+                          required={selectedProduct.type === 'physical_product' || selectedProduct.require_address}
+                          placeholder="Alamat lengkap (Jalan, RT/RW, Kecamatan, Kota, Kode Pos)"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
+                          rows={3}
+                          value={checkoutForm.address}
+                          onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Custom Questions */}
+                  {selectedProduct.custom_questions?.map((q, idx) => (
+                    <div key={q.id || idx}>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">{q.label}</label>
+                      <input 
+                        required={q.required}
+                        type="text" 
+                        placeholder="Your answer"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+                        value={checkoutForm.customAnswers[q.id] || ''}
+                        onChange={(e) => setCheckoutForm({...checkoutForm, customAnswers: {...checkoutForm.customAnswers, [q.id]: e.target.value}})}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column: Order Summary */}
+              <div className="w-full lg:w-[400px] shrink-0">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:sticky lg:top-24">
+                  <h4 className="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+                    <LucideIcons.ShoppingCart className="w-5 h-5 text-slate-400" /> Order Summary
+                  </h4>
+                  
+                  <div className="flex gap-4 items-start mb-6">
+                    <div className="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100 relative">
+                      {selectedProduct.thumbnail_url ? (
+                        <img src={selectedProduct.thumbnail_url} alt="Product" className="w-full h-full object-cover" />
+                      ) : (selectedProduct.icon && LucideIcons[selectedProduct.icon]) ? (
+                        <div className="absolute inset-0 flex items-center justify-center opacity-40">
+                          {(() => {
+                            const IconComponent = LucideIcons[selectedProduct.icon];
+                            return <IconComponent className="w-8 h-8" />;
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center opacity-40">
+                          <LucideIcons.Image className="w-8 h-8" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="font-bold text-slate-800 text-sm line-clamp-2 leading-snug">{selectedProduct.title || 'Untitled Product'}</h5>
+                      {selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex] && (
+                        <p className="text-xs text-slate-500 mt-1 font-medium bg-slate-100 inline-block px-2 py-0.5 rounded">
+                          Variant: {selectedProduct.variants[selectedVariantIndex].name}
+                        </p>
+                      )}
+                      <div className="mt-2 font-black text-slate-900 text-sm">
+                        {(() => {
+                          let p = selectedProduct.price;
+                          if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
+                            p = selectedProduct.variants[selectedVariantIndex].price;
+                          }
+                          return p ? `Rp ${parseInt(p).toLocaleString('id-ID')}` : 'FREE';
+                        })()}
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-              
-              <div className="p-4 sm:p-6 border-t border-slate-100 bg-white shrink-0">
-                <div className="flex gap-3">
-                  <button type="button" onClick={() => setIsCheckoutOpen(false)} className="flex-1 py-3 px-4 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
-                    Cancel
+
+                  <div className="border-t border-slate-100 pt-4 mb-6">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-500 font-medium">Subtotal</span>
+                        <span className="text-sm font-bold text-slate-800">
+                          {(() => {
+                            let p = selectedProduct.price || 0;
+                            if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
+                              p = selectedProduct.variants[selectedVariantIndex].price;
+                            }
+                            return p ? `Rp ${parseInt(p).toLocaleString('id-ID')}` : 'FREE';
+                          })()}
+                        </span>
+                      </div>
+                      
+                      {selectedRate && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-500 font-medium">Shipping ({selectedRate.courier_name})</span>
+                          <span className="text-sm font-bold text-slate-800">
+                            Rp {selectedRate.price.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4 mt-4 border-t border-slate-100">
+                      <span className="text-slate-800 font-black text-lg">Total</span>
+                      <span className="font-black text-[#0b5cff] text-xl">
+                        {(() => {
+                          let p = selectedProduct.price || 0;
+                          if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
+                            p = selectedProduct.variants[selectedVariantIndex].price;
+                          }
+                          let total = parseInt(p) + parseInt(selectedRate?.price || 0);
+                          return total ? `Rp ${total.toLocaleString('id-ID')}` : 'FREE';
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id && (!selectedDestinationArea || !selectedRate)}
+                    className="w-full bg-[#0b5cff] hover:bg-[#094acc] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <LucideIcons.CreditCard className="w-5 h-5" />
+                    Bayar Sekarang
                   </button>
-                  <button type="submit" className="flex-[2] py-3 px-4 font-bold text-white bg-[#0b5cff] hover:bg-[#094acc] rounded-xl transition-colors shadow-lg shadow-[#0b5cff]/30 flex justify-center items-center gap-2">
-                    <LucideIcons.CreditCard className="w-5 h-5" /> Bayar Sekarang
-                  </button>
+
+                  <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400 font-medium">
+                    <LucideIcons.Lock className="w-3 h-3" /> Secure and Encrypted Payment
+                  </div>
                 </div>
               </div>
+
             </form>
           </div>
         </div>

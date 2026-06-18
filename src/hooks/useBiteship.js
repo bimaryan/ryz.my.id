@@ -10,6 +10,9 @@ export function useBiteship() {
   const [couriers, setCouriers] = useState([]);
   const [isSearchingArea, setIsSearchingArea] = useState(false);
   const [isLoadingCouriers, setIsLoadingCouriers] = useState(false);
+  const [isTracking, setIsTracking] = useState(false);
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   // Search areas (Province, City, District) based on text input
   const searchArea = useCallback(async (input) => {
@@ -79,12 +82,102 @@ export function useBiteship() {
     }
   }, []);
 
+  // Track a waybill/receipt number
+  const trackWaybill = useCallback(async (trackingNumber, courierCode) => {
+    setIsTracking(true);
+    try {
+      const response = await fetch(`${API_URL}/trackings/${trackingNumber}/couriers/${courierCode}`, {
+        headers: {
+          'Authorization': BITESHIP_API_KEY
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        return data;
+      } else {
+        console.error("Biteship Tracking Error:", data);
+        return { success: false, error: data.error || data.message || "Tracking failed" };
+      }
+    } catch (error) {
+      console.error("Failed to track waybill:", error);
+      return { success: false, error: error.message };
+    } finally {
+      setIsTracking(false);
+    }
+  }, []);
+
+  // Calculate shipping rates
+  const calculateRates = useCallback(async (originAreaId, destinationAreaId, items) => {
+    setIsLoadingRates(true);
+    try {
+      const payload = {
+        origin_area_id: originAreaId,
+        destination_area_id: destinationAreaId,
+        couriers: "jne,jnt,sicepat,anteraja,ninja,grab,gojek",
+        items: items
+      };
+      const response = await fetch(`${API_URL}/rates/couriers`, {
+        method: 'POST',
+        headers: {
+          'Authorization': BITESHIP_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (data.success) {
+        return { success: true, rates: data.pricing };
+      } else {
+        console.error("Biteship Rates Error:", data);
+        return { success: false, error: data.error || data.message || "Failed to calculate rates" };
+      }
+    } catch (error) {
+      console.error("Failed to calculate rates:", error);
+      return { success: false, error: error.message };
+    } finally {
+      setIsLoadingRates(false);
+    }
+  }, []);
+
+  // Create Biteship Order (to get automatic waybill/resi)
+  const createOrder = useCallback(async (payload) => {
+    setIsCreatingOrder(true);
+    try {
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Authorization': BITESHIP_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (data.success) {
+        return { success: true, order: data };
+      } else {
+        console.error("Biteship Create Order Error:", data);
+        return { success: false, error: data.error || data.message || "Failed to create order" };
+      }
+    } catch (error) {
+      console.error("Failed to create order:", error);
+      return { success: false, error: error.message };
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  }, []);
+
   return {
     areas,
     searchArea,
     isSearchingArea,
     couriers,
     fetchCouriers,
-    isLoadingCouriers
+    isLoadingCouriers,
+    trackWaybill,
+    isTracking,
+    calculateRates,
+    isLoadingRates,
+    createOrder,
+    isCreatingOrder
   };
 }

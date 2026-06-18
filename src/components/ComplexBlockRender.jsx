@@ -43,37 +43,93 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
     avgRating = (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1);
   }
 
+  const layout = link.block_layout || 'default';
+
+  let isReleased = true;
+  if (link.set_release_time && link.release_time) {
+    const releaseDate = new Date(link.release_time);
+    if (new Date() < releaseDate) {
+      isReleased = false;
+    }
+  }
+
   const handleAction = (e) => {
     e.preventDefault();
+    if (!isReleased) return;
     if (onClick) onClick(link);
   };
+
+  const renderThumbnail = (className) => (
+    <div className={`relative flex flex-col justify-center bg-black/5 overflow-hidden ${className}`}>
+      {thumbnail_url ? (
+        <img src={thumbnail_url} alt={title} className="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-40">
+          {icon && LucideIcons[icon] ? (
+            React.createElement(LucideIcons[icon], { className: "w-8 h-8" })
+          ) : (
+            <LucideIcons.Image className="w-8 h-8" />
+          )}
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20 mix-blend-multiply"></div>
+    </div>
+  );
+
+  const renderActionButton = (className) => (
+    <div 
+      className={`font-black rounded-lg shadow-sm transition-transform ${isReleased ? 'hover:scale-105' : 'opacity-70'} ${className}`} 
+      style={{ backgroundColor: isReleased ? actionBg : '#94a3b8', color: isReleased ? actionText : '#ffffff' }}
+    >
+      {!isReleased ? 'Coming Soon' : (button_text || 'Beli Sekarang')}
+    </div>
+  );
+
+  if (layout === 'compact') {
+    return (
+      <button
+        onClick={handleAction}
+        className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-row items-center p-2 sm:p-3`}
+        style={{ backgroundColor: cardBg, color: cardText }}
+      >
+        {renderThumbnail("w-14 h-14 sm:w-16 sm:h-16 rounded-md shrink-0")}
+        <div className="px-3 flex flex-col flex-1 relative z-20">
+          <h3 className="font-bold text-sm sm:text-base leading-tight line-clamp-1">{title || 'Untitled Product'}</h3>
+          {type !== 'blog' && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`font-black text-xs sm:text-sm ${isFree ? 'text-[#0b5cff]' : 'text-slate-800'}`}>
+                {isFree ? 'FREE' : `Rp ${parseInt(price).toLocaleString('id-ID')}`}
+              </span>
+              {discount_price && <span className="text-[10px] line-through opacity-40">{discount_price}</span>}
+            </div>
+          )}
+        </div>
+        {type !== 'blog' && (
+          <div className="shrink-0">
+            {renderActionButton("text-[10px] sm:text-xs px-3 py-1.5 sm:px-4 sm:py-2")}
+          </div>
+        )}
+      </button>
+    );
+  }
+
+  const isVertical = layout === 'large_image' || layout === 'grid';
 
   return (
     <button
       onClick={handleAction}
-      className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-row items-stretch`}
+      className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex ${isVertical ? 'flex-col' : 'flex-row'} items-stretch`}
       style={{ backgroundColor: cardBg, color: cardText, padding: 0 }}
     >
-      {/* Left side: Thumbnail */}
-      <div className="w-28 sm:w-36 shrink-0 relative flex flex-col justify-center bg-black/5">
-        {thumbnail_url ? (
-          <img src={thumbnail_url} alt={title} className="absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center opacity-40">
-            {icon && LucideIcons[icon] ? (
-              React.createElement(LucideIcons[icon], { className: "w-8 h-8" })
-            ) : (
-              <LucideIcons.Image className="w-8 h-8" />
-            )}
-          </div>
-        )}
-        {/* Subtle gradient overlay for text readability if needed */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20 mix-blend-multiply"></div>
-      </div>
+      {/* Thumbnail */}
+      {renderThumbnail(
+        layout === 'large_image' ? "w-full h-48 sm:h-56" : 
+        layout === 'grid' ? "w-full aspect-square" : 
+        "w-28 sm:w-36 shrink-0"
+      )}
 
-      {/* Right side: Content */}
-      <div className="p-4 sm:p-5 flex flex-col justify-between flex-1 w-full relative z-20">
-        
+      {/* Content */}
+      <div className={`p-4 sm:p-5 flex flex-col justify-between flex-1 w-full relative z-20`}>
         <div className="flex items-start justify-between gap-2 mb-2">
           <div>
             <h3 className="font-bold text-base sm:text-lg leading-tight line-clamp-2">{title || 'Untitled Product'}</h3>
@@ -107,13 +163,7 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
                 {isFree ? 'FREE' : `Rp ${parseInt(price).toLocaleString('id-ID')}`}
               </span>
             </div>
-            
-            <div 
-              className="text-[10px] sm:text-xs font-black px-4 py-2 rounded-lg shadow-sm transition-transform hover:scale-105" 
-              style={{ backgroundColor: actionBg, color: actionText }}
-            >
-              {button_text || 'Beli Sekarang'}
-            </div>
+            {renderActionButton("text-[10px] sm:text-xs px-4 py-2")}
           </div>
         )}
       </div>

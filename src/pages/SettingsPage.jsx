@@ -11,7 +11,8 @@ import { usePlanLimits } from '@/hooks/useSharesAndPlans'
 import { useLinks } from '@/hooks/useLinks'
 import { useCustomDomains } from '@/hooks/useCustomDomains'
 import { usePages } from '@/hooks/usePages'
-import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2 } from 'lucide-react'
+import { useBiteship } from '@/hooks/useBiteship'
+import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2, Store, Search as SearchIcon } from 'lucide-react'
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -38,6 +39,13 @@ export default function SettingsPage() {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const { areas, searchArea, isSearchingArea } = useBiteship()
+  const [areaSearch, setAreaSearch] = useState('')
+  const [showAreaResults, setShowAreaResults] = useState(false)
+  const [selectedAreaId, setSelectedAreaId] = useState('')
+  const [selectedAreaName, setSelectedAreaName] = useState('')
+  const [originAddress, setOriginAddress] = useState('')
+  const [isSavingEcommerce, setIsSavingEcommerce] = useState(false)
 
   useEffect(() => {
     fetchPlans()
@@ -65,6 +73,11 @@ export default function SettingsPage() {
         email: user.email || '',
         whatsapp_number: user.user_metadata?.whatsapp_number || '',
       })
+      if (user.user_metadata?.biteship_origin_area_id) {
+        setSelectedAreaId(user.user_metadata.biteship_origin_area_id)
+        setSelectedAreaName(user.user_metadata.biteship_origin_area_name || '')
+        setOriginAddress(user.user_metadata.biteship_origin_address || '')
+      }
     }
   }, [user, resetProfile])
 
@@ -109,6 +122,32 @@ export default function SettingsPage() {
     }
   }
 
+  const handleEcommerceSubmit = async (e) => {
+    e.preventDefault();
+    setSuccessMsg('');
+    setErrorMsg('');
+    setIsSavingEcommerce(true);
+
+    if (!selectedAreaId) {
+      setErrorMsg('Please select an origin area (Kecamatan)');
+      setIsSavingEcommerce(false);
+      return;
+    }
+
+    const res = await updateProfile({
+      biteship_origin_area_id: selectedAreaId,
+      biteship_origin_area_name: selectedAreaName,
+      biteship_origin_address: originAddress
+    });
+
+    setIsSavingEcommerce(false);
+    if (res.success) {
+      setSuccessMsg('E-commerce shipping origin saved successfully!');
+    } else {
+      setErrorMsg(res.error || 'Failed to save e-commerce settings');
+    }
+  };
+
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -139,6 +178,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
+    { id: 'ecommerce', label: 'E-Commerce', icon: Store },
     { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
     { id: 'security', label: 'Security & Password', icon: Shield },
     { id: 'devices', label: 'Connected Devices', icon: MonitorSmartphone },
@@ -256,6 +296,88 @@ export default function SettingsPage() {
 
                       <div className="pt-4 border-t border-slate-200">
                         <Button type="submit" isLoading={isProfileSubmitting || isLoading} className="bitly-button-primary">Save Changes</Button>
+                      </div>
+                    </form>
+                  )}
+
+                  {activeTab === 'ecommerce' && (
+                    <form onSubmit={handleEcommerceSubmit} className="space-y-6 max-w-lg">
+                      <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6">
+                        <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                          <Store className="w-5 h-5 text-[#0b5cff]" /> Shipping Origin Configuration
+                        </h3>
+                        <p className="text-sm text-slate-600">
+                          Set your store's origin location. This is crucial for calculating accurate shipping rates via Biteship.
+                        </p>
+                      </div>
+
+                      <div className="relative">
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Origin Area (Kecamatan)</label>
+                        <div className="relative">
+                          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                          <input
+                            type="text"
+                            placeholder="Type minimum 3 characters to search (e.g. Kebayoran Baru)"
+                            className="bitly-input pl-10 w-full"
+                            value={areaSearch}
+                            onChange={(e) => {
+                              setAreaSearch(e.target.value);
+                              if (e.target.value.length >= 3) {
+                                searchArea(e.target.value);
+                                setShowAreaResults(true);
+                              } else {
+                                setShowAreaResults(false);
+                              }
+                            }}
+                            onFocus={() => {
+                              if (areaSearch.length >= 3) setShowAreaResults(true);
+                            }}
+                          />
+                        </div>
+                        {isSearchingArea && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-4 text-center text-sm text-slate-500">
+                            Searching areas...
+                          </div>
+                        )}
+                        {showAreaResults && areas.length > 0 && !isSearchingArea && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                            {areas.map(area => (
+                              <button
+                                key={area.id}
+                                type="button"
+                                className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-sm transition-colors"
+                                onClick={() => {
+                                  setSelectedAreaId(area.id);
+                                  setSelectedAreaName(area.name);
+                                  setAreaSearch(area.name);
+                                  setShowAreaResults(false);
+                                }}
+                              >
+                                <span className="font-bold text-slate-800 block">{area.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {selectedAreaName && !showAreaResults && (
+                          <p className="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1">
+                            <CheckCircle2 className="w-4 h-4" /> Selected: {selectedAreaName}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Detailed Origin Address</label>
+                        <textarea
+                          placeholder="e.g. Jl. Sudirman No. 123, Rt 01 Rw 02"
+                          rows={3}
+                          value={originAddress}
+                          onChange={(e) => setOriginAddress(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl px-4 py-3 text-sm font-medium transition-all outline-none resize-none"
+                        ></textarea>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-200">
+                        <Button type="submit" isLoading={isSavingEcommerce} className="bitly-button-primary">Save E-Commerce Settings</Button>
                       </div>
                     </form>
                   )}

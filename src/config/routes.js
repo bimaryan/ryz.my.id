@@ -21,6 +21,8 @@ import LinksPage from '@/pages/LinksPage'
 import DocsPage from '@/pages/DocsPage'
 import TermsPage from '@/pages/TermsPage'
 import PrivacyPage from '@/pages/PrivacyPage'
+import OrdersPage from '@/pages/OrdersPage'
+import OrderTrackingPage from '@/pages/OrderTrackingPage'
 
 export const routes = [
   // Public routes
@@ -62,6 +64,11 @@ export const routes = [
   {
     path: '/:slug/blog/:blogId',
     element: BlogPublicPage,
+    public: true,
+  },
+  {
+    path: '/track/:orderId',
+    element: OrderTrackingPage,
     public: true,
   },
   {
@@ -134,6 +141,11 @@ export const routes = [
   {
     path: '/dashboard/pages/:id',
     element: PageEditor,
+    protected: true,
+  },
+  {
+    path: '/dashboard/orders',
+    element: OrdersPage,
     protected: true,
   },
 
