@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6fa; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .header { background: #0b5cff; padding: 30px 20px; text-align: center; color: white; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: bold; letter-spacing: -0.5px; }
+    .content { padding: 40px 30px; color: #273144; text-align: center; }
+    .content p { font-size: 16px; line-height: 1.6; color: #566b8f; margin-bottom: 30px; }
+    .btn { display: inline-block; background-color: #0b5cff; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: bold; font-size: 16px; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #e8ebf2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>RYZLink</h1>
+    </div>
+    <div class="content">
+      <h2 style="margin-top: 0;">Verifikasi Email Anda</h2>
+      <p>Halo,<br><br>Terima kasih telah mendaftar di RYZLink! Anda hanya tinggal satu langkah lagi untuk bisa menggunakan semua fitur keren kami. Silakan klik tombol di bawah ini untuk memverifikasi alamat email Anda.</p>
+      
+      <!-- INI ADALAH VARIABEL WAJIB DARI SUPABASE -->
+      <a href="{{ .ConfirmationURL }}" class="btn">Verifikasi Email Saya</a>
+      
+      <p style="margin-top: 30px; font-size: 14px;">Jika Anda tidak merasa mendaftar di RYZLink, Anda bisa mengabaikan email ini.</p>
+    </div>
+    <div class="footer">
+      &copy; 2026 RYZLink. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

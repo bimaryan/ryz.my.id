@@ -95,6 +95,22 @@ const TEMPLATES = [
   {
     name: 'Ocean Depth',
     theme: { font_family: 'Plus Jakarta Sans', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)', text_color: '#ffffff', button_bg: '#ffffff', button_text: '#0284c7', button_style: 'rounded-full', button_shadow: 'shadow-md', button_border: 'border border-transparent', button_animation: 'hover:shadow-xl transition-shadow' }
+  },
+  {
+    name: 'Y2K Sparkle',
+    theme: { font_family: 'Oswald', bg_type: 'color', bg_value: '#ff00ff', text_color: '#ffffff', button_bg: '#00ffff', button_text: '#000000', button_style: 'rounded-none', button_shadow: 'shadow-[6px_6px_0_#ffffff]', button_border: 'border-4 border-white', button_animation: 'hover:-translate-y-1 hover:shadow-[10px_10px_0_#ffffff] transition-all' }
+  },
+  {
+    name: 'Coffee Shop',
+    theme: { font_family: 'Playfair Display', bg_type: 'color', bg_value: '#f5ebe0', text_color: '#5e503f', button_bg: '#c6ac8f', button_text: '#ffffff', button_style: 'rounded-tl-2xl rounded-br-2xl', button_shadow: 'shadow-sm', button_border: 'border-transparent', button_animation: 'hover:scale-105 transition-transform' }
+  },
+  {
+    name: 'Neon Tokyo',
+    theme: { font_family: 'Syne', bg_type: 'gradient', bg_value: 'linear-gradient(to bottom, #0f0c29, #302b63, #24243e)', text_color: '#ffffff', button_bg: 'rgba(0,0,0,0.4)', button_text: '#ff007f', button_style: 'rounded-tr-3xl rounded-bl-3xl backdrop-blur-md', button_shadow: 'shadow-[0_0_20px_rgba(255,0,127,0.4)]', button_border: 'border border-[#ff007f]', button_animation: 'hover:shadow-[0_0_30px_rgba(255,0,127,0.7)] transition-all' }
+  },
+  {
+    name: 'Forest minimal',
+    theme: { font_family: 'DM Sans', bg_type: 'color', bg_value: '#ebf2ed', text_color: '#2d4a22', button_bg: '#ffffff', button_text: '#2d4a22', button_style: 'rounded-xl', button_shadow: 'shadow-sm', button_border: 'border-l-4 border-[#2d4a22]', button_animation: 'hover:translate-x-2 transition-transform' }
   }
 ]
 
@@ -925,6 +941,9 @@ export default function PageEditor() {
                     <option value="rounded-md">Rounded</option>
                     <option value="rounded-xl">Rounded XL</option>
                     <option value="rounded-full">Pill</option>
+                    <option value="rounded-[2rem]">Large Pill (2rem)</option>
+                    <option value="rounded-tl-2xl rounded-br-2xl">Leaf Shape</option>
+                    <option value="rounded-tr-3xl rounded-bl-3xl">Opposite Leaf</option>
                     <option value="rounded-xl shadow-[4px_4px_0px_rgba(0,0,0,1)] border-2 border-black">Brutalism</option>
                     <option value="rounded-2xl shadow-[8px_8px_16px_#d1d9e6,-8px_-8px_16px_#ffffff] border-transparent bg-[#f4f6fa] text-[#273144]">Neumorphism</option>
                   </select>
@@ -969,6 +988,9 @@ export default function PageEditor() {
                     <option value="border border-slate-300">Thin Solid</option>
                     <option value="border-2 border-black">Thick Dark</option>
                     <option value="border-2 border-[#0b5cff]">Accent Color</option>
+                    <option value="border-b-4 border-black">Bottom Bold</option>
+                    <option value="border-l-4 border-[#0b5cff]">Left Accent</option>
+                    <option value="border-l-4 border-transparent">Left Transparent</option>
                   </select>
                 </div>
                 

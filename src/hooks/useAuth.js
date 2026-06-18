@@ -98,6 +98,27 @@ export function useAuth() {
         data: updates
       })
       if (updateError) throw updateError
+
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser?.id) {
+        const publicUpdates = {}
+        if (updates.full_name !== undefined) publicUpdates.full_name = updates.full_name;
+        if (updates.avatar_url !== undefined) publicUpdates.avatar_url = updates.avatar_url;
+        if (updates.plan_type !== undefined) publicUpdates.plan_type = updates.plan_type;
+        if (updates.max_links !== undefined) publicUpdates.max_links = updates.max_links;
+        
+        if (Object.keys(publicUpdates).length > 0) {
+          const { error: publicUpdateError } = await supabase
+            .from('users')
+            .update(publicUpdates)
+            .eq('id', currentUser.id);
+            
+          if (publicUpdateError) {
+             console.error('Failed to sync to public.users:', publicUpdateError);
+          }
+        }
+      }
+
       return { success: true, data }
     } catch (err) {
       setError(err.message)

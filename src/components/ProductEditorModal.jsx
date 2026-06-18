@@ -7,6 +7,26 @@ import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
+const PHYSICAL_PRODUCT_CATEGORIES = {
+  "Elektronik": ["Handphone & Tablet", "Komputer & Laptop", "Kamera", "Audio", "Smart Home", "Aksesoris Elektronik"],
+  "Pakaian Pria": ["Kaos", "Kemeja", "Celana", "Jeans", "Jaket & Outerwear", "Pakaian Dalam", "Aksesoris Pria"],
+  "Pakaian Wanita": ["Atasan", "Bawahan", "Dress", "Jeans", "Jaket & Outerwear", "Pakaian Dalam", "Aksesoris Wanita"],
+  "Sepatu & Sandal": ["Sepatu Pria", "Sepatu Wanita", "Sandal Pria", "Sandal Wanita", "Sepatu Anak", "Kaos Kaki"],
+  "Tas": ["Tas Pria", "Tas Wanita", "Koper & Travel", "Tas Anak"],
+  "Kecantikan": ["Perawatan Wajah", "Makeup", "Perawatan Tubuh", "Parfum", "Perawatan Rambut", "Alat Kecantikan"],
+  "Kesehatan": ["Obat & Suplemen", "Alat Medis", "Perawatan Diri", "Kesehatan Seksual", "Kesehatan Mata"],
+  "Ibu & Bayi": ["Pakaian Bayi", "Perlengkapan Makan", "Perlengkapan Mandi", "Mainan Bayi", "Perlengkapan Ibu"],
+  "Rumah Tangga": ["Furnitur", "Dekorasi", "Perlengkapan Dapur", "Kamar Mandi", "Kamar Tidur", "Alat Kebersihan"],
+  "Makanan & Minuman": ["Makanan Kering", "Minuman", "Snack", "Bahan Masakan", "Makanan Segar"],
+  "Buku & Alat Tulis": ["Buku Bacaan", "Buku Pendidikan", "Alat Tulis", "Perlengkapan Kantor", "Buku Catatan"],
+  "Olahraga & Outdoor": ["Pakaian Olahraga", "Sepatu Olahraga", "Alat Olahraga", "Camping & Hiking", "Bersepeda", "Pancing"],
+  "Mainan & Hobi": ["Mainan Anak", "Action Figure", "Board Game", "Koleksi", "Alat Musik", "Video Game"],
+  "Otomotif": ["Aksesoris Mobil", "Aksesoris Motor", "Suku Cadang", "Perawatan Kendaraan", "Helm"],
+  "Hewan Peliharaan": ["Makanan Kucing", "Makanan Anjing", "Aksesoris Hewan", "Perawatan Hewan", "Aquarium"],
+  "Jam Tangan": ["Jam Tangan Pria", "Jam Tangan Wanita", "Jam Tangan Anak", "Aksesoris Jam"],
+  "Lainnya": ["Barang Custom", "Tiket & Voucher", "Produk Virtual", "Lain-lain"]
+};
+
 export default function ProductEditorModal({ isOpen, onClose, initialData, onSave }) {
   const { uploadImage } = useAuth();
   const { areas, searchArea, isSearchingArea, couriers, fetchCouriers, isLoadingCouriers } = useBiteship();
@@ -185,22 +205,31 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                   <select 
                     className="w-full border-slate-300 rounded-md focus:ring-green-500 text-sm py-2 px-3"
                     value={formData.category || ''}
-                    onChange={(e) => handleUpdate('category', e.target.value)}
+                    onChange={(e) => {
+                      handleUpdate('category', e.target.value);
+                      handleUpdate('sub_category', ''); // Reset sub-category when category changes
+                    }}
                   >
                     <option value="">Select Category</option>
-                    <option value="Kamera & Optik">Kamera & Optik</option>
-                    <option value="Pakaian">Pakaian</option>
+                    {Object.keys(PHYSICAL_PRODUCT_CATEGORIES).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-2">Sub Category</label>
                   <select 
-                    className="w-full border-slate-300 rounded-md focus:ring-green-500 text-sm py-2 px-3"
+                    className="w-full border-slate-300 rounded-md focus:ring-green-500 text-sm py-2 px-3 disabled:bg-slate-100 disabled:text-slate-400"
                     value={formData.sub_category || ''}
                     onChange={(e) => handleUpdate('sub_category', e.target.value)}
+                    disabled={!formData.category}
                   >
                     <option value="">Select Sub-Category</option>
-                    <option value="Aksesoris Kamera">Aksesoris Kamera</option>
+                    {formData.category && PHYSICAL_PRODUCT_CATEGORIES[formData.category] && 
+                      PHYSICAL_PRODUCT_CATEGORIES[formData.category].map(sub => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))
+                    }
                   </select>
                 </div>
               </div>

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Eye, EyeOff } from 'lucide-react'
 import { FcGoogle } from 'react-icons/fc'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 import SEO from '@/components/SEO'
 
 const DISPOSABLE_DOMAINS = [
@@ -32,6 +33,7 @@ export default function SignupPage() {
   const navigate = useNavigate()
   const { signUp, signInWithGoogle, isLoading, error: authError } = useAuth()
   const [serverError, setServerError] = useState(null)
+  const [successMessage, setSuccessMessage] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   
   // Math CAPTCHA state
@@ -68,7 +70,9 @@ export default function SignupPage() {
     const result = await signUp(data)
     
     if (result.success) {
-      navigate('/dashboard')
+      // Forcefully sign out in case Supabase auto-creates a session
+      await supabase.auth.signOut()
+      setSuccessMessage('Pendaftaran berhasil! Silakan cek email Anda untuk memverifikasi akun.')
     } else {
       if (result.error?.includes('rate limit')) {
         setServerError('Too many attempts. Please try again later.')
@@ -105,9 +109,23 @@ export default function SignupPage() {
         </div>
 
         <div className="bg-white border border-[#e8ebf2] shadow-sm rounded-[8px] py-8 px-6 sm:px-10">
-          <button
-            onClick={signInWithGoogle}
-            disabled={isLoading}
+          
+          {successMessage ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              </div>
+              <h3 className="text-xl font-bold text-[#273144] mb-2">Cek Email Anda</h3>
+              <p className="text-[#566b8f] mb-6">{successMessage}</p>
+              <Link to="/login" className="bitly-button-primary w-full h-12 text-[16px] inline-flex items-center justify-center">
+                Kembali ke halaman Login
+              </Link>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={signInWithGoogle}
+                disabled={isLoading}
             className="w-full flex items-center justify-center gap-2 h-12 bg-white border border-slate-200 rounded-[4px] text-[#273144] font-semibold hover:bg-slate-50 transition-colors mb-5"
             type="button"
           >
@@ -217,12 +235,14 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[13px] text-[#566b8f]">
-            By creating an account, you agree to RYZLink's{' '}
-            <a href="#" className="text-[#0b5cff] hover:underline">Terms of Service</a>{' '}
-            and{' '}
-            <a href="#" className="text-[#0b5cff] hover:underline">Privacy Policy</a>.
-          </p>
+            <p className="mt-6 text-center text-[13px] text-[#566b8f]">
+              By creating an account, you agree to RYZLink's{' '}
+              <a href="#" className="text-[#0b5cff] hover:underline">Terms of Service</a>{' '}
+              and{' '}
+              <a href="#" className="text-[#0b5cff] hover:underline">Privacy Policy</a>.
+            </p>
+            </>
+          )}
         </div>
       </div>
     </div>

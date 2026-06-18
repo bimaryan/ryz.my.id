@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6fa; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .header { background: #0b5cff; padding: 30px 20px; text-align: center; color: white; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: bold; letter-spacing: -0.5px; }
+    .content { padding: 40px 30px; color: #273144; text-align: center; }
+    .content p { font-size: 16px; line-height: 1.6; color: #566b8f; margin-bottom: 30px; }
+    .btn { display: inline-block; background-color: #0b5cff; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: bold; font-size: 16px; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #e8ebf2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>RYZLink</h1>
+    </div>
+    <div class="content">
+      <h2 style="margin-top: 0;">Reset Password Anda</h2>
+      <p>Halo,<br><br>Kami menerima permintaan untuk mengatur ulang password akun Anda di RYZLink. Jika ini memang Anda, silakan klik tombol di bawah ini untuk membuat password baru.</p>
+      
+      <!-- VARIABEL SUPABASE UNTUK RESET PASSWORD -->
+      <a href="{{ .ConfirmationURL }}" class="btn">Reset Password Saya</a>
+      
+      <p style="margin-top: 30px; font-size: 14px;">Jika Anda tidak pernah meminta reset password, Anda bisa mengabaikan email ini dan akun Anda akan tetap aman.</p>
+    </div>
+    <div class="footer">
+      &copy; 2026 RYZLink. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

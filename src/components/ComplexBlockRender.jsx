@@ -43,6 +43,12 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
     avgRating = (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1);
   }
 
+  // Prevent pill-shapes on large complex cards
+  let blockStyle = theme.button_style || '';
+  if (blockStyle.includes('rounded-full')) {
+    blockStyle = blockStyle.replace('rounded-full', 'rounded-[2rem]');
+  }
+
   const layout = link.block_layout || 'default';
 
   let isReleased = true;
@@ -89,7 +95,7 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
     return (
       <button
         onClick={handleAction}
-        className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex flex-row items-center p-2 sm:p-3`}
+        className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${blockStyle} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} relative overflow-hidden flex flex-row items-center p-2 sm:p-3`}
         style={{ backgroundColor: cardBg, color: cardText }}
       >
         {renderThumbnail("w-14 h-14 sm:w-16 sm:h-16 rounded-md shrink-0")}
@@ -97,7 +103,7 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
           <h3 className="font-bold text-sm sm:text-base leading-tight line-clamp-1">{title || 'Untitled Product'}</h3>
           {type !== 'blog' && (
             <div className="flex items-center gap-2 mt-1">
-              <span className={`font-black text-xs sm:text-sm ${isFree ? 'text-[#0b5cff]' : 'text-slate-800'}`}>
+              <span className="font-black text-xs sm:text-sm" style={{ color: isFree ? (theme.text_color || '#0b5cff') : cardText }}>
                 {isFree ? 'FREE' : `Rp ${parseInt(price).toLocaleString('id-ID')}`}
               </span>
               {discount_price && <span className="text-[10px] line-through opacity-40">{discount_price}</span>}
@@ -118,7 +124,7 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
   return (
     <button
       onClick={handleAction}
-      className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} border relative overflow-hidden flex ${isVertical ? 'flex-col' : 'flex-row'} items-stretch`}
+      className={`block w-full text-left transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${blockStyle} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} relative overflow-hidden flex ${isVertical ? 'flex-col' : 'flex-row'} items-stretch`}
       style={{ backgroundColor: cardBg, color: cardText, padding: 0 }}
     >
       {/* Thumbnail */}
@@ -159,7 +165,7 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
               {discount_price && (
                 <span className="text-[10px] line-through opacity-40 mb-[-2px]">{discount_price}</span>
               )}
-              <span className={`font-black ${isFree ? 'text-[#0b5cff]' : 'text-slate-800'}`}>
+              <span className="font-black" style={{ color: isFree ? (theme.text_color || '#0b5cff') : cardText }}>
                 {isFree ? 'FREE' : `Rp ${parseInt(price).toLocaleString('id-ID')}`}
               </span>
             </div>

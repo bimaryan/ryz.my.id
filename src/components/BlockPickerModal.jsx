@@ -95,7 +95,7 @@ export default function BlockPickerModal({ isOpen, onClose, onSelect }) {
   
   if (!isOpen) return null
 
-  const isProUser = user?.user_metadata?.plan_type === 'pro'
+  const isProUser = ['pro', 'enterprise'].includes(user?.user_metadata?.plan_type);
   const tabs = ['All Blocks', 'Basic', 'Monetization']
 
   const filteredBlocks = BLOCKS.filter(b => {

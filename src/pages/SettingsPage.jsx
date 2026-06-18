@@ -12,6 +12,7 @@ import { useLinks } from '@/hooks/useLinks'
 import { useCustomDomains } from '@/hooks/useCustomDomains'
 import { usePages } from '@/hooks/usePages'
 import { useBiteship } from '@/hooks/useBiteship'
+import { useBillingHistory } from '@/hooks/useBillingHistory'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2, Store, Search as SearchIcon } from 'lucide-react'
@@ -36,6 +37,7 @@ export default function SettingsPage() {
   const { links, fetchLinks } = useLinks()
   const { domains, fetchDomains } = useCustomDomains()
   const { uploadImage } = usePages()
+  const { history: billingHistory, fetchHistory: fetchBillingHistory, addBillingRecord, isLoading: isBillingLoading } = useBillingHistory()
   
   const [activeTab, setActiveTab] = useState('profile')
   const [successMsg, setSuccessMsg] = useState('')
@@ -54,6 +56,12 @@ export default function SettingsPage() {
     fetchLinks()
     fetchDomains()
   }, [fetchPlans, fetchLinks, fetchDomains])
+
+  useEffect(() => {
+    if (activeTab === 'billing') {
+      fetchBillingHistory()
+    }
+  }, [activeTab, fetchBillingHistory])
 
   useEffect(() => {
     if (!document.querySelector('script[src*="snap.js"]')) {
@@ -410,19 +418,19 @@ export default function SettingsPage() {
                           <div>
                             <div className="flex justify-between text-sm font-bold mb-1.5">
                               <span>Links Created</span>
-                              <span>{links.length} / {user?.user_metadata?.max_links || 100}</span>
+                              <span>{links.length} / {user?.user_metadata?.max_links === -1 ? 'Unlimited' : (user?.user_metadata?.max_links || 100)}</span>
                             </div>
                             <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden">
-                              <div className="h-full bg-white rounded-full" style={{ width: `${Math.min(100, (links.length / (user?.user_metadata?.max_links || 100)) * 100)}%` }}></div>
+                              <div className="h-full bg-white rounded-full" style={{ width: `${user?.user_metadata?.max_links === -1 ? 0 : Math.min(100, (links.length / (user?.user_metadata?.max_links || 100)) * 100)}%` }}></div>
                             </div>
                           </div>
                           <div>
                             <div className="flex justify-between text-sm font-bold mb-1.5">
                               <span>Custom Domains</span>
-                              <span>{domains.length} / {user?.user_metadata?.max_custom_domains || 1}</span>
+                              <span>{domains.length} / {(user?.user_metadata?.custom_domains || user?.user_metadata?.max_custom_domains === -1) ? 'Unlimited' : (user?.user_metadata?.max_custom_domains || 1)}</span>
                             </div>
                             <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden">
-                              <div className="h-full bg-white rounded-full" style={{ width: `${Math.min(100, (domains.length / (user?.user_metadata?.max_custom_domains || 1)) * 100)}%` }}></div>
+                              <div className="h-full bg-white rounded-full" style={{ width: `${(user?.user_metadata?.custom_domains || user?.user_metadata?.max_custom_domains === -1) ? 0 : Math.min(100, (domains.length / (user?.user_metadata?.max_custom_domains || 1)) * 100)}%` }}></div>
                             </div>
                           </div>
                         </div>
@@ -487,11 +495,24 @@ export default function SettingsPage() {
                                       if (result && result.token) {
                                         toast.dismiss("payment_toast");
                                         window.snap.pay(result.token, {
-                                          onSuccess: async function() {
+                                          onSuccess: async function(resultSnap) {
                                             toast.loading("Memperbarui akun...", { id: "update_toast" });
-                                            const res = await updateProfile({ plan_type: plan.plan_name });
+                                            const res = await updateProfile({ 
+                                              plan_type: planName,
+                                              max_links: plan.max_links !== undefined ? plan.max_links : (planName === 'free' ? 100 : -1),
+                                              custom_domains: plan.custom_domains !== undefined ? plan.custom_domains : (planName !== 'free'),
+                                              max_custom_domains: plan.max_custom_domains !== undefined ? plan.max_custom_domains : (planName !== 'free' ? -1 : 1),
+                                              max_team_members: plan.max_team_members !== undefined ? plan.max_team_members : (planName === 'free' ? 0 : 10)
+                                            });
                                             if (res.success) {
-                                              setSuccessMsg(`Berhasil berlangganan ${plan.plan_name}! Anda sekarang bisa menggunakan fitur PRO.`);
+                                              await addBillingRecord({
+                                                plan_name: planName,
+                                                amount: priceIDR,
+                                                status: 'paid',
+                                                midtrans_order_id: resultSnap?.order_id || orderId
+                                              });
+                                              fetchBillingHistory();
+                                              setSuccessMsg(`Berhasil berlangganan ${planName}! Anda sekarang bisa menggunakan fitur PRO.`);
                                               toast.success("Akun berhasil di-upgrade!", { id: "update_toast" });
                                             } else {
                                               setErrorMsg('Gagal memperbarui akun setelah pembayaran.');
@@ -520,6 +541,57 @@ export default function SettingsPage() {
                               </div>
                               );
                             })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Billing History Section */}
+                      <div className="border border-slate-200 rounded-xl p-6 bg-white shadow-sm mt-8">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">Billing History</h3>
+                        {isBillingLoading ? (
+                          <div className="text-center py-4 text-slate-500 font-medium">Loading history...</div>
+                        ) : billingHistory && billingHistory.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                              <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-bold">Date</th>
+                                  <th className="px-4 py-3 font-bold">Plan</th>
+                                  <th className="px-4 py-3 font-bold">Amount</th>
+                                  <th className="px-4 py-3 font-bold">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {billingHistory.map((item) => (
+                                  <tr key={item.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
+                                    <td className="px-4 py-3 text-slate-600 font-medium">
+                                      {new Date(item.created_at).toLocaleDateString('en-US', {
+                                        year: 'numeric', month: 'short', day: 'numeric'
+                                      })}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="capitalize font-bold text-slate-900">{item.plan_name}</span>
+                                    </td>
+                                    <td className="px-4 py-3 font-bold text-slate-900">
+                                      Rp {item.amount.toLocaleString('id-ID')}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className={`px-2 py-1 text-xs font-bold rounded-full ${
+                                        item.status === 'paid' ? 'bg-green-100 text-green-700' :
+                                        item.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                        'bg-yellow-100 text-yellow-700'
+                                      }`}>
+                                        {item.status.toUpperCase()}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-slate-500 font-medium border border-dashed border-slate-200 rounded-lg bg-slate-50">
+                            No billing history found.
                           </div>
                         )}
                       </div>
