@@ -20,15 +20,16 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
+      '/api/midtrans': {
+        target: 'https://app.sandbox.midtrans.com',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/midtrans/, ''),
+      },
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
-      },
-      '/api/midtrans': {
-        target: 'https://app.sandbox.midtrans.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/midtrans/, ''),
       }
     },
     open: true,
