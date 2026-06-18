@@ -37,6 +37,12 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
   const plainDescription = description ? description.replace(/<[^>]+>/g, '') : '';
   const isFree = !price || price == 0 || isNaN(price);
 
+  const reviews = link.reviews || [];
+  let avgRating = 0;
+  if (reviews.length > 0) {
+    avgRating = (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1);
+  }
+
   const handleAction = (e) => {
     e.preventDefault();
     if (onClick) onClick(link);
@@ -73,6 +79,11 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
             <h3 className="font-bold text-base sm:text-lg leading-tight line-clamp-2">{title || 'Untitled Product'}</h3>
             {subInfo && (
               <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest opacity-50 mt-1">{subInfo}</p>
+            )}
+            {reviews.length > 0 && (
+              <div className="flex items-center gap-1 mt-1 text-[10px] sm:text-xs font-bold" style={{ color: isDark ? '#fbbf24' : '#eab308' }}>
+                ⭐ {avgRating} <span style={{ color: cardText }} className="opacity-50 font-medium">({reviews.length})</span>
+              </div>
             )}
           </div>
           <div className="shrink-0 px-2 py-1 bg-black/5 backdrop-blur-md rounded border border-black/5 text-[9px] font-black uppercase tracking-widest opacity-80">

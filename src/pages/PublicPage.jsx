@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import * as LucideIcons from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import ComplexBlockRender from '@/components/ComplexBlockRender'
+import { toast } from 'react-hot-toast'
 
 const BRAND_COLORS = {
   instagram: '#E1306C',
@@ -25,27 +26,125 @@ export default function PublicPage() {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', address: '' })
   const [creatorWA, setCreatorWA] = useState('')
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
 
-  const handleCheckout = (e) => {
+  const handleCheckout = async (e) => {
     e.preventDefault();
     if (!selectedProduct) return;
     if (selectedProduct.ask_phone !== false && !checkoutForm.name) {
-      alert("Please fill in your Name.");
+      toast.error("Please fill in your Name.");
       return;
     }
     if (selectedProduct.require_address && !checkoutForm.address) {
-      alert("Please fill in your Shipping Address.");
+      toast.error("Please fill in your Shipping Address.");
       return;
     }
-    let text = `Halo, saya tertarik dengan:\n\n*${selectedProduct.title}*\n`;
-    if (selectedProduct.price) text += `Harga: Rp ${parseInt(selectedProduct.price).toLocaleString('id-ID')}\n`;
-    if (checkoutForm.name) text += `\nNama Pemesan: ${checkoutForm.name}`;
-    if (checkoutForm.address) text += `\nAlamat Pengiriman: ${checkoutForm.address}`;
-    
-    const waUrl = `https://wa.me/${creatorWA}?text=${encodeURIComponent(text)}`;
-    window.open(waUrl, '_blank');
-    setIsCheckoutOpen(false);
+
+    let variantName = '';
+    let finalPrice = selectedProduct.price || 0;
+    if (selectedProduct.variants && selectedProduct.variants.length > 0) {
+      const variant = selectedProduct.variants[selectedVariantIndex];
+      if (variant) {
+        variantName = variant.name;
+        if (variant.price) finalPrice = variant.price;
+      }
+    }
+
+    try {
+      // 1. Simpan order ke database
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          page_slug: slug,
+          product_id: selectedProduct.id,
+          product_name: selectedProduct.title,
+          variant_name: variantName || null,
+          amount: finalPrice,
+          customer_name: checkoutForm.name,
+          customer_phone: checkoutForm.phone || null,
+          customer_address: checkoutForm.address || null,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Minta Token Snap dari Midtrans (Lewat Proxy lokal)
+      const response = await fetch('/api/midtrans/snap/v1/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Basic ' + btoa(import.meta.env.VITE_MIDTRANS_SERVER_KEY + ':')
+        },
+        body: JSON.stringify({
+          transaction_details: {
+            order_id: orderData.id,
+            gross_amount: parseInt(finalPrice)
+          },
+          customer_details: {
+            first_name: checkoutForm.name,
+            phone: checkoutForm.phone || '08123456789',
+            billing_address: {
+              address: checkoutForm.address || ''
+            }
+          }
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error("Midtrans Error:", result);
+        toast.error("Gagal memulai pembayaran: " + (result.error_messages ? result.error_messages[0] : "Kesalahan tidak diketahui"));
+        return;
+      }
+
+      // 3. Panggil Snap Pay
+      window.snap.pay(result.token, {
+        onSuccess: async function(snapResult) {
+          await supabase.from('orders').update({ status: 'paid', midtrans_order_id: snapResult.order_id }).eq('id', orderData.id);
+          toast.success("Pembayaran Berhasil!");
+          setIsCheckoutOpen(false);
+        },
+        onPending: function(snapResult) {
+          toast.success("Menunggu Pembayaran!");
+          setIsCheckoutOpen(false);
+        },
+        onError: async function(snapResult) {
+          await supabase.from('orders').update({ status: 'failed', midtrans_order_id: snapResult.order_id }).eq('id', orderData.id);
+          toast.error("Pembayaran Gagal!");
+          setIsCheckoutOpen(false);
+        },
+        onClose: function() {
+          toast.error('Anda menutup popup tanpa menyelesaikan pembayaran.');
+        }
+      });
+
+    } catch (err) {
+      console.error("Checkout Error:", err);
+      toast.error("Terjadi kesalahan sistem saat memproses pesanan.");
+    }
   };
+
+  useEffect(() => {
+    // Load Midtrans Snap Script
+    const scriptTag = document.createElement('script');
+    scriptTag.src = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true' 
+      ? 'https://app.midtrans.com/snap/snap.js'
+      : 'https://app.sandbox.midtrans.com/snap/snap.js';
+    scriptTag.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
+    
+    // Hanya tambahkan jika belum ada
+    if (!document.querySelector(`script[src="${scriptTag.src}"]`)) {
+      document.body.appendChild(scriptTag);
+    }
+
+    return () => {
+      // document.body.removeChild(scriptTag);
+    }
+  }, []);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -264,8 +363,9 @@ export default function PublicPage() {
                         navigate(`/${slug}/blog/${product.id}`);
                       } else {
                         setSelectedProduct(product);
+                        setSelectedVariantIndex(0);
                         setIsCheckoutOpen(true);
-                        setCheckoutForm({ name: '', phone: '' });
+                        setCheckoutForm({ name: '', phone: '', address: '' });
                       }
                     }} 
                   />
@@ -335,54 +435,103 @@ export default function PublicPage() {
 
       {isCheckoutOpen && selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex flex-col items-center p-6 text-center border-b border-slate-100">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex flex-col items-center p-6 text-center border-b border-slate-100 shrink-0">
               <h3 className="text-xl font-black text-slate-900 mb-1">{selectedProduct.title || 'Checkout'}</h3>
-              <p className="text-sm font-bold text-slate-500">{selectedProduct.price ? `Rp ${parseInt(selectedProduct.price).toLocaleString('id-ID')}` : 'FREE'}</p>
+              <p className="text-sm font-bold text-slate-500">
+                {(() => {
+                  let p = selectedProduct.price;
+                  if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
+                    p = selectedProduct.variants[selectedVariantIndex].price;
+                  }
+                  return p ? `Rp ${parseInt(p).toLocaleString('id-ID')}` : 'FREE';
+                })()}
+              </p>
             </div>
             
-            <form onSubmit={handleCheckout} className="p-6 flex flex-col gap-4">
-              {selectedProduct.ask_phone !== false ? (
-                <>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
-                    <input 
-                      required
-                      type="text" 
-                      placeholder="e.g. John Doe"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900"
-                      value={checkoutForm.name}
-                      onChange={(e) => setCheckoutForm({...checkoutForm, name: e.target.value})}
-                    />
-                    <p className="text-[11px] text-slate-500 mt-2">Pesan akan diteruskan ke WhatsApp kreator.</p>
-                  </div>
-                  {selectedProduct.require_address && (
+            <form onSubmit={handleCheckout} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-6 flex flex-col gap-4">
+                  {selectedProduct.variants?.length > 0 && (
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Shipping Address</label>
-                      <textarea 
-                        required
-                        placeholder="Alamat lengkap (Jalan, RT/RW, Kecamatan, Kota, Kode Pos)"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
-                        rows={3}
-                        value={checkoutForm.address}
-                        onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
-                      />
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Select Variant</label>
+                      <select 
+                        value={selectedVariantIndex}
+                        onChange={(e) => setSelectedVariantIndex(parseInt(e.target.value))}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900"
+                      >
+                        {selectedProduct.variants.map((v, i) => (
+                          <option key={i} value={i}>{v.name} {v.price ? `- Rp ${parseInt(v.price).toLocaleString('id-ID')}` : ''}</option>
+                        ))}
+                      </select>
                     </div>
                   )}
-                </>
-              ) : (
-                <div className="text-center text-sm font-bold text-slate-500 py-4">
-                  Proceed to complete your transaction via WhatsApp.
+                  {selectedProduct.ask_phone !== false ? (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
+                        <input 
+                          required
+                          type="text" 
+                          placeholder="e.g. John Doe"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900"
+                          value={checkoutForm.name}
+                          onChange={(e) => setCheckoutForm({...checkoutForm, name: e.target.value})}
+                        />
+                        <p className="text-[11px] text-slate-500 mt-2">Pesan akan diteruskan ke WhatsApp kreator.</p>
+                      </div>
+                      {selectedProduct.require_address && (
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Shipping Address</label>
+                          <textarea 
+                            required
+                            placeholder="Alamat lengkap (Jalan, RT/RW, Kecamatan, Kota, Kode Pos)"
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
+                            rows={3}
+                            value={checkoutForm.address}
+                            onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center text-sm font-bold text-slate-500 py-4">
+                      Proceed to complete your transaction via WhatsApp.
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Reviews Section */}
+                {selectedProduct.reviews?.length > 0 && (
+                  <div className="border-t border-slate-100 bg-slate-50 p-6">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center justify-between">
+                      <span>Customer Reviews ({selectedProduct.reviews.length})</span>
+                      <span className="text-yellow-500">⭐ {(selectedProduct.reviews.reduce((acc, curr) => acc + curr.rating, 0) / selectedProduct.reviews.length).toFixed(1)}</span>
+                    </h4>
+                    <div className="space-y-4">
+                      {selectedProduct.reviews.map((r, i) => (
+                        <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-sm text-slate-800">{r.reviewer_name || 'Anonymous'}</span>
+                            <span className="text-yellow-400 text-xs">{'⭐'.repeat(r.rating || 5)}</span>
+                          </div>
+                          {r.comment && <p className="text-sm text-slate-600 leading-relaxed mt-2">{r.comment}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               
-              <div className="flex gap-3 mt-4">
-                <button type="button" onClick={() => setIsCheckoutOpen(false)} className="flex-1 py-3 px-4 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
-                  Cancel
-                </button>
-                <button type="submit" className="flex-[2] py-3 px-4 font-bold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors shadow-lg shadow-green-500/30 flex justify-center items-center gap-2">
-                  <LucideIcons.MessageCircle className="w-5 h-5" /> Checkout via WA
-                </button>
+              <div className="p-4 sm:p-6 border-t border-slate-100 bg-white shrink-0">
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setIsCheckoutOpen(false)} className="flex-1 py-3 px-4 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" className="flex-[2] py-3 px-4 font-bold text-white bg-[#0b5cff] hover:bg-[#094acc] rounded-xl transition-colors shadow-lg shadow-[#0b5cff]/30 flex justify-center items-center gap-2">
+                    <LucideIcons.CreditCard className="w-5 h-5" /> Bayar Sekarang
+                  </button>
+                </div>
               </div>
             </form>
           </div>
