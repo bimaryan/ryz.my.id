@@ -12,6 +12,8 @@ import { useLinks } from '@/hooks/useLinks'
 import { useCustomDomains } from '@/hooks/useCustomDomains'
 import { usePages } from '@/hooks/usePages'
 import { useBiteship } from '@/hooks/useBiteship'
+import { supabase } from '@/lib/supabase'
+import toast from 'react-hot-toast'
 import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2, Store, Search as SearchIcon } from 'lucide-react'
 
 const profileSchema = z.object({
@@ -52,6 +54,17 @@ export default function SettingsPage() {
     fetchLinks()
     fetchDomains()
   }, [fetchPlans, fetchLinks, fetchDomains])
+
+  useEffect(() => {
+    if (!document.querySelector('script[src*="snap.js"]')) {
+      const scriptTag = document.createElement('script');
+      scriptTag.src = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true' 
+        ? 'https://app.midtrans.com/snap/snap.js'
+        : 'https://app.sandbox.midtrans.com/snap/snap.js';
+      scriptTag.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
+      document.head.appendChild(scriptTag);
+    }
+  }, []);
 
   const { register: registerProfile, handleSubmit: handleSubmitProfile, reset: resetProfile, formState: { errors: profileErrors, isSubmitting: isProfileSubmitting } } = useForm({
     resolver: zodResolver(profileSchema),
@@ -423,23 +436,90 @@ export default function SettingsPage() {
                           <div className="text-center py-4"><span className="text-slate-500 font-bold">Loading plans...</span></div>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {plans.filter(p => p.plan_name !== 'free').map((plan) => (
+                            {(plans?.length > 0 ? plans : [
+                              { id: 'pro', plan_type: 'pro', max_links: -1, custom_domains: true, max_team_members: 10 },
+                              { id: 'enterprise', plan_type: 'enterprise', max_links: -1, custom_domains: true, max_team_members: 100 }
+                            ]).filter(p => (p.plan_type || p.plan_name) !== 'free').map((plan) => {
+                              const planName = plan.plan_type || plan.plan_name;
+                              return (
                               <div key={plan.id} className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm hover:border-[#0b5cff] transition-colors cursor-pointer relative overflow-hidden flex flex-col h-full">
-                                {plan.plan_name === 'pro' && <div className="absolute top-0 right-0 bg-[#0b5cff] text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">POPULAR</div>}
-                                <h4 className="font-bold text-slate-900 mb-1 capitalize">{plan.plan_name}</h4>
+                                {planName === 'pro' && <div className="absolute top-0 right-0 bg-[#0b5cff] text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">POPULAR</div>}
+                                <h4 className="font-bold text-slate-900 mb-1 capitalize">{planName}</h4>
                                 <p className="text-xl font-extrabold text-[#0b5cff] mb-4">
-                                  ${plan.plan_name === 'pro' ? '15' : '99'}<span className="text-sm font-medium text-slate-500">/mo</span>
+                                  ${planName === 'pro' ? '5' : '20'}<span className="text-sm font-medium text-slate-500">/mo</span>
                                 </p>
                                 <ul className="text-sm text-slate-600 space-y-2 mb-6 flex-1">
                                   <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {plan.max_links === -1 ? 'Unlimited' : plan.max_links.toLocaleString()} Links</li>
-                                  <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {plan.max_custom_domains === -1 ? 'Unlimited' : plan.max_custom_domains} Custom Domains</li>
+                                  <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {plan.custom_domains || plan.max_custom_domains === -1 ? 'Unlimited' : (plan.max_custom_domains || 'None')} Custom Domains</li>
                                   <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {plan.max_team_members === 0 ? 'No Team Members' : `${plan.max_team_members} Team Members`}</li>
+                                  {(planName === 'pro' || planName === 'enterprise') && <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> E-Commerce (Physical Products)</li>}
                                 </ul>
-                                <Button className={`w-full ${plan.plan_name === 'pro' ? 'bitly-button-primary' : 'bitly-button-secondary'}`}>
-                                  {plan.plan_name === 'enterprise' ? 'Contact Sales' : `Upgrade to ${plan.plan_name.charAt(0).toUpperCase() + plan.plan_name.slice(1)}`}
+                                <Button 
+                                  onClick={async () => {
+                                    if (user?.user_metadata?.plan_type === planName) return;
+                                    setSuccessMsg('');
+                                    setErrorMsg('');
+                                    if (planName === 'pro' || planName === 'enterprise') {
+                                      const priceIDR = planName === 'pro' ? 50000 : 200000;
+                                      const orderId = `PLAN_${planName.toUpperCase()}_${Date.now()}`;
+                                      
+                                      toast.loading("Memulai pembayaran...", { id: "payment_toast" });
+                                      const { data: result, error: rpcError } = await supabase.rpc('get_midtrans_token', {
+                                        p_order_id: orderId,
+                                        p_gross_amount: priceIDR,
+                                        p_first_name: user?.user_metadata?.full_name || 'Creator',
+                                        p_phone: user?.user_metadata?.whatsapp_number || '081234567890',
+                                        p_address: '',
+                                        p_server_key: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'SB-Mid-server-0TGPuhniptPemYTjz0tJl9K8',
+                                        p_is_production: import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true'
+                                      });
+                                      
+                                      if (rpcError) {
+                                        toast.error("Gagal terhubung ke server pembayaran.", { id: "payment_toast" });
+                                        return;
+                                      }
+                                      
+                                      if (result && result.error) {
+                                        toast.error("Gagal memulai pembayaran Midtrans.", { id: "payment_toast" });
+                                        return;
+                                      }
+                                      
+                                      if (result && result.token) {
+                                        toast.dismiss("payment_toast");
+                                        window.snap.pay(result.token, {
+                                          onSuccess: async function() {
+                                            toast.loading("Memperbarui akun...", { id: "update_toast" });
+                                            const res = await updateProfile({ plan_type: plan.plan_name });
+                                            if (res.success) {
+                                              setSuccessMsg(`Berhasil berlangganan ${plan.plan_name}! Anda sekarang bisa menggunakan fitur PRO.`);
+                                              toast.success("Akun berhasil di-upgrade!", { id: "update_toast" });
+                                            } else {
+                                              setErrorMsg('Gagal memperbarui akun setelah pembayaran.');
+                                              toast.error("Gagal memperbarui akun.", { id: "update_toast" });
+                                            }
+                                          },
+                                          onPending: function() {
+                                            toast.success("Pembayaran tertunda. Selesaikan pembayaran Anda.");
+                                          },
+                                          onError: function() {
+                                            toast.error("Pembayaran gagal.");
+                                          },
+                                          onClose: function() {
+                                            toast.error("Anda menutup jendela pembayaran.");
+                                          }
+                                        });
+                                      }
+                                    } else {
+                                      setErrorMsg('Contact sales for enterprise plans.');
+                                    }
+                                  }}
+                                  className={`w-full ${planName === 'pro' ? 'bitly-button-primary' : 'bitly-button-secondary'}`}
+                                >
+                                  {user?.user_metadata?.plan_type === planName ? 'Current Plan' : `Upgrade to ${planName.charAt(0).toUpperCase() + planName.slice(1)}`}
                                 </Button>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>

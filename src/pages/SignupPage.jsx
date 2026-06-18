@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff } from 'lucide-react'
+import { FcGoogle } from 'react-icons/fc'
 import { useAuth } from '@/hooks/useAuth'
 import SEO from '@/components/SEO'
 
@@ -29,7 +30,7 @@ const signupSchema = z.object({
 
 export default function SignupPage() {
   const navigate = useNavigate()
-  const { signUp, isLoading, error: authError } = useAuth()
+  const { signUp, signInWithGoogle, isLoading, error: authError } = useAuth()
   const [serverError, setServerError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
   
@@ -104,6 +105,25 @@ export default function SignupPage() {
         </div>
 
         <div className="bg-white border border-[#e8ebf2] shadow-sm rounded-[8px] py-8 px-6 sm:px-10">
+          <button
+            onClick={signInWithGoogle}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 h-12 bg-white border border-slate-200 rounded-[4px] text-[#273144] font-semibold hover:bg-slate-50 transition-colors mb-5"
+            type="button"
+          >
+            <FcGoogle className="w-5 h-5" />
+            Sign up with Google
+          </button>
+          
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#e8ebf2]"></div>
+            </div>
+            <div className="relative flex justify-center text-[13px] uppercase tracking-wider font-semibold">
+              <span className="px-3 bg-white text-[#566b8f]">Or sign up with email</span>
+            </div>
+          </div>
+
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             
             <div className="space-y-2">

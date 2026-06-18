@@ -70,6 +70,26 @@ export function useAuth() {
     }
   }, [])
 
+  const signInWithGoogle = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      })
+      if (authError) throw authError
+      return { success: true, data }
+    } catch (err) {
+      setError(err.message)
+      return { success: false, error: err.message }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   const updateProfile = useCallback(async (updates) => {
     setIsLoading(true)
     setError(null)
@@ -142,6 +162,7 @@ export function useAuth() {
     user,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     updateProfile,
     updatePassword,

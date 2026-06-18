@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { X, Image as ImageIcon, Link as LinkIcon, Type, PlaySquare, ShoppingBag, Calendar, Star, DollarSign, BookOpen } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { toast } from 'react-hot-toast'
 
 const BLOCKS = [
   {
@@ -73,7 +75,8 @@ const BLOCKS = [
     icon: ShoppingBag,
     color: 'text-indigo-600',
     bg: 'bg-indigo-50',
-    category: 'Monetization'
+    category: 'Monetization',
+    isPro: true
   },
   {
     id: 'blog',
@@ -87,10 +90,12 @@ const BLOCKS = [
 ]
 
 export default function BlockPickerModal({ isOpen, onClose, onSelect }) {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('All Blocks')
   
   if (!isOpen) return null
 
+  const isProUser = user?.user_metadata?.plan_type === 'pro'
   const tabs = ['All Blocks', 'Basic', 'Monetization']
 
   const filteredBlocks = BLOCKS.filter(b => {
@@ -102,21 +107,37 @@ export default function BlockPickerModal({ isOpen, onClose, onSelect }) {
   const basicBlocks = filteredBlocks.filter(b => b.category === 'Basic')
   const monetizationBlocks = filteredBlocks.filter(b => b.category === 'Monetization')
 
+  const handleSelectBlock = (block) => {
+    if (block.isPro && !isProUser) {
+      toast.error('🌟 Fitur ini khusus pengguna PRO. Silakan upgrade plan Anda di menu Settings.');
+      return;
+    }
+    onSelect(block.id);
+  }
+
   const BlockItem = ({ block }) => {
     const Icon = block.icon
+    const isLocked = block.isPro && !isProUser;
     return (
       <button 
-        onClick={() => onSelect(block.id)}
-        className="flex items-center gap-4 p-4 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-2xl transition-all text-left group w-full relative"
+        onClick={() => handleSelectBlock(block)}
+        className={`flex items-center gap-4 p-4 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-2xl transition-all text-left group w-full relative ${isLocked ? 'opacity-70' : ''}`}
       >
         <div className={`w-14 h-14 rounded-2xl ${block.bg} ${block.color} flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105`}>
           <Icon className="w-6 h-6" />
         </div>
         <div>
-          <div className="font-bold text-slate-800 text-sm mb-0.5">{block.title}</div>
+          <div className="font-bold text-slate-800 text-sm mb-0.5 flex items-center gap-2">
+            {block.title}
+          </div>
           <div className="text-xs text-slate-500 leading-snug pr-8">{block.description}</div>
         </div>
-        {block.badge && (
+        {block.isPro && (
+          <span className="absolute right-4 top-4 bg-amber-400 shadow-sm shadow-amber-500/30 text-amber-950 text-[9px] font-black tracking-widest px-2 py-1 rounded-full uppercase">
+            PRO
+          </span>
+        )}
+        {!block.isPro && block.badge && (
           <span className="absolute right-4 top-4 bg-[#0b5cff] shadow-sm shadow-blue-500/30 text-white text-[9px] font-black tracking-widest px-2 py-1 rounded-full uppercase">
             {block.badge}
           </span>
