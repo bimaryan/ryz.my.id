@@ -107,7 +107,6 @@ export default function DashboardLayout({ children }) {
     { name: "Orders", path: "/dashboard/orders", icon: ShoppingCart },
     // { name: "Forms", path: "/dashboard/forms", icon: FileText },
     { name: "Pages", path: "/dashboard/pages", icon: LayoutTemplate },
-    { name: "Custom Domains", path: "/dashboard/domains", icon: Globe },
     { name: "Webhooks", path: "/dashboard/webhooks", icon: Webhook },
     { name: "API Keys", path: "/dashboard/api-keys", icon: Shield },
     { name: "Teams", path: "/dashboard/teams", icon: Users },
