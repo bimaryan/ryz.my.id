@@ -25,6 +25,11 @@ app.set('trust proxy', 1);
 app.use(securityHeaders);
 app.use(checkBans);
 
+// Security Check Endpoint for Frontend
+app.get('/api/check-security', (req, res) => {
+    res.json({ success: true, message: 'You are allowed to access this site.' });
+});
+
 app.use(cors());
 app.use(express.json());
 
