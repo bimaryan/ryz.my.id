@@ -18,8 +18,12 @@ dotenv.config({ path: path.join(__dirname, '../.env.local') });
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable if you're behind a reverse proxy (Heroku, Bluemix, AWS ELB, Nginx, etc)
+// Enable if you're behind a reverse proxy
 app.set('trust proxy', 1);
+
+// Standard Middlewares (Must be before security/routes)
+app.use(cors());
+app.use(express.json());
 
 // Apply Security Middlewares
 app.use(securityHeaders);
@@ -35,9 +39,6 @@ app.get('/api/check-security', (req, res) => {
         detected_device_id: req.headers['x-device-id'] || 'Tidak Ada (Gunakan Frontend Baru)'
     });
 });
-
-app.use(cors());
-app.use(express.json());
 
 // Basic health check endpoint
 app.get('/api/health', (req, res) => {
