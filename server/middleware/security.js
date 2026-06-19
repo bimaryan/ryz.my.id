@@ -7,23 +7,83 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BANS_FILE_PATH = path.join(__dirname, '../bans.json');
 
+// Helper function to automatically ban an IP
+export const autoBanIp = (ip) => {
+  if (!ip || ip === '127.0.0.1' || ip === '::1') return; 
+  try {
+    const bansData = fs.readFileSync(BANS_FILE_PATH, 'utf8');
+    const bans = JSON.parse(bansData);
+    if (!bans.bannedIPs.includes(ip)) {
+      bans.bannedIPs.push(ip);
+      fs.writeFileSync(BANS_FILE_PATH, JSON.stringify(bans, null, 2));
+      console.log(`[SECURITY] Auto-banned hacker IP: ${ip}`);
+    }
+  } catch (err) {
+    console.error('Failed to auto-ban IP:', err);
+  }
+};
+
+// Helper function to automatically ban a Device
+export const autoBanDevice = (deviceId) => {
+  if (!deviceId) return;
+  try {
+    const bansData = fs.readFileSync(BANS_FILE_PATH, 'utf8');
+    const bans = JSON.parse(bansData);
+    if (!bans.bannedDevices.includes(deviceId)) {
+      bans.bannedDevices.push(deviceId);
+      fs.writeFileSync(BANS_FILE_PATH, JSON.stringify(bans, null, 2));
+      console.log(`[SECURITY] Auto-banned hacker Device: ${deviceId}`);
+    }
+  } catch (err) {
+    console.error('Failed to auto-ban Device:', err);
+  }
+};
+
 // Helmet Middleware for security headers
 export const securityHeaders = helmet();
 
-// Rate Limiting Middleware
+// Rate Limiting Middleware (Nge-ban orang yang spam request)
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  message: {
-    success: false,
-    error: {
-      code: 'TOO_MANY_REQUESTS',
-      message: 'Too many requests from this IP, please try again after 15 minutes'
-    }
+  max: 200, // Limit dinaikkan sedikit agar user asli tidak kena
+  standardHeaders: true, 
+  legacyHeaders: false, 
+  handler: (req, res, next, options) => {
+    const forwarded = req.headers['x-forwarded-for'];
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : (req.ip || req.connection.remoteAddress);
+    
+    // Hacker melakukan spam / brute force! Langsung Auto Ban!
+    autoBanIp(clientIp);
+
+    res.status(options.statusCode).json({
+      success: false,
+      error: {
+        code: 'BANNED_FOR_SPAM',
+        message: 'You have been permanently banned for abusive behavior.'
+      }
+    });
   }
 });
+
+// Middleware pendeteksi Serangan Hacker (Mencari file .env, phpmyadmin, wp-admin)
+export const maliciousScanner = (req, res, next) => {
+  const maliciousPatterns = ['.env', 'wp-admin', 'wp-login', 'phpmyadmin', 'config.php', '.git'];
+  const isMalicious = maliciousPatterns.some(pattern => req.url.toLowerCase().includes(pattern));
+  
+  if (isMalicious) {
+    const forwarded = req.headers['x-forwarded-for'];
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : (req.ip || req.connection.remoteAddress);
+    
+    // Hacker mencoba mencari celah! Langsung Auto Ban!
+    autoBanIp(clientIp);
+    
+    return res.status(403).json({ 
+        success: false, 
+        error: { code: 'MALICIOUS_ATTACK_BLOCKED', message: 'Malicious attack detected. Your IP has been permanently banned.' }
+    });
+  }
+  next();
+};
 
 // Middleware to check banned IPs and Devices
 export const checkBans = (req, res, next) => {

@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { requireApiKey } from './middleware/auth.js';
-import { securityHeaders, apiLimiter, checkBans } from './middleware/security.js';
+import { securityHeaders, apiLimiter, checkBans, maliciousScanner, autoBanIp, autoBanDevice } from './middleware/security.js';
 
 // Import Routes
 import linksRouter from './routes/links.js';
@@ -27,6 +27,7 @@ app.use(express.json());
 
 // Apply Security Middlewares
 app.use(securityHeaders);
+app.use(maliciousScanner);
 app.use(checkBans);
 
 // Security Check Endpoint for Frontend
@@ -38,6 +39,18 @@ app.get('/api/check-security', (req, res) => {
         headers_forwarded: req.headers['x-forwarded-for'],
         detected_device_id: req.headers['x-device-id'] || 'Tidak Ada (Gunakan Frontend Baru)'
     });
+});
+
+// Endpoint for Frontend to Report Hackers
+app.post('/api/report-malicious', (req, res) => {
+    const forwarded = req.headers['x-forwarded-for'];
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : (req.ip || req.connection.remoteAddress);
+    const deviceId = req.headers['x-device-id'];
+    
+    if (clientIp) autoBanIp(clientIp);
+    if (deviceId) autoBanDevice(deviceId);
+    
+    res.json({ success: true, message: 'Threat neutralized. Hacker banned.' });
 });
 
 // Basic health check endpoint

@@ -31,6 +31,23 @@ function App() {
     const checkSecurity = async () => {
       try {
         const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id'
+        
+        // Cek apakah hacker mencoba akses URL berbahaya di frontend
+        const currentPath = window.location.pathname.toLowerCase();
+        const maliciousPatterns = ['.env', 'wp-admin', 'wp-login', 'phpmyadmin', 'config.php', '.git'];
+        const isMalicious = maliciousPatterns.some(pattern => currentPath.includes(pattern));
+
+        if (isMalicious) {
+          // Lapor ke Backend untuk Auto-Ban IP dan Device ini selamanya!
+          await fetch(`${apiUrl}/api/report-malicious`, {
+            method: 'POST',
+            headers: { 'x-device-id': deviceId }
+          });
+          setIsBanned(true);
+          return;
+        }
+
+        // Kalau aman, cek status ban biasa
         const res = await fetch(`${apiUrl}/api/check-security`, {
           headers: {
             'x-device-id': deviceId

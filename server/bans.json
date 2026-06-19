@@ -1,4 +1,4 @@
 {
-  "bannedIPs": ["::1", "165.101.230.112"],
-  "bannedDevices": ["DEV-fovgtu6crogankav9k6c6"]
+  "bannedIPs": [],
+  "bannedDevices": []
 }
