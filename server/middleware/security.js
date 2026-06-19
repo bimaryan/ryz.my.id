@@ -32,8 +32,9 @@ export const checkBans = (req, res, next) => {
     const { bannedIPs, bannedDevices } = JSON.parse(bansData);
 
     // 1. Check IP
-    // Using req.ip, which works if trust proxy is configured or directly connected
-    const clientIp = req.ip || req.connection.remoteAddress;
+    // Ambil IP asli dari header x-forwarded-for karena server berada di belakang Nginx/Cloudflare
+    const forwarded = req.headers['x-forwarded-for'];
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : (req.ip || req.connection.remoteAddress);
     
     if (clientIp && bannedIPs.includes(clientIp)) {
       return res.status(403).json({
