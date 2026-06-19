@@ -32,7 +32,7 @@ app.get('/api/check-security', (req, res) => {
         message: 'You are allowed to access this site.', 
         detected_ip: req.ip,
         headers_forwarded: req.headers['x-forwarded-for'],
-        remote_address: req.connection?.remoteAddress
+        detected_device_id: req.headers['x-device-id'] || 'Tidak Ada (Gunakan Frontend Baru)'
     });
 });
 

@@ -19,11 +19,23 @@ function App() {
   const [isBanned, setIsBanned] = useState(false)
 
   useEffect(() => {
-    // Check with our new backend security system
+    // 1. Generate or retrieve Device ID
+    let deviceId = localStorage.getItem('ryz_device_id')
+    if (!deviceId) {
+      deviceId = 'DEV-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      localStorage.setItem('ryz_device_id', deviceId)
+    }
+    console.log("Your Device ID is:", deviceId) // Biar user bisa cek device id-nya
+
+    // 2. Check with our new backend security system
     const checkSecurity = async () => {
       try {
         const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id'
-        const res = await fetch(`${apiUrl}/api/check-security`)
+        const res = await fetch(`${apiUrl}/api/check-security`, {
+          headers: {
+            'x-device-id': deviceId
+          }
+        })
         if (res.status === 403) {
           setIsBanned(true)
         }
