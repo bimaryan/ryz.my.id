@@ -104,7 +104,20 @@ router.post('/webhook', async (req, res) => {
       dbStatus = 'pending';
     }
 
-    // Update Supabase using Service Role (Bypasses RLS so we can update safely)
+    // Tangani Test Notification dari dashboard Midtrans
+    if (order_id.startsWith('payment_notif_test_')) {
+      return res.json({ success: true, message: 'Midtrans test notification received successfully' });
+    }
+
+    // Tangani transaksi Plan Upgrade (karena ini tidak masuk ke tabel orders yang butuh UUID)
+    if (order_id.startsWith('PLAN_')) {
+      // Untuk saat ini Plan upgrade ditangani oleh Frontend setelah success (SettingsPage.jsx)
+      // Jadi Webhook cukup merespon OK agar Midtrans tidak retry.
+      console.log(`[MIDTRANS WEBHOOK] Plan Upgrade transaction ${order_id} recorded.`);
+      return res.json({ success: true, message: 'Plan upgrade webhook received' });
+    }
+
+    // Update Supabase menggunakan Service Role (Bypasses RLS)
     const { error } = await supabase
       .from('orders')
       .update({ 
