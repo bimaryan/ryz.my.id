@@ -17,7 +17,6 @@ import { useActivityLog } from '@/hooks/useActivityLog'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2, Store, Search as SearchIcon, Settings, Globe, Trash2, Plus, Copy, Check } from 'lucide-react'
-import DomainDnsManager from '@/components/DomainDnsManager'
 
 const isApexDomain = (domain) => {
   if (!domain) return false;
@@ -302,7 +301,6 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'profile', label: 'Profil', icon: User },
     { id: 'ecommerce', label: 'E-Commerce', icon: Store },
-    { id: 'domains', label: 'Custom Domain', icon: Globe },
     { id: 'billing', label: 'Paket & Tagihan', icon: CreditCard },
     { id: 'security', label: 'Keamanan', icon: Shield },
     { id: 'devices', label: 'Perangkat Terhubung', icon: MonitorSmartphone },
@@ -555,70 +553,7 @@ export default function SettingsPage() {
                     </form>
                   )}
 
-                  {activeTab === 'domains' && (
-                    <div className="space-y-8 animate-fade-in-up">
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
-                        <h3 className="text-lg font-extrabold text-slate-800 mb-2 flex items-center gap-2">
-                          <Globe className="w-5 h-5 text-[#0b5cff]" /> Custom Domain (Domain Sendiri)
-                        </h3>
-                        <p className="text-sm text-slate-600 font-medium mb-4">
-                          Gunakan domain Anda sendiri untuk link pendek (misal: <strong>link.domainanda.com/promo</strong>). 
-                          Batas domain Anda saat ini: <strong>{(user?.user_metadata?.max_custom_domains === -1) ? 'Unlimited' : `${domains.length} / ${user?.user_metadata?.max_custom_domains || 1}`}</strong>.
-                        </p>
-                        
-                        <div className="bg-white p-4 rounded-xl border border-blue-200 text-sm">
-                          <h4 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-[#0b5cff]" /> Info: Konfigurasi DNS
-                          </h4>
-                          <p className="text-slate-600 mb-2">
-                            Setiap domain yang Anda tambahkan di bawah ini akan mendapatkan <strong>instruksi DNS unik</strong> (CNAME). Cukup *copy-paste* nilai tersebut ke pengelola DNS Anda (Cloudflare, Niagahoster, dll).
-                          </p>
-                          <p className="text-slate-500 text-xs mt-2 border-t border-slate-100 pt-2">
-                            * Jika Anda menggunakan Cloudflare, pastikan status proxy disetel ke <strong>DNS Only</strong> (Awan Abu-abu) saat pertama kali menghubungkan domain.
-                          </p>
-                        </div>
-                      </div>
 
-                      <form onSubmit={handleAddDomain} className="flex gap-4">
-                        <div className="flex-1">
-                          <Input 
-                            type="text"
-                            placeholder="misal: link.domainanda.com"
-                            value={newDomain}
-                            onChange={(e) => setNewDomain(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5 h-12"
-                            disabled={isAddingDomain}
-                          />
-                        </div>
-                        <Button 
-                          type="submit" 
-                          isLoading={isAddingDomain} 
-                          className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5 h-12 flex items-center gap-2 whitespace-nowrap"
-                        >
-                          <Plus className="w-5 h-5" />
-                          Tambah Domain
-                        </Button>
-                      </form>
-
-                      <div className="space-y-4 mt-8">
-                        {domains.length === 0 ? (
-                          <div className="border border-slate-200 rounded-xl p-8 text-center bg-white shadow-sm">
-                            <Globe className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                            <h4 className="font-bold text-slate-800">Belum ada Custom Domain</h4>
-                            <p className="text-slate-500 text-sm mt-1">Tambahkan domain Anda di atas untuk memulai.</p>
-                          </div>
-                        ) : (
-                          domains.map((domain) => (
-                            <DomainDnsManager 
-                              key={domain.id} 
-                              domain={domain} 
-                              handleDeleteDomain={handleDeleteDomain} 
-                            />
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
 
                   {activeTab === 'billing' && (
                     <div className="space-y-8 animate-fade-in-up">
