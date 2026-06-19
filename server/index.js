@@ -12,6 +12,7 @@ import linksRouter from './routes/links.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Try to load .env from the server folder first (for 1Panel), then fallback to ../.env.local (for local dev)
 dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '.env.local') });
 dotenv.config({ path: path.join(__dirname, '../.env.local') });
 
 const app = express();
