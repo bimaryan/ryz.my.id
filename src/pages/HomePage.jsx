@@ -55,18 +55,10 @@ export default function HomePage() {
 
     fetchGlobalStats()
 
-    const channel = supabase.channel('global-stats')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'links' }, payload => {
-        fetchGlobalStats()
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'analytics' }, payload => {
-        fetchGlobalStats()
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    // Realtime subscriptions are disabled because the WebSocket connection
+    // to your Supabase instance (wss://supabase.ryaze.my.id) is failing.
+    // This is typically due to Nginx/proxy missing WebSocket Upgrade headers.
+    // The stats will just load once on mount.
   }, [])
 
   return (
@@ -100,11 +92,11 @@ export default function HomePage() {
               ) : (
                 <>
                   <Link to="/login" className="hidden sm:block text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
-                    Log in
+                    Masuk
                   </Link>
                   <Link to="/signup">
                     <button className="h-10 px-6 bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094bdd] hover:to-indigo-700 text-white font-bold rounded-full text-sm transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                      Sign up Free
+                      Daftar Gratis
                     </button>
                   </Link>
                 </>
@@ -119,26 +111,26 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-7xl text-center flex flex-col items-center">
 
           <h1 className="mx-auto max-w-5xl font-black text-5xl sm:text-6xl md:text-7xl lg:text-[80px] tracking-tighter text-slate-900 mb-8 leading-[1.05] animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            The ultimate platform for <br className="hidden md:block" />
+            Platform utama untuk <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0b5cff] via-indigo-500 to-purple-600">
-              digital connections.
+              koneksi digital Anda.
             </span>
           </h1>
           
           <p className="mx-auto max-w-2xl text-lg sm:text-xl text-slate-600 mb-10 leading-relaxed font-medium animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            Build your brand, track analytics, and seamlessly route users with our lightning-fast URL shortener, QR Codes, and Link-in-Bio pages.
+            Bangun merek Anda, lacak analitik, dan arahkan pengguna dengan mudah melalui penyingkat tautan yang super cepat, Kode QR, dan halaman Link-in-Bio.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto animate-fade-in-up" style={{ animationDelay: '300ms' }}>
             <Link to={session ? "/dashboard" : "/signup"} className="w-full sm:w-auto">
               <button className="w-full sm:w-auto h-14 px-8 bg-slate-900 hover:bg-slate-800 text-white font-bold text-lg rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 flex items-center justify-center group transform hover:-translate-y-1">
-                Start for free
+                Mulai gratis
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
             <Link to="/docs" className="w-full sm:w-auto">
               <button className="w-full sm:w-auto h-14 px-8 bg-white/80 backdrop-blur-md hover:bg-white text-slate-800 border border-slate-200 font-bold text-lg rounded-full transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1">
-                Read the Docs
+                Baca Dokumentasi
               </button>
             </Link>
           </div>
@@ -162,7 +154,7 @@ export default function HomePage() {
               </div>
               <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white/50 shadow-xl transform translate-y-8 hover:translate-y-4 transition-transform duration-500 z-10">
                 <div className="flex items-center justify-between mb-6">
-                  <div className="font-bold text-slate-800">Analytics</div>
+                  <div className="font-bold text-slate-800">Analitik</div>
                   <div className="text-green-500 text-sm font-bold">+24%</div>
                 </div>
                 <div className="flex items-end gap-2 h-24">
@@ -199,23 +191,23 @@ export default function HomePage() {
               <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">
                 {stats.links > 0 ? <AnimatedCounter value={stats.links} /> : "0"}
               </div>
-              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Links Shortened</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tautan Dibuat</div>
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">
                 {stats.clicks > 0 ? <AnimatedCounter value={stats.clicks} /> : "0"}
               </div>
-              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Clicks Tracked</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Klik Terlacak</div>
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">
                 <AnimatedCounter value={99.9} decimals={1} suffix="%" />
               </div>
-              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Uptime SLA</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">SLA Waktu Aktif</div>
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">24/7</div>
-              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">API Access</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Akses API</div>
             </div>
           </div>
         </div>
@@ -225,20 +217,20 @@ export default function HomePage() {
       <section className="py-24 sm:py-32 relative z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 sm:mb-24">
-            <h2 className="text-4xl sm:text-5xl font-black text-slate-900 mb-6 tracking-tight">Everything you need. <br/> Nothing you don't.</h2>
-            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">A unified platform for modern creators and businesses.</p>
+            <h2 className="text-4xl sm:text-5xl font-black text-slate-900 mb-6 tracking-tight">Semua yang Anda butuhkan.</h2>
+            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">Satu platform terpadu untuk kreator dan bisnis modern.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[340px]">
             {/* Bento 1: Analytics (Large) */}
-            <div className="md:col-span-2 md:row-span-2 bg-white rounded-[32px] p-8 sm:p-12 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden group">
+            <div className="md:col-span-2 md:row-span-2 bg-white rounded-[32px] p-8 sm:p-12 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden group flex flex-col">
               <div className="relative z-10 max-w-sm">
                 <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-6">
                   <BarChart3 className="w-7 h-7" />
                 </div>
-                <h3 className="text-3xl font-black text-slate-900 mb-4">Deep Analytics</h3>
+                <h3 className="text-3xl font-black text-slate-900 mb-4">Analitik Mendalam</h3>
                 <p className="text-lg text-slate-600 font-medium leading-relaxed">
-                  Track every click with pinpoint accuracy. View locations, devices, referrers, and operating systems in a beautiful real-time dashboard.
+                  Lacak setiap klik dengan akurat. Lihat lokasi, perangkat, perujuk, dan sistem operasi di dasbor real-time yang memukau.
                 </p>
               </div>
               {/* Decorative Visual */}
@@ -252,13 +244,13 @@ export default function HomePage() {
             </div>
 
             {/* Bento 2: Pages (Medium) */}
-            <div className="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden">
+            <div className="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden flex flex-col">
               <div className="relative z-10">
                 <div className="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-600 mb-6">
                   <LayoutTemplate className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-3">Link-in-Bio Pages</h3>
-                <p className="text-slate-600 font-medium">Create stunning, highly-customizable landing pages for your social media profiles.</p>
+                <h3 className="text-2xl font-black text-slate-900 mb-3">Halaman Link-in-Bio</h3>
+                <p className="text-slate-600 font-medium">Buat halaman arahan yang memukau dan dapat disesuaikan untuk profil media sosial Anda.</p>
               </div>
               <div className="absolute -right-4 -bottom-4 w-32 h-40 bg-pink-50 rounded-tl-3xl border-t border-l border-pink-100 p-4">
                 <div className="w-10 h-10 rounded-full bg-pink-200 mx-auto mb-3"></div>
@@ -268,14 +260,16 @@ export default function HomePage() {
             </div>
 
             {/* Bento 3: QR Codes (Medium) */}
-            <div className="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 mb-6">
-                <QrCode className="w-6 h-6" />
-              </div>
-              <h3 className="text-2xl font-black text-slate-900 mb-3">Dynamic QR</h3>
-              <p className="text-slate-600 font-medium mb-6">Generate fully customizable QR codes that track scans and can be updated anytime.</p>
-              <div className="w-16 h-16 mx-auto bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center">
-                <QrCode className="w-8 h-8 text-slate-800" />
+            <div className="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow flex flex-col relative overflow-hidden">
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 mb-6">
+                  <QrCode className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-3">QR Dinamis</h3>
+                <p className="text-slate-600 font-medium mb-6">Buat kode QR yang dapat disesuaikan sepenuhnya, melacak pindaian, dan dapat diperbarui kapan saja.</p>
+                <div className="w-16 h-16 mx-auto bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center mt-auto">
+                  <QrCode className="w-8 h-8 text-slate-800" />
+                </div>
               </div>
             </div>
 
@@ -286,9 +280,9 @@ export default function HomePage() {
                 <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-cyan-400 mb-6 border border-white/10">
                   <Globe2 className="w-7 h-7" />
                 </div>
-                <h3 className="text-3xl font-black text-white mb-4">Global Edge Network</h3>
+                <h3 className="text-3xl font-black text-white mb-4">Jaringan Edge Global</h3>
                 <p className="text-lg text-slate-400 font-medium leading-relaxed">
-                  Every link is distributed across a massive global CDN. Whether your user is in Tokyo or New York, redirects happen in single-digit milliseconds. Speed equals conversion.
+                  Setiap tautan didistribusikan melalui CDN global. Baik pengguna Anda di Tokyo atau Jakarta, pengalihan terjadi dalam hitungan milidetik. Kecepatan adalah konversi.
                 </p>
               </div>
             </div>
@@ -303,14 +297,14 @@ export default function HomePage() {
             {/* Glow effects */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.3)_0%,transparent_70%)] pointer-events-none"></div>
             
-            <h2 className="text-4xl sm:text-5xl font-black mb-6 tracking-tight relative z-10">Ready to level up your links?</h2>
+            <h2 className="text-4xl sm:text-5xl font-black mb-6 tracking-tight relative z-10">Siap untuk meningkatkan tautan Anda?</h2>
             <p className="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto font-medium relative z-10">
-              Join thousands of creators and businesses already using RYZLink. Setup takes less than a minute.
+              Bergabunglah dengan ribuan kreator dan bisnis yang telah menggunakan RYZLink. Penyiapan kurang dari satu menit.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
               <Link to="/signup">
                 <button className="h-14 px-8 bg-white text-indigo-600 hover:bg-indigo-50 font-black text-lg rounded-full shadow-lg transition-transform transform hover:-translate-y-1 w-full sm:w-auto">
-                  Create your free account
+                  Buat akun gratis Anda
                 </button>
               </Link>
             </div>
@@ -330,8 +324,8 @@ export default function HomePage() {
             </span>
           </div>
           <div className="flex items-center gap-6 text-sm font-medium text-slate-500">
-            <Link to="/terms" className="hover:text-slate-900 transition-colors">Terms</Link>
-            <Link to="/privacy" className="hover:text-slate-900 transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-slate-900 transition-colors">Ketentuan</Link>
+            <Link to="/privacy" className="hover:text-slate-900 transition-colors">Privasi</Link>
             <span>© 2026 RYZ. All rights reserved.</span>
           </div>
         </div>

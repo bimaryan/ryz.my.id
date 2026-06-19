@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async'
 
 export default function SEO({ 
-  title = 'RYZ Shortlink', 
-  description = 'A premium, lightning-fast URL shortener designed to boost your click-through rates. Track, manage, and optimize your links.',
-  keywords = 'url shortener, shortlink, ryz, link management, custom domain, analytics',
+  title = 'RYZLink - Platform Penyingkat Tautan Premium & Link in Bio', 
+  description = 'Platform penyingkat tautan premium, kode QR dinamis, dan halaman link-in-bio super cepat. Lacak, kelola, dan optimalkan setiap klik dengan analitik mendalam.',
+  keywords = 'penyingkat tautan, url shortener, shortlink, ryzlink, link in bio, qr code, analitik link, custom domain',
   image = '/og-image.png',
   url = 'https://ryz.my.id'
 }) {

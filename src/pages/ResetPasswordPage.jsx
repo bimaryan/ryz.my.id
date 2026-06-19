@@ -10,14 +10,14 @@ import { supabase } from '@/lib/supabase'
 
 const resetPasswordSchema = z.object({
   password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character'),
+    .min(8, 'Kata sandi minimal 8 karakter')
+    .regex(/[A-Z]/, 'Harus mengandung huruf besar')
+    .regex(/[a-z]/, 'Harus mengandung huruf kecil')
+    .regex(/[0-9]/, 'Harus mengandung angka')
+    .regex(/[^A-Za-z0-9]/, 'Harus mengandung karakter khusus'),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Kata sandi tidak cocok",
   path: ["confirmPassword"],
 })
 
@@ -71,15 +71,19 @@ export default function ResetPasswordPage() {
 
   if (!isSessionValid) {
     return (
-      <div className="min-h-screen bg-[#f4f6fa] text-[#273144] font-sans flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-[#0b5cff]/20">
-        <div className="w-full max-w-[440px] text-center">
-          <div className="bg-white border border-[#e8ebf2] shadow-sm rounded-[8px] py-8 px-6 sm:px-10">
-            <h2 className="text-2xl font-bold text-[#273144] mb-4">Invalid or Expired Link</h2>
-            <p className="text-[#566b8f] mb-6">
-              The password reset link you clicked is invalid or has expired. Please request a new one.
+      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-[#0b5cff]/20 relative overflow-hidden">
+        {/* Decorative bg */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-400/20 mix-blend-multiply filter blur-[100px] animate-blob pointer-events-none"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-indigo-400/20 mix-blend-multiply filter blur-[100px] animate-blob animation-delay-2000 pointer-events-none"></div>
+
+        <div className="w-full max-w-[440px] text-center relative z-10 animate-fade-in-up">
+          <div className="bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-2xl rounded-[32px] py-8 px-6 sm:px-10">
+            <h2 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 mb-4">Tautan Tidak Valid atau Kedaluwarsa</h2>
+            <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+              Tautan untuk mengatur ulang kata sandi tidak valid atau telah kedaluwarsa. Silakan minta tautan baru.
             </p>
-            <Link to="/forgot-password" className="bitly-button-primary w-full h-12 text-[16px] inline-flex items-center justify-center">
-              Request New Link
+            <Link to="/forgot-password" className="w-full bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white h-12 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center hover:-translate-y-0.5">
+              Minta Tautan Baru
             </Link>
           </div>
         </div>
@@ -88,74 +92,78 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f6fa] text-[#273144] font-sans flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-[#0b5cff]/20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-[#0b5cff]/20 relative overflow-hidden">
       <SEO 
-        title="Set New Password | RYZ Shortlink" 
-        description="Set a new password for your RYZ Shortlink account."
+        title="Atur Kata Sandi Baru | RYZ Shortlink" 
+        description="Atur kata sandi baru untuk akun RYZ Shortlink Anda."
       />
 
-      <div className="w-full max-w-[440px]">
+      {/* Decorative bg */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-400/20 mix-blend-multiply filter blur-[100px] animate-blob pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-indigo-400/20 mix-blend-multiply filter blur-[100px] animate-blob animation-delay-2000 pointer-events-none"></div>
+
+      <div className="w-full max-w-[440px] relative z-10 animate-fade-in-up">
         <div className="mb-8 text-center">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded bg-[#0b5cff] text-white">
+          <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b5cff] to-indigo-600 text-white shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
               <span className="font-extrabold text-2xl font-sans tracking-wide">R</span>
             </div>
-            <span className="text-3xl font-bold text-[#273144] tracking-tight">
+            <span className="text-3xl font-bold text-slate-800 tracking-tight">
               RYZ<span className="text-[#0b5cff]">Link</span>
             </span>
           </Link>
-          <h2 className="text-2xl font-bold text-[#273144]">Set new password</h2>
-          <p className="mt-2 text-[15px] text-[#566b8f]">
-            Please enter your new password below.
+          <h2 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600">Atur kata sandi baru</h2>
+          <p className="mt-2 text-[15px] font-medium text-slate-500">
+            Silakan masukkan kata sandi baru Anda di bawah ini.
           </p>
         </div>
 
-        <div className="bg-white border border-[#e8ebf2] shadow-sm rounded-[8px] py-8 px-6 sm:px-10">
+        <div className="bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-2xl rounded-[32px] py-8 px-6 sm:px-10">
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             
             <div className="space-y-2">
-              <label className="block text-[15px] font-bold text-[#273144]">New Password</label>
+              <label className="block text-[15px] font-bold text-slate-700">Kata Sandi Baru</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   {...register('password')}
-                  className="bitly-input w-full pr-10"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl py-3 pl-4 pr-10 text-sm font-bold text-slate-800 transition-all outline-none"
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0b5cff] focus:outline-none transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-sm font-medium text-red-500 mt-1">{errors.password.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <label className="block text-[15px] font-bold text-[#273144]">Confirm New Password</label>
+              <label className="block text-[15px] font-bold text-slate-700">Konfirmasi Kata Sandi Baru</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
                   {...register('confirmPassword')}
-                  className="bitly-input w-full pr-10"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl py-3 pl-4 pr-10 text-sm font-bold text-slate-800 transition-all outline-none"
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0b5cff] focus:outline-none transition-colors"
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {errors.confirmPassword && <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>}
+              {errors.confirmPassword && <p className="text-sm font-medium text-red-500 mt-1">{errors.confirmPassword.message}</p>}
             </div>
 
             {(authError || serverError) && (
-              <div className="rounded-[4px] bg-red-50 p-4 border border-red-200">
-                <div className="text-sm text-red-600 font-medium">
+              <div className="rounded-xl bg-red-50 p-4 border border-red-100">
+                <div className="text-sm text-red-600 font-bold">
                   {authError || serverError}
                 </div>
               </div>
@@ -164,9 +172,9 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="bitly-button-primary w-full h-12 text-[16px] mt-2"
+              className="w-full bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white h-12 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 mt-2"
             >
-              {isLoading ? 'Updating...' : 'Update password'}
+              {isLoading ? 'Memperbarui...' : 'Perbarui kata sandi'}
             </button>
           </form>
         </div>

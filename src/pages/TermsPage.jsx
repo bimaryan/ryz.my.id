@@ -4,76 +4,90 @@ import { Hexagon, ArrowLeft } from 'lucide-react'
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-500/30">
-      <SEO title="Terms of Service | RYZLink" />
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-[#0b5cff]/20 relative overflow-hidden">
+      <SEO title="Syarat & Ketentuan | RYZLink" />
+
+      {/* Decorative bg */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-400/20 mix-blend-multiply filter blur-[100px] animate-blob pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-indigo-400/20 mix-blend-multiply filter blur-[100px] animate-blob animation-delay-2000 pointer-events-none"></div>
 
       {/* Navbar Minimal */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg group-hover:shadow-indigo-500/25 transition-all">
-                <Hexagon className="w-5 h-5 text-white" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b5cff] to-indigo-600 text-white shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
+                <span className="font-extrabold text-xl font-sans tracking-wide">R</span>
               </div>
-              <span className="text-xl font-black tracking-tight text-slate-900">
-                RYZLink
+              <span className="text-xl font-bold tracking-tight text-slate-800">
+                RYZ<span className="text-[#0b5cff]">Link</span>
               </span>
             </Link>
-            <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" /> Back to Home
+            <Link to="/" className="text-sm font-bold text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
+              <ArrowLeft className="w-4 h-4" /> Kembali ke Beranda
             </Link>
           </div>
         </div>
       </nav>
 
-      <main className="relative pt-32 pb-20 px-4 sm:pt-40 sm:pb-32">
-        <div className="mx-auto max-w-3xl bg-white p-8 sm:p-12 rounded-3xl shadow-sm border border-slate-200/60">
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-4">Terms of Service</h1>
-          <p className="text-slate-500 font-medium mb-10">Last updated: June 17, 2026</p>
+      <main className="relative pt-32 pb-20 px-4 sm:pt-40 sm:pb-32 z-10 animate-fade-in-up">
+        <div className="mx-auto max-w-3xl bg-white/80 backdrop-blur-xl p-8 sm:p-12 rounded-[32px] shadow-xl border border-slate-200/60">
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-4">Syarat & Ketentuan</h1>
+          <p className="text-slate-500 font-bold mb-10">Pembaruan terakhir: 17 Juni 2026</p>
 
-          <div className="prose prose-slate max-w-none text-slate-700 space-y-6">
-            <h2 className="text-xl font-bold text-slate-900">1. Acceptance of Terms</h2>
-            <p>
-              By accessing and using RYZLink ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our Service.
-            </p>
+          <div className="prose prose-slate max-w-none text-slate-600 font-medium space-y-8 leading-relaxed">
+            <section>
+              <h2 className="text-xl font-bold text-slate-800 mb-3">1. Penerimaan Syarat</h2>
+              <p>
+                Dengan mengakses dan menggunakan RYZLink ("Layanan"), Anda setuju untuk terikat oleh Syarat Ketentuan ini. Jika Anda tidak setuju, mohon untuk tidak menggunakan Layanan kami.
+              </p>
+            </section>
 
-            <h2 className="text-xl font-bold text-slate-900">2. Description of Service</h2>
-            <p>
-              RYZLink provides URL shortening, Link-in-Bio pages, and QR code generation services. We reserve the right to modify, suspend, or discontinue any part of the Service at any time without notice.
-            </p>
+            <section>
+              <h2 className="text-xl font-bold text-slate-800 mb-3">2. Deskripsi Layanan</h2>
+              <p>
+                RYZLink menyediakan layanan penyingkat URL, halaman Link-in-Bio, dan pembuatan kode QR. Kami berhak mengubah, menangguhkan, atau menghentikan bagian mana pun dari Layanan kapan saja tanpa pemberitahuan.
+              </p>
+            </section>
 
-            <h2 className="text-xl font-bold text-slate-900">3. Acceptable Use</h2>
-            <p>
-              You agree not to use the Service to:
-            </p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Link to malicious content, spam, or phishing sites.</li>
-              <li>Violate any applicable laws or regulations.</li>
-              <li>Infringe upon the intellectual property rights of others.</li>
-              <li>Distribute inappropriate, offensive, or explicit material.</li>
-            </ul>
-            <p>
-              We reserve the right to disable or delete any links or accounts that violate these terms.
-            </p>
+            <section>
+              <h2 className="text-xl font-bold text-slate-800 mb-3">3. Penggunaan yang Dapat Diterima</h2>
+              <p className="mb-2">Anda setuju untuk tidak menggunakan Layanan untuk:</p>
+              <ul className="list-disc pl-5 space-y-2 text-slate-600 marker:text-[#0b5cff]">
+                <li>Menautkan ke konten berbahaya, spam, atau situs phishing.</li>
+                <li>Melanggar hukum atau peraturan yang berlaku.</li>
+                <li>Melanggar hak kekayaan intelektual pihak lain.</li>
+                <li>Mendistribusikan materi yang tidak pantas, menyinggung, atau eksplisit.</li>
+              </ul>
+              <p className="mt-4">
+                Kami berhak menonaktifkan atau menghapus tautan atau akun apa pun yang melanggar ketentuan ini.
+              </p>
+            </section>
 
-            <h2 className="text-xl font-bold text-slate-900">4. Account Registration</h2>
-            <p>
-              You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You must notify us immediately of any unauthorized use of your account.
-            </p>
+            <section>
+              <h2 className="text-xl font-bold text-slate-800 mb-3">4. Registrasi Akun</h2>
+              <p>
+                Anda bertanggung jawab untuk menjaga kerahasiaan kredensial akun Anda dan atas semua aktivitas yang terjadi di bawah akun Anda. Anda harus segera memberi tahu kami tentang penggunaan akun Anda secara tidak sah.
+              </p>
+            </section>
 
-            <h2 className="text-xl font-bold text-slate-900">5. Limitation of Liability</h2>
-            <p>
-              RYZLink is provided on an "as is" and "as available" basis. We shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the Service.
-            </p>
+            <section>
+              <h2 className="text-xl font-bold text-slate-800 mb-3">5. Batasan Tanggung Jawab</h2>
+              <p>
+                RYZLink disediakan "sebagaimana adanya" dan "sebagaimana tersedia". Kami tidak bertanggung jawab atas kerugian tidak langsung, insidental, khusus, konsekuensial, atau hukuman yang diakibatkan oleh penggunaan atau ketidakmampuan Anda untuk menggunakan Layanan.
+              </p>
+            </section>
 
-            <h2 className="text-xl font-bold text-slate-900">6. Changes to Terms</h2>
-            <p>
-              We reserve the right to update these Terms of Service at any time. Continued use of the Service after such changes constitutes your acceptance of the new Terms.
-            </p>
+            <section>
+              <h2 className="text-xl font-bold text-slate-800 mb-3">6. Perubahan Ketentuan</h2>
+              <p>
+                Kami berhak memperbarui Syarat Ketentuan ini kapan saja. Penggunaan Layanan yang berkelanjutan setelah perubahan tersebut merupakan penerimaan Anda terhadap Ketentuan baru.
+              </p>
+            </section>
 
-            <div className="mt-12 pt-8 border-t border-slate-100">
-              <p className="text-sm text-slate-500">
-                If you have any questions about these Terms, please contact us at support@ryz.my.id.
+            <div className="mt-12 pt-8 border-t border-slate-200">
+              <p className="text-[15px] font-bold text-slate-500">
+                Jika Anda memiliki pertanyaan tentang Ketentuan ini, silakan hubungi kami di <a href="mailto:support@ryz.my.id" className="text-[#0b5cff] hover:underline">support@ryz.my.id</a>.
               </p>
             </div>
           </div>
