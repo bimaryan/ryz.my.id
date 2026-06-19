@@ -6,6 +6,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { FileText, Plus, Search, Edit, Trash2, ExternalLink, BarChart3, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function FormsPage() {
   const { user } = useAuth();
@@ -14,6 +15,8 @@ export default function FormsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [formToDelete, setFormToDelete] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -77,18 +80,26 @@ export default function FormsPage() {
     }
   };
 
-  const deleteForm = async (id) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus formulir ini? Semua pertanyaan dan jawaban akan terhapus permanen.")) return;
+  const confirmDeleteForm = async () => {
+    if (!formToDelete) return;
     
     try {
-      const { error } = await supabase.from('forms').delete().eq('id', id);
+      const { error } = await supabase.from('forms').delete().eq('id', formToDelete);
       if (error) throw error;
-      setForms(forms.filter(f => f.id !== id));
+      setForms(forms.filter(f => f.id !== formToDelete));
       toast.success("Formulir berhasil dihapus");
     } catch (err) {
       console.error(err);
       toast.error("Gagal menghapus formulir");
+    } finally {
+      setDeleteModalOpen(false);
+      setFormToDelete(null);
     }
+  };
+
+  const triggerDelete = (id) => {
+    setFormToDelete(id);
+    setDeleteModalOpen(true);
   };
 
   const filteredForms = forms.filter(f => 
@@ -161,11 +172,11 @@ export default function FormsPage() {
             filteredForms.map(form => (
               <div key={form.id} className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 flex flex-col">
                 <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1 pr-4">
+                  <div className="flex-1 min-w-0 pr-4">
                     <h3 className="font-bold text-slate-800 text-lg truncate mb-1" title={form.title}>
                       {form.title || 'Tanpa Judul'}
                     </h3>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
                       <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md ${form.status ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
                         {form.status ? 'Aktif' : 'Draft'}
                       </span>
@@ -209,7 +220,7 @@ export default function FormsPage() {
                   </div>
                   
                   <button 
-                    onClick={() => deleteForm(form.id)}
+                    onClick={() => triggerDelete(form.id)}
                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Hapus Form"
                   >
@@ -221,6 +232,16 @@ export default function FormsPage() {
           )}
         </div>
       </div>
+      
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => { setDeleteModalOpen(false); setFormToDelete(null); }}
+        onConfirm={confirmDeleteForm}
+        title="Hapus Formulir"
+        message="Apakah Anda yakin ingin menghapus formulir ini? Semua pertanyaan dan tanggapan akan terhapus secara permanen."
+        confirmText="Hapus"
+        cancelText="Batal"
+      />
     </DashboardLayout>
   );
 }

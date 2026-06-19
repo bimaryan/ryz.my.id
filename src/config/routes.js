@@ -162,16 +162,21 @@ export const routes = [
     element: OrdersPage,
     protected: true,
   },
-  // {
-  //   path: '/dashboard/forms',
-  //   element: FormsPage,
-  //   protected: true,
-  // },
-  // {
-  //   path: '/dashboard/forms/:id/edit',
-  //   element: FormBuilderPage,
-  //   protected: true,
-  // },
+  {
+    path: '/dashboard/forms',
+    element: FormsPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/forms/:id/edit',
+    element: FormBuilderPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/forms/:id/responses',
+    element: FormBuilderPage,
+    protected: true,
+  },
 
   // Catch-all
   {

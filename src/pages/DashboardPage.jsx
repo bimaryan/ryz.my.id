@@ -89,19 +89,22 @@ export default function DashboardPage() {
     // Auto-generate short code for quick create
     const randomCode = Math.random().toString(36).substring(2, 8);
 
-    const success = await createLink({
+    const res = await createLink({
       original_url: quickUrl.trim(),
       short_code: randomCode,
       title: "Quick Link",
       category: "General",
     });
 
-    if (success) {
+    if (res.success) {
       toast.success("Link created successfully!");
       setQuickUrl("");
       if (quickQr) {
-        // Implementation logic for quick QR
+        setQrCodeLink(res.data);
       }
+      setQuickQr(false);
+    } else {
+      toast.error(res.error || "Failed to create link");
     }
   };
 
