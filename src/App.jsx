@@ -25,7 +25,6 @@ function App() {
       deviceId = 'DEV-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
       localStorage.setItem('ryz_device_id', deviceId)
     }
-    console.log("Your Device ID is:", deviceId) // Biar user bisa cek device id-nya
 
     // 2. Check with our new backend security system
     const checkSecurity = async () => {
