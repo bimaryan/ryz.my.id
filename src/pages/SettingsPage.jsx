@@ -13,6 +13,7 @@ import { useCustomDomains } from '@/hooks/useCustomDomains'
 import { usePages } from '@/hooks/usePages'
 import { useBiteship } from '@/hooks/useBiteship'
 import { useBillingHistory } from '@/hooks/useBillingHistory'
+import { useActivityLog } from '@/hooks/useActivityLog'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2, Store, Search as SearchIcon } from 'lucide-react'
@@ -50,6 +51,31 @@ export default function SettingsPage() {
   const [selectedAreaName, setSelectedAreaName] = useState('')
   const [originAddress, setOriginAddress] = useState('')
   const [isSavingEcommerce, setIsSavingEcommerce] = useState(false)
+  
+  const { logs, fetchLogs, logActivity, isLoading: isLogsLoading } = useActivityLog()
+  
+  // Parse current device details safely
+  const getDeviceDetails = () => {
+    try {
+      const ua = navigator.userAgent;
+      let browser = 'Unknown Browser';
+      if (ua.includes('Firefox/')) browser = 'Firefox';
+      else if (ua.includes('Edg/')) browser = 'Edge';
+      else if (ua.includes('Chrome/')) browser = 'Chrome';
+      else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Safari';
+      
+      let os = 'Unknown OS';
+      if (ua.includes('Win')) os = 'Windows';
+      else if (ua.includes('Mac')) os = 'Mac OS';
+      else if (ua.includes('Linux')) os = 'Linux';
+      else if (ua.includes('Android')) os = 'Android';
+      else if (ua.includes('like Mac')) os = 'iOS';
+
+      return `${os} • ${browser}`;
+    } catch {
+      return 'Unknown Device';
+    }
+  };
 
   useEffect(() => {
     fetchPlans()
@@ -60,8 +86,10 @@ export default function SettingsPage() {
   useEffect(() => {
     if (activeTab === 'billing') {
       fetchBillingHistory()
+    } else if (activeTab === 'activity') {
+      fetchLogs()
     }
-  }, [activeTab, fetchBillingHistory])
+  }, [activeTab, fetchBillingHistory, fetchLogs])
 
   useEffect(() => {
     if (!document.querySelector('script[src*="snap.js"]')) {
@@ -125,6 +153,11 @@ export default function SettingsPage() {
         setErrorMsg(res.error)
         return
       }
+      await logActivity('Email Address Updated')
+    }
+
+    if (data.full_name !== user?.user_metadata?.full_name || data.whatsapp_number !== user?.user_metadata?.whatsapp_number) {
+      await logActivity('Profile Info Updated')
     }
 
     setSuccessMsg('Profile updated successfully! Note: Email changes may require confirmation.')
@@ -136,6 +169,7 @@ export default function SettingsPage() {
     
     const res = await updatePassword(data.password)
     if (res.success) {
+      await logActivity('Password Changed')
       setSuccessMsg('Password updated successfully!')
       resetPassword()
     } else {
@@ -623,54 +657,65 @@ export default function SettingsPage() {
 
                   {activeTab === 'devices' && (
                     <div className="space-y-6">
-                      <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                      <div className="flex items-center justify-between p-4 border border-[#0b5cff]/20 bg-blue-50/30 rounded-lg shadow-sm">
                         <div className="flex items-center gap-4">
                           <div className="p-3 bg-blue-50 text-[#0b5cff] rounded-lg">
                             <MonitorSmartphone className="h-6 w-6" />
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900">Windows • Chrome</p>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">Jakarta, Indonesia • Active now</p>
+                            <p className="font-bold text-slate-900">{getDeviceDetails()}</p>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">Active now</p>
                           </div>
                         </div>
                         <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded uppercase tracking-wider">Current Session</span>
                       </div>
-
-                      <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg opacity-60">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-slate-100 text-slate-500 rounded-lg">
-                            <MonitorSmartphone className="h-6 w-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-slate-900">Mac OS • Safari</p>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">Singapore • Last active 2 days ago</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700">Revoke</Button>
+                      
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <p className="text-sm text-slate-600 font-medium">To log out of all other devices, please change your password.</p>
                       </div>
                     </div>
                   )}
 
                   {activeTab === 'preferences' && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                    <div className="space-y-6 max-w-2xl">
+                      <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-slate-300 transition-colors">
                         <div>
                           <p className="font-bold text-slate-900">Marketing Emails</p>
                           <p className="text-xs text-slate-500 font-medium mt-0.5">Receive tips, offers, and product updates.</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" defaultChecked />
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={user?.user_metadata?.email_preferences?.marketing ?? true}
+                            onChange={async (e) => {
+                              const newPrefs = { ...(user?.user_metadata?.email_preferences || {}), marketing: e.target.checked };
+                              await updateProfile({ email_preferences: newPrefs });
+                              await logActivity(`Toggled Marketing Emails to ${e.target.checked}`);
+                              toast.success("Preferences updated");
+                            }}
+                          />
                           <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0b5cff]"></div>
                         </label>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                      <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-slate-300 transition-colors">
                         <div>
                           <p className="font-bold text-slate-900">Weekly Reports</p>
                           <p className="text-xs text-slate-500 font-medium mt-0.5">Get a weekly summary of your link performance.</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" />
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={user?.user_metadata?.email_preferences?.weekly_reports ?? false}
+                            onChange={async (e) => {
+                              const newPrefs = { ...(user?.user_metadata?.email_preferences || {}), weekly_reports: e.target.checked };
+                              await updateProfile({ email_preferences: newPrefs });
+                              await logActivity(`Toggled Weekly Reports to ${e.target.checked}`);
+                              toast.success("Preferences updated");
+                            }}
+                          />
                           <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0b5cff]"></div>
                         </label>
                       </div>
@@ -679,27 +724,34 @@ export default function SettingsPage() {
 
                   {activeTab === 'activity' && (
                     <div className="space-y-4">
-                      <div className="flex items-center gap-4 p-4 border-l-4 border-[#0b5cff] bg-blue-50/50 rounded-r-lg">
-                        <div className="h-8 w-8 rounded bg-white text-[#0b5cff] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-blue-100">Now</div>
-                        <div>
-                          <p className="text-sm text-slate-900">You updated your profile settings</p>
-                          <p className="text-xs text-slate-500">Jakarta, ID • 192.168.1.1</p>
+                      {isLogsLoading ? (
+                        <div className="text-center py-8 text-slate-500 font-medium">Loading activity logs...</div>
+                      ) : logs.length > 0 ? (
+                        logs.map((log) => {
+                          // Calculate relative time roughly
+                          const diffSecs = Math.floor((new Date() - new Date(log.created_at)) / 1000);
+                          let timeStr = 'Now';
+                          if (diffSecs > 86400) timeStr = `${Math.floor(diffSecs / 86400)}d`;
+                          else if (diffSecs > 3600) timeStr = `${Math.floor(diffSecs / 3600)}h`;
+                          else if (diffSecs > 60) timeStr = `${Math.floor(diffSecs / 60)}m`;
+
+                          return (
+                            <div key={log.id} className="flex items-center gap-4 p-4 border-l-4 border-slate-200 hover:bg-slate-50 rounded-r-lg transition-colors">
+                              <div className="h-8 w-8 rounded bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">{timeStr}</div>
+                              <div>
+                                <p className="text-sm font-bold text-slate-900">{log.action}</p>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                  {log.user_agent || 'Unknown Device'} • {new Date(log.created_at).toLocaleString('id-ID')}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-8 text-slate-500 font-medium border border-dashed border-slate-200 rounded-lg bg-slate-50">
+                          No activity logged yet.
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4 p-4 border-l-4 border-slate-200 hover:bg-slate-50 rounded-r-lg transition-colors">
-                        <div className="h-8 w-8 rounded bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs shrink-0">2d</div>
-                        <div>
-                          <p className="text-sm text-slate-900">You created a new custom domain</p>
-                          <p className="text-xs text-slate-500">Jakarta, ID • 192.168.1.1</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 p-4 border-l-4 border-slate-200 hover:bg-slate-50 rounded-r-lg transition-colors">
-                        <div className="h-8 w-8 rounded bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs shrink-0">5d</div>
-                        <div>
-                          <p className="text-sm text-slate-900">You signed in from a new device (Windows)</p>
-                          <p className="text-xs text-slate-500">Jakarta, ID • 192.168.1.1</p>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   )}
 

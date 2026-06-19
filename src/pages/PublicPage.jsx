@@ -233,6 +233,10 @@ export default function PublicPage() {
           }
 
           setIsCheckoutOpen(false);
+          // Redirect to track page
+          setTimeout(() => {
+            window.location.href = `/track/${orderData.id}`;
+          }, 1500);
         },
         onPending: function(snapResult) {
           toast.success("Menunggu Pembayaran!");
