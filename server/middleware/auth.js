@@ -2,16 +2,35 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// Try to load .env from the server folder first (for 1Panel), then fallback to ../../.env.local
-dotenv.config({ path: path.join(__dirname, '../.env') });
-dotenv.config({ path: path.join(__dirname, '../../.env.local') });
+
+console.log("=== DEBUG INFO ===");
+console.log("__dirname is:", __dirname);
+const envPath1 = path.join(__dirname, '../.env');
+console.log("Looking for .env at:", envPath1, "Exists?", fs.existsSync(envPath1));
+const envPath2 = path.join(__dirname, '../../.env.local');
+console.log("Looking for .env.local at:", envPath2, "Exists?", fs.existsSync(envPath2));
+
+const result1 = dotenv.config({ path: envPath1 });
+console.log("Dotenv result 1:", result1.error ? result1.error.message : "Success");
+const result2 = dotenv.config({ path: envPath2 });
+console.log("Dotenv result 2:", result2.error ? result2.error.message : "Success");
+
+console.log("SUPABASE_URL from process.env:", process.env.SUPABASE_URL);
+console.log("==================");
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+let supabaseClient;
+try {
+  supabaseClient = createClient(supabaseUrl, supabaseKey);
+} catch (e) {
+  console.error("Supabase init error:", e.message);
+}
+export const supabase = supabaseClient;
 
 export const requireApiKey = async (req, res, next) => {
   const authHeader = req.headers.authorization;
