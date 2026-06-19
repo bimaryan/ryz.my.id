@@ -60,22 +60,25 @@ export default function WebhooksPage() {
 
       <div className="flex-1 w-full max-w-7xl mx-auto animate-fade-in-up">
         <div className="space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">
+          <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="max-w-2xl">
+              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-3 flex items-center gap-3">
+                <Webhook className="h-8 w-8 text-[#0b5cff]" />
                 Webhook
               </h1>
-              <p className="text-slate-500 font-medium mt-1">
+              <p className="text-slate-600 font-medium">
                 Kirim data secara real-time ke server Anda saat ada aktivitas.
               </p>
             </div>
-            <Button
-              size="md"
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 whitespace-nowrap"
-            >
-              <Plus className="h-4 w-4 mr-2" /> Tambah Webhook
-            </Button>
+            <div>
+              <Button
+                size="md"
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 whitespace-nowrap"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Tambah Webhook
+              </Button>
+            </div>
           </div>
 
           <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 overflow-hidden">

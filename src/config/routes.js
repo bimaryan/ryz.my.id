@@ -24,6 +24,9 @@ import TermsPage from '@/pages/TermsPage'
 import PrivacyPage from '@/pages/PrivacyPage'
 import OrdersPage from '@/pages/OrdersPage'
 import OrderTrackingPage from '@/pages/OrderTrackingPage'
+import FormsPage from '@/pages/FormsPage'
+import FormBuilderPage from '@/pages/FormBuilderPage'
+import PublicFormPage from '@/pages/PublicFormPage'
 
 export const routes = [
   // Public routes
@@ -60,6 +63,11 @@ export const routes = [
   {
     path: '/p/:slug',
     element: PublicPage,
+    public: true,
+  },
+  {
+    path: '/f/:id',
+    element: PublicFormPage,
     public: true,
   },
   {
@@ -152,6 +160,16 @@ export const routes = [
   {
     path: '/dashboard/orders',
     element: OrdersPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/forms',
+    element: FormsPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/forms/:id/edit',
+    element: FormBuilderPage,
     protected: true,
   },
 

@@ -137,12 +137,12 @@ export default function OrdersPage() {
 
       <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight flex items-center gap-3">
+        <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-3 flex items-center gap-3">
               <ShoppingCart className="text-[#0b5cff] w-8 h-8" /> Pesanan
             </h1>
-            <p className="text-slate-500 font-medium mt-1">
+            <p className="text-slate-600 font-medium">
               Kelola penjualan Anda, perbarui status pengiriman, dan lacak paket.
             </p>
           </div>

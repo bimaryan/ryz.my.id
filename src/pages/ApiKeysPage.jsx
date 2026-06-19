@@ -57,7 +57,10 @@ export default function ApiKeysPage() {
           
           <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="max-w-2xl">
-              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-3">Kunci Akses API</h1>
+              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-3 flex items-center gap-3">
+                <Key className="h-8 w-8 text-[#0b5cff]" />
+                Kunci Akses API
+              </h1>
               <p className="text-slate-600 font-medium">
                 Buat kunci API aman untuk berinteraksi dengan RYZ Shortlink secara terprogram. Gunakan kunci ini untuk mengautentikasi dan mengotomatiskan pembuatan tautan dari aplikasi Anda sendiri.
               </p>

@@ -56,9 +56,14 @@ export default function LinksPage() {
       <SEO title="Links | RYZ Shortlink" />
 
       <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
-        <div>
-          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">Daftar Link</h1>
-          <p className="text-slate-500 font-medium mt-1">Kelola dan lacak semua shortlink yang telah Anda buat.</p>
+        <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-3 flex items-center gap-3">
+              <Link2 className="h-8 w-8 text-[#0b5cff]" />
+              Daftar Link
+            </h1>
+            <p className="text-slate-600 font-medium">Kelola dan lacak semua shortlink yang telah Anda buat.</p>
+          </div>
         </div>
 
         {/* Link List */}

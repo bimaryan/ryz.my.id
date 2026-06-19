@@ -16,7 +16,7 @@ import { useBillingHistory } from '@/hooks/useBillingHistory'
 import { useActivityLog } from '@/hooks/useActivityLog'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
-import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2, Store, Search as SearchIcon } from 'lucide-react'
+import { User, Shield, MonitorSmartphone, Mail, CheckCircle2, CreditCard, UploadCloud, Loader2, Store, Search as SearchIcon, Settings } from 'lucide-react'
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -257,10 +257,15 @@ export default function SettingsPage() {
       <SEO title="Pengaturan | RYZ Shortlink" />
 
       <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
-        <div>
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">Pengaturan</h1>
-            <p className="text-slate-500 font-medium mt-1">Kelola pengaturan dan preferensi akun Anda.</p>
+        <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-3 flex items-center gap-3">
+              <Settings className="h-8 w-8 text-[#0b5cff]" />
+              Pengaturan
+            </h1>
+            <p className="text-slate-600 font-medium">Kelola pengaturan dan preferensi akun Anda.</p>
           </div>
+        </div>
 
           <div className="flex flex-col md:flex-row gap-8">
             {/* Sidebar Tabs */}

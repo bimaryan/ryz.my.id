@@ -66,26 +66,32 @@ export default function PagesPage() {
       <SEO title="Pages | RYZ Shortlink" />
 
       <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">Halaman</h1>
-            <p className="text-slate-500 font-medium mt-1">Buat halaman Link-in-Bio yang indah untuk membagikan banyak tautan.</p>
+        {/* Header Section */}
+        <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-3 flex items-center gap-3">
+              <LayoutTemplate className="h-8 w-8 text-[#0b5cff]" />
+              Halaman
+            </h1>
+            <p className="text-slate-600 font-medium">Buat halaman Link-in-Bio yang indah untuk membagikan banyak tautan.</p>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 whitespace-nowrap">
-            <Plus className="h-5 w-5 mr-2" />
-            Buat Halaman
-          </Button>
+          <div>
+            <Button onClick={() => setIsCreateModalOpen(true)} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 whitespace-nowrap">
+              <Plus className="h-4 w-4 mr-1.5" /> Buat Halaman
+            </Button>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/40 relative overflow-hidden">
-          <div className="relative">
+        {/* Filters */}
+        <div className="bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/40 flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Cari halaman berdasarkan judul atau URL..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl text-sm transition-all outline-none text-slate-700 font-medium"
+              placeholder="Cari halaman berdasarkan judul atau URL..."
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl text-sm transition-all outline-none text-slate-700 font-medium"
             />
           </div>
         </div>
