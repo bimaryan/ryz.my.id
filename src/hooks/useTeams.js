@@ -57,6 +57,13 @@ export function useTeams() {
 
   const createTeam = useCallback(async (teamData) => {
     if (!session?.user?.id) return { success: false, error: 'Not authenticated' }
+    
+    // Check limit
+    const maxTeamMembers = session.user.user_metadata?.max_team_members ?? 0;
+    if (maxTeamMembers === 0) {
+      return { success: false, error: 'Teams feature is not available on your current plan. Please upgrade to Pro.' };
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -152,6 +159,20 @@ export function useTeams() {
   }, [])
 
   const addTeamMember = useCallback(async (teamId, email, role = 'member') => {
+    // Check limit
+    const maxTeamMembers = session?.user?.user_metadata?.max_team_members ?? 0;
+    if (maxTeamMembers === 0) {
+      return { success: false, error: 'Teams feature is not available on your current plan.' };
+    }
+    
+    if (maxTeamMembers !== -1) {
+      // Check current member count
+      const { count } = await supabase.from('team_members').select('*', { count: 'exact', head: true }).eq('team_id', teamId);
+      if (count >= maxTeamMembers) {
+        return { success: false, error: `You have reached the limit of ${maxTeamMembers} members per team.` };
+      }
+    }
+
     try {
       // Use SECURITY DEFINER RPC to bypass INSERT RLS and check email securely
       const { data, error: rpcErr } = await supabase.rpc('invite_team_member', { 

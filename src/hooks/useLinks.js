@@ -40,6 +40,13 @@ export function useLinks() {
 
   const createLink = useCallback(async (linkData) => {
     if (!session?.user?.id) return { success: false, error: 'Not authenticated' }
+    
+    // Check limit
+    const maxLinks = session.user.user_metadata?.max_links ?? 100;
+    if (maxLinks !== -1 && links.length >= maxLinks) {
+      return { success: false, error: `You have reached your limit of ${maxLinks} links. Please upgrade your plan.` };
+    }
+
     setIsLoading(true)
     setError(null)
 

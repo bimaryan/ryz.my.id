@@ -50,6 +50,9 @@ export default function SettingsPage() {
   const [selectedAreaId, setSelectedAreaId] = useState('')
   const [selectedAreaName, setSelectedAreaName] = useState('')
   const [originAddress, setOriginAddress] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [bankAccount, setBankAccount] = useState('')
+  const [bankAccountName, setBankAccountName] = useState('')
   const [isSavingEcommerce, setIsSavingEcommerce] = useState(false)
   
   const { logs, fetchLogs, logActivity, isLoading: isLogsLoading } = useActivityLog()
@@ -127,6 +130,11 @@ export default function SettingsPage() {
         setSelectedAreaName(user.user_metadata.biteship_origin_area_name || '')
         setOriginAddress(user.user_metadata.biteship_origin_address || '')
       }
+      if (user.user_metadata?.bank_name) {
+        setBankName(user.user_metadata.bank_name)
+        setBankAccount(user.user_metadata.bank_account || '')
+        setBankAccountName(user.user_metadata.bank_account_name || '')
+      }
     }
   }, [user, resetProfile])
 
@@ -157,10 +165,10 @@ export default function SettingsPage() {
     }
 
     if (data.full_name !== user?.user_metadata?.full_name || data.whatsapp_number !== user?.user_metadata?.whatsapp_number) {
-      await logActivity('Profile Info Updated')
+      await logActivity('Profil Diperbarui')
     }
 
-    setSuccessMsg('Profile updated successfully! Note: Email changes may require confirmation.')
+    setSuccessMsg('Profil berhasil diperbarui! Catatan: Perubahan email mungkin memerlukan konfirmasi.')
   }
 
   const onPasswordSubmit = async (data) => {
@@ -169,8 +177,8 @@ export default function SettingsPage() {
     
     const res = await updatePassword(data.password)
     if (res.success) {
-      await logActivity('Password Changed')
-      setSuccessMsg('Password updated successfully!')
+      await logActivity('Kata Sandi Diubah')
+      setSuccessMsg('Kata sandi berhasil diperbarui!')
       resetPassword()
     } else {
       setErrorMsg(res.error)
@@ -184,7 +192,7 @@ export default function SettingsPage() {
     setIsSavingEcommerce(true);
 
     if (!selectedAreaId) {
-      setErrorMsg('Please select an origin area (Kecamatan)');
+      setErrorMsg('Harap pilih area asal pengiriman (Kecamatan)');
       setIsSavingEcommerce(false);
       return;
     }
@@ -192,14 +200,17 @@ export default function SettingsPage() {
     const res = await updateProfile({
       biteship_origin_area_id: selectedAreaId,
       biteship_origin_area_name: selectedAreaName,
-      biteship_origin_address: originAddress
+      biteship_origin_address: originAddress,
+      bank_name: bankName,
+      bank_account: bankAccount,
+      bank_account_name: bankAccountName
     });
 
     setIsSavingEcommerce(false);
     if (res.success) {
-      setSuccessMsg('E-commerce shipping origin saved successfully!');
+      setSuccessMsg('Konfigurasi asal e-commerce berhasil disimpan!');
     } else {
-      setErrorMsg(res.error || 'Failed to save e-commerce settings');
+      setErrorMsg(res.error || 'Gagal menyimpan pengaturan e-commerce');
     }
   };
 
@@ -208,7 +219,7 @@ export default function SettingsPage() {
     if (!file) return
 
     if (file.size > 2 * 1024 * 1024) {
-      setErrorMsg('Image size must be less than 2MB')
+      setErrorMsg('Ukuran gambar harus kurang dari 2MB')
       return
     }
 
@@ -222,33 +233,33 @@ export default function SettingsPage() {
     if (res.success) {
       const updateRes = await updateProfile({ avatar_url: res.url })
       if (updateRes.success) {
-        setSuccessMsg('Avatar updated successfully!')
+        setSuccessMsg('Avatar berhasil diperbarui!')
       } else {
-        setErrorMsg(updateRes.error || 'Failed to update avatar in profile')
+        setErrorMsg(updateRes.error || 'Gagal memperbarui avatar di profil')
       }
     } else {
-      setErrorMsg(res.error || 'Failed to upload avatar')
+      setErrorMsg(res.error || 'Gagal mengunggah avatar')
     }
   }
 
   const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'profile', label: 'Profil', icon: User },
     { id: 'ecommerce', label: 'E-Commerce', icon: Store },
-    { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
-    { id: 'security', label: 'Security & Password', icon: Shield },
-    { id: 'devices', label: 'Connected Devices', icon: MonitorSmartphone },
-    { id: 'preferences', label: 'Email Preferences', icon: Mail },
-    { id: 'activity', label: 'Activity Log', icon: CheckCircle2 },
+    { id: 'billing', label: 'Paket & Tagihan', icon: CreditCard },
+    { id: 'security', label: 'Keamanan', icon: Shield },
+    { id: 'devices', label: 'Perangkat Terhubung', icon: MonitorSmartphone },
+    { id: 'preferences', label: 'Preferensi Email', icon: Mail },
+    { id: 'activity', label: 'Log Aktivitas', icon: CheckCircle2 },
   ]
 
   return (
     <DashboardLayout>
-      <SEO title="Settings | RYZ Shortlink" />
+      <SEO title="Pengaturan | RYZ Shortlink" />
 
       <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
         <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Settings</h1>
-            <p className="text-slate-500 font-medium mt-1">Manage your account settings and preferences.</p>
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">Pengaturan</h1>
+            <p className="text-slate-500 font-medium mt-1">Kelola pengaturan dan preferensi akun Anda.</p>
           </div>
 
           <div className="flex flex-col md:flex-row gap-8">
@@ -306,7 +317,7 @@ export default function SettingsPage() {
                   {activeTab === 'profile' && (
                     <form onSubmit={handleSubmitProfile(onProfileSubmit)} className="space-y-6 max-w-md">
                       <div className="flex items-center gap-6 mb-8">
-                        <div className="h-20 w-20 rounded-full bg-slate-200 flex items-center justify-center text-3xl font-bold text-slate-500 uppercase overflow-hidden shadow-sm border border-slate-200">
+                        <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-[#0b5cff] to-indigo-600 flex items-center justify-center text-3xl font-extrabold text-white uppercase overflow-hidden shadow-lg shadow-blue-500/20 border border-slate-200">
                           {user?.user_metadata?.avatar_url ? (
                             <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                           ) : (
@@ -314,66 +325,68 @@ export default function SettingsPage() {
                           )}
                         </div>
                         <div>
-                          <label className={`inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold border rounded-lg cursor-pointer transition-colors ${isUploadingAvatar ? 'bg-slate-100 text-slate-400 border-slate-200' : 'border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+                          <label className={`inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold border rounded-xl cursor-pointer transition-colors ${isUploadingAvatar ? 'bg-slate-100 text-slate-400 border-slate-200' : 'border-slate-200 hover:bg-slate-50 text-slate-700 shadow-sm'}`}>
                             {isUploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
-                            {isUploadingAvatar ? 'Uploading...' : 'Change Avatar'}
+                            {isUploadingAvatar ? 'Mengunggah...' : 'Ubah Avatar'}
                             <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploadingAvatar} />
                           </label>
-                          <p className="text-xs text-slate-500 mt-2 font-medium">Recommended size: 256x256px. Max: 2MB.</p>
+                          <p className="text-xs text-slate-500 mt-2 font-medium">Ukuran disarankan: 256x256px. Maks: 2MB.</p>
                         </div>
                       </div>
 
                       <Input 
-                        label={<span className="text-slate-700 font-bold">Full Name</span>} 
+                        label={<span className="text-slate-700 font-bold">Nama Lengkap</span>} 
                         error={profileErrors.full_name?.message} 
                         {...registerProfile('full_name')} 
-                        className="bitly-input" 
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5" 
                       />
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Alamat Email</label>
                         <Input 
                           type="email"
                           error={profileErrors.email?.message} 
                           {...registerProfile('email')} 
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">WhatsApp Number</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Nomor WhatsApp</label>
                         <Input 
                           type="text"
-                          placeholder="e.g. 628123456789"
+                          placeholder="misal: 628123456789"
                           error={profileErrors.whatsapp_number?.message} 
                           {...registerProfile('whatsapp_number')} 
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
                         />
-                        <p className="text-xs text-slate-500 mt-2 font-medium">Include country code (e.g. 62 for Indonesia). This will be used for your checkout links.</p>
+                        <p className="text-xs text-slate-500 mt-2 font-medium">Gunakan kode negara (misal 62 untuk Indonesia). Ini akan digunakan untuk tautan checkout E-Commerce Anda.</p>
                       </div>
 
-                      <div className="pt-4 border-t border-slate-200">
-                        <Button type="submit" isLoading={isProfileSubmitting || isLoading} className="bitly-button-primary">Save Changes</Button>
+                      <div className="pt-6 mt-6 border-t border-slate-100">
+                        <Button type="submit" isLoading={isProfileSubmitting || isLoading} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5">Simpan Perubahan</Button>
                       </div>
                     </form>
                   )}
 
                   {activeTab === 'ecommerce' && (
                     <form onSubmit={handleEcommerceSubmit} className="space-y-6 max-w-lg">
-                      <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                          <Store className="w-5 h-5 text-[#0b5cff]" /> Shipping Origin Configuration
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-100 mb-6 shadow-sm">
+                        <h3 className="font-extrabold text-slate-800 flex items-center gap-2 mb-2">
+                          <Store className="w-5 h-5 text-[#0b5cff]" /> Konfigurasi Asal Pengiriman
                         </h3>
-                        <p className="text-sm text-slate-600">
-                          Set your store's origin location. This is crucial for calculating accurate shipping rates via Biteship.
+                        <p className="text-sm text-slate-600 font-medium">
+                          Atur lokasi asal toko Anda. Ini penting untuk menghitung ongkos kirim secara akurat via Biteship.
                         </p>
                       </div>
 
                       <div className="relative">
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Origin Area (Kecamatan)</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Area Asal (Kecamatan)</label>
                         <div className="relative">
-                          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                          <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                           <input
                             type="text"
-                            placeholder="Type minimum 3 characters to search (e.g. Kebayoran Baru)"
-                            className="bitly-input pl-10 w-full"
+                            placeholder="Ketik minimal 3 karakter untuk mencari (misal: Kebayoran Baru)"
+                            className="w-full pl-11 bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl px-4 py-2.5 transition-all outline-none"
                             value={areaSearch}
                             onChange={(e) => {
                               setAreaSearch(e.target.value);
@@ -390,12 +403,12 @@ export default function SettingsPage() {
                           />
                         </div>
                         {isSearchingArea && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-4 text-center text-sm text-slate-500">
-                            Searching areas...
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-center text-sm text-slate-500 font-bold">
+                            Mencari area...
                           </div>
                         )}
                         {showAreaResults && areas.length > 0 && !isSearchingArea && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
                             {areas.map(area => (
                               <button
                                 key={area.id}
@@ -415,24 +428,66 @@ export default function SettingsPage() {
                         )}
                         {selectedAreaName && !showAreaResults && (
                           <p className="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1">
-                            <CheckCircle2 className="w-4 h-4" /> Selected: {selectedAreaName}
+                            <CheckCircle2 className="w-4 h-4" /> Terpilih: {selectedAreaName}
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Detailed Origin Address</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Alamat Lengkap Asal</label>
                         <textarea
-                          placeholder="e.g. Jl. Sudirman No. 123, Rt 01 Rw 02"
+                          placeholder="misal: Jl. Sudirman No. 123, Rt 01 Rw 02"
                           rows={3}
                           value={originAddress}
                           onChange={(e) => setOriginAddress(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl px-4 py-3 text-sm font-medium transition-all outline-none resize-none"
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl px-4 py-3 text-sm font-medium transition-all outline-none resize-none"
                         ></textarea>
                       </div>
 
-                      <div className="pt-4 border-t border-slate-200">
-                        <Button type="submit" isLoading={isSavingEcommerce} className="bitly-button-primary">Save E-Commerce Settings</Button>
+                      <div className="pt-6 border-t border-slate-200 mt-6">
+                        <h3 className="font-extrabold text-slate-800 mb-4 flex items-center gap-2">
+                          <CreditCard className="w-5 h-5 text-[#0b5cff]" /> Rekening Pencairan
+                        </h3>
+                        <p className="text-sm text-slate-600 font-medium mb-4">
+                          Masukkan informasi rekening Anda. Semua pendapatan dari penjualan akan ditransfer ke rekening ini.
+                        </p>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Nama Bank / E-Wallet</label>
+                            <Input 
+                              type="text"
+                              placeholder="BCA, Mandiri, GoPay, Dana, dll."
+                              value={bankName}
+                              onChange={(e) => setBankName(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Nomor Rekening</label>
+                            <Input 
+                              type="text"
+                              placeholder="1234567890"
+                              value={bankAccount}
+                              onChange={(e) => setBankAccount(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Atas Nama</label>
+                            <Input 
+                              type="text"
+                              placeholder="Sesuai buku tabungan"
+                              value={bankAccountName}
+                              onChange={(e) => setBankAccountName(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 mt-6 border-t border-slate-100">
+                        <Button type="submit" isLoading={isSavingEcommerce} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5">Simpan Pengaturan E-Commerce</Button>
                       </div>
                     </form>
                   )}
@@ -443,7 +498,11 @@ export default function SettingsPage() {
                         <div className="flex justify-between items-start mb-6">
                           <div>
                             <h3 className="text-xl font-bold mb-1 capitalize">{user?.user_metadata?.plan_type || 'Free'} Plan</h3>
-                            <p className="text-blue-100 text-sm">You are currently on the {user?.user_metadata?.plan_type || 'free'} tier.</p>
+                            <p className="text-blue-100 text-sm">
+                              {user?.user_metadata?.plan_type !== 'free' && user?.user_metadata?.plan_expires_at 
+                                ? `Active until ${new Date(user.user_metadata.plan_expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}` 
+                                : `You are currently on the free tier.`}
+                            </p>
                           </div>
                           <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-bold backdrop-blur-sm">Active</span>
                         </div>
@@ -512,7 +571,7 @@ export default function SettingsPage() {
                                         p_first_name: user?.user_metadata?.full_name || 'Creator',
                                         p_phone: user?.user_metadata?.whatsapp_number || '081234567890',
                                         p_address: '',
-                                        p_server_key: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'SB-Mid-server-0TGPuhniptPemYTjz0tJl9K8',
+                                        p_default_server_key: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'SB-Mid-server-0TGPuhniptPemYTjz0tJl9K8',
                                         p_is_production: import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true'
                                       });
                                       
@@ -536,7 +595,8 @@ export default function SettingsPage() {
                                               max_links: plan.max_links !== undefined ? plan.max_links : (planName === 'free' ? 100 : -1),
                                               custom_domains: plan.custom_domains !== undefined ? plan.custom_domains : (planName !== 'free'),
                                               max_custom_domains: plan.max_custom_domains !== undefined ? plan.max_custom_domains : (planName !== 'free' ? -1 : 1),
-                                              max_team_members: plan.max_team_members !== undefined ? plan.max_team_members : (planName === 'free' ? 0 : 10)
+                                              max_team_members: plan.max_team_members !== undefined ? plan.max_team_members : (planName === 'free' ? 0 : 10),
+                                              plan_expires_at: planName === 'free' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
                                             });
                                             if (res.success) {
                                               await addBillingRecord({

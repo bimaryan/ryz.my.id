@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import ComplexBlockRender from '@/components/ComplexBlockRender'
 import { toast } from 'react-hot-toast'
 import { useBiteship } from '@/hooks/useBiteship'
+import emailjs from '@emailjs/browser'
 
 const BRAND_COLORS = {
   instagram: '#E1306C',
@@ -157,7 +158,7 @@ export default function PublicPage() {
         p_first_name: checkoutForm.name,
         p_phone: checkoutForm.phone || '08123456789',
         p_address: checkoutForm.address || '',
-        p_server_key: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'SB-Mid-server-0TGPuhniptPemYTjz0tJl9K8',
+        p_default_server_key: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'SB-Mid-server-0TGPuhniptPemYTjz0tJl9K8',
         p_is_production: import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true'
       });
 
@@ -183,6 +184,13 @@ export default function PublicPage() {
       window.snap.pay(result.token, {
         onSuccess: async function(snapResult) {
           await supabase.from('orders').update({ status: 'paid', midtrans_order_id: snapResult.order_id }).eq('id', orderData.id);
+          
+          if (selectedProduct.item_quantity_enabled && selectedProduct.id) {
+            await supabase.rpc('decrement_product_stock', {
+              p_page_id: page.id,
+              p_product_id: selectedProduct.id
+            });
+          }
           
           if (selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id && selectedDestinationArea && selectedRate) {
             toast.loading("Menerbitkan Resi otomatis...", { id: "resi_toast" });
@@ -230,6 +238,27 @@ export default function PublicPage() {
             }
           } else {
             toast.success("Pembayaran Berhasil!");
+          }
+
+          // Kirim Email Notifikasi
+          if (checkoutForm.email && import.meta.env.VITE_EMAILJS_SERVICE_ID) {
+            try {
+              await emailjs.send(
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_default',
+                {
+                  order_id: orderData.id,
+                  customer_name: checkoutForm.name,
+                  customer_email: checkoutForm.email,
+                  product_name: selectedProduct.title,
+                  amount: `Rp ${parseInt(finalPrice).toLocaleString('id-ID')}`,
+                  status: 'PAID'
+                },
+                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+              );
+            } catch (err) {
+              console.error("Gagal kirim email:", err);
+            }
           }
 
           setIsCheckoutOpen(false);

@@ -59,9 +59,12 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
     }
   }
 
+  const isOutOfStock = link.type === 'physical_product' && link.item_quantity_enabled && parseInt(link.stock || 0) <= 0;
+
   const handleAction = (e) => {
     e.preventDefault();
     if (!isReleased) return;
+    if (isOutOfStock) return;
     if (onClick) onClick(link);
   };
 
@@ -84,10 +87,10 @@ export default function ComplexBlockRender({ link, theme, onClick }) {
 
   const renderActionButton = (className) => (
     <div 
-      className={`font-black rounded-lg shadow-sm transition-transform ${isReleased ? 'hover:scale-105' : 'opacity-70'} ${className}`} 
-      style={{ backgroundColor: isReleased ? actionBg : '#94a3b8', color: isReleased ? actionText : '#ffffff' }}
+      className={`font-black rounded-lg shadow-sm transition-transform ${(isReleased && !isOutOfStock) ? 'hover:scale-105' : 'opacity-70'} ${className}`} 
+      style={{ backgroundColor: (isReleased && !isOutOfStock) ? actionBg : '#94a3b8', color: (isReleased && !isOutOfStock) ? actionText : '#ffffff' }}
     >
-      {!isReleased ? 'Coming Soon' : (button_text || 'Beli Sekarang')}
+      {!isReleased ? 'Coming Soon' : isOutOfStock ? 'Habis' : (button_text || 'Beli Sekarang')}
     </div>
   );
 

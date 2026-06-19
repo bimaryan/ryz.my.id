@@ -16,7 +16,8 @@ import {
   LayoutTemplate,
   Settings,
   User,
-  ShoppingCart
+  ShoppingCart,
+  AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +34,24 @@ export default function DashboardLayout({ children }) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const [showExpiredBanner, setShowExpiredBanner] = useState(false);
+
+  useEffect(() => {
+    if (user?.user_metadata?.subscription_expired_at) {
+      setShowExpiredBanner(true);
+    } else {
+      setShowExpiredBanner(false);
+    }
+  }, [user]);
+
+  const dismissExpiredBanner = async () => {
+    setShowExpiredBanner(false);
+    await supabase.auth.updateUser({
+      data: {
+        subscription_expired_at: null
+      }
+    });
+  };
 
   const searchQuery = searchParams.get("q") || "";
 
@@ -93,7 +112,7 @@ export default function DashboardLayout({ children }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f4f6fa] text-[#273144] font-sans flex">
+    <div className="min-h-screen bg-[#f8f9fc] text-[#273144] font-sans flex">
       {/* Mobile Backdrop Overlay */}
       {isMobileMenuOpen && (
         <div
@@ -105,13 +124,13 @@ export default function DashboardLayout({ children }) {
       {/* Sidebar Navigation */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-[#e8ebf2] flex flex-col shadow-2xl md:shadow-none transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-[260px] bg-white border border-[#e8ebf2]/50 flex flex-col shadow-2xl md:shadow-xl md:shadow-slate-200/50 transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} 
-          md:translate-x-0 md:static md:h-screen flex-shrink-0
+          md:translate-x-0 md:static md:h-[calc(100vh-2rem)] md:m-4 md:rounded-2xl flex-shrink-0
         `}
       >
         {/* SIDEBAR LOGO SECTION */}
-        <div className="flex h-16 items-center justify-between px-6 mb-2 border-b md:border-none border-[#e8ebf2]">
+        <div className="flex h-16 items-center justify-between px-6 mb-2 border-b border-slate-100/50">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-[#0b5cff] to-[#094acc] text-white shadow-sm">
               <span className="font-extrabold text-lg font-sans tracking-wide">
@@ -133,7 +152,7 @@ export default function DashboardLayout({ children }) {
         <div className="px-4 mb-4 mt-2">
           <Button
             onClick={() => setIsCreateModalOpen(true)}
-            className="w-full bg-[#0b5cff] hover:bg-[#094acc] text-white flex items-center justify-center gap-2 py-2.5 rounded-md font-semibold transition-colors shadow-sm hover:shadow"
+            className="w-full bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5"
           >
             <Plus className="h-5 w-5" />
             Create new
@@ -151,11 +170,11 @@ export default function DashboardLayout({ children }) {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all font-semibold text-sm group
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all duration-200 font-semibold text-sm group
                   ${
                     isActive
-                      ? "bg-[#ebf3ff] text-[#0b5cff]"
-                      : "text-[#273144] hover:bg-[#f4f6fa] hover:text-[#0b5cff]"
+                      ? "bg-blue-50/80 text-[#0b5cff] shadow-sm shadow-blue-100/50"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-[#0b5cff] hover:translate-x-1"
                   }
                 `}
               >
@@ -176,7 +195,7 @@ export default function DashboardLayout({ children }) {
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Global Top Navbar */}
-        <header className="h-16 bg-white border-b border-[#e8ebf2] flex items-center justify-between px-4 sm:px-6 shrink-0 z-30 sticky top-0">
+        <header className="h-16 bg-white/70 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-4 sm:px-6 shrink-0 z-30 sticky top-0 mt-0 md:mt-4 md:mr-4 md:rounded-2xl md:border md:shadow-sm">
           {/* MOBILE LOGO SECTION */}
           <div className="flex items-center gap-4 md:hidden">
             <button
@@ -205,7 +224,7 @@ export default function DashboardLayout({ children }) {
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Search links, domains, or tags..."
-              className="w-full pl-10 pr-4 py-2 bg-[#f4f6fa] border border-transparent focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-md text-sm transition-all outline-none"
+              className="w-full pl-10 pr-4 py-2 bg-slate-100/80 border border-transparent focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-full text-sm transition-all outline-none"
             />
           </div>
 
@@ -228,7 +247,7 @@ export default function DashboardLayout({ children }) {
               </button>
 
               {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-fade-in-up origin-top-right">
+                <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100/80 py-2 z-50 animate-fade-in-up origin-top-right">
                   <div className="px-4 py-3 border-b border-slate-100">
                     <p className="text-sm font-bold text-slate-900 truncate">
                       {user?.user_metadata?.full_name || "User"}
@@ -269,7 +288,38 @@ export default function DashboardLayout({ children }) {
 
         {/* Scrollable Page Content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
-          <div className="max-w-7xl mx-auto">{children}</div>
+          <div className="max-w-7xl mx-auto">
+            {showExpiredBanner && (
+              <div className="mb-6 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-red-500/20 text-white animate-fade-in-up relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-white/20 rounded-xl">
+                    <AlertTriangle className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-lg">Langganan Anda Telah Berakhir</h3>
+                    <p className="text-red-100 font-medium text-sm mt-0.5">Paket Premium Anda telah kedaluwarsa. Anda kini menggunakan paket Gratis. Perbarui untuk memulihkan fitur Premium.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <Link 
+                    to="/dashboard/settings" 
+                    className="flex-1 sm:flex-none text-center bg-white text-red-600 px-5 py-2.5 rounded-xl font-bold shadow-sm hover:bg-red-50 transition-colors"
+                  >
+                    Perbarui Sekarang
+                  </Link>
+                  <button 
+                    onClick={dismissExpiredBanner}
+                    className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-colors shrink-0"
+                    title="Tutup Peringatan"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {children}
+          </div>
         </main>
       </div>
 

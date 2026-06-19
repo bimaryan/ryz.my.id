@@ -57,21 +57,21 @@ export default function LinksPage() {
 
       <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Links</h1>
-          <p className="text-slate-500 font-medium mt-1">Manage and track all your created shortlinks.</p>
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">Daftar Link</h1>
+          <p className="text-slate-500 font-medium mt-1">Kelola dan lacak semua shortlink yang telah Anda buat.</p>
         </div>
 
         {/* Link List */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-200 bg-slate-50/50 flex-wrap gap-4">
-            <h2 className="text-lg font-bold text-slate-900">All Links</h2>
+        <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 relative overflow-hidden">
+          <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-100 bg-white flex-wrap gap-4">
+            <h2 className="text-xl font-extrabold text-slate-800">Semua Link</h2>
             <div className="flex gap-3 w-full sm:w-auto">
               <select 
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full sm:w-auto bg-white border border-slate-200 hover:border-slate-300 rounded-lg text-sm px-4 py-2 text-slate-700 font-semibold focus:outline-none focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 transition-all cursor-pointer shadow-sm"
+                className="w-full sm:w-auto bg-slate-50 border border-slate-200 hover:border-[#0b5cff] rounded-xl text-sm px-4 py-2.5 text-slate-700 font-bold focus:outline-none focus:ring-4 focus:ring-[#0b5cff]/10 transition-all cursor-pointer"
               >
-                <option value="">All Categories</option>
+                <option value="">Semua Kategori</option>
                 {Array.from(new Set(links.map(l => l.category).filter(Boolean))).map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -79,26 +79,26 @@ export default function LinksPage() {
             </div>
           </div>
           
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 p-2 sm:p-4">
             {linksLoading && (
               <div className="text-center py-12">
                 <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mx-auto"></div>
-                <p className="mt-4 text-slate-500 font-medium">Loading your links...</p>
+                <p className="mt-4 text-slate-500 font-medium">Memuat link Anda...</p>
               </div>
             )}
             
             {!linksLoading && filteredLinks.length === 0 && (
               <div className="py-20 text-center bg-slate-50/50">
-                <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  <Link2 className="h-8 w-8 text-slate-400" />
+                <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                  <Link2 className="h-10 w-10 text-blue-500" />
                 </div>
-                <p className="text-slate-600 font-semibold mb-1 text-lg">
-                  {searchQuery ? "No results found" : "No links found."}
+                <p className="text-slate-700 font-extrabold mb-1 text-xl">
+                  {searchQuery ? "Tidak ada hasil pencarian" : "Belum ada link yang dibuat"}
                 </p>
-                <p className="text-slate-500 text-sm">
+                <p className="text-slate-500 text-sm font-medium">
                   {searchQuery
-                    ? "Try adjusting your search terms."
-                    : "Use the form above to create your first short link."}
+                    ? "Coba sesuaikan kata kunci pencarian Anda."
+                    : "Buat shortlink pertama Anda melalui menu Dashboard."}
                 </p>
               </div>
             )}
@@ -106,7 +106,7 @@ export default function LinksPage() {
             {filteredLinks.map((link) => (
               <div
                 key={link.id}
-                className="p-6 flex flex-col lg:flex-row gap-6 lg:items-center justify-between hover:bg-slate-50/80 transition-colors group"
+                className="p-5 flex flex-col lg:flex-row gap-6 lg:items-center justify-between hover:bg-slate-50/80 transition-all duration-300 group rounded-2xl border border-transparent hover:border-slate-200 hover:shadow-md hover:-translate-y-0.5 bg-white"
               >
                 <div className="flex items-start gap-4 flex-1 min-w-0">
                   {/* Link Icon Avatar */}
@@ -164,7 +164,7 @@ export default function LinksPage() {
                       {link.clicks_count || 0}
                     </p>
                     <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">
-                      Engagements
+                      Interaksi
                     </p>
                   </div>
 
@@ -172,7 +172,7 @@ export default function LinksPage() {
                     <button
                       onClick={() => setShareLink(link)}
                       className="p-2.5 text-slate-400 hover:text-slate-800 hover:bg-white border border-transparent hover:border-slate-200 shadow-sm hover:shadow rounded-lg transition-all"
-                      title="Share Access"
+                      title="Bagikan Akses"
                     >
                       <Share2 className="h-4 w-4" />
                     </button>
@@ -190,7 +190,7 @@ export default function LinksPage() {
                           ? "bg-green-50 text-green-600 border-green-200"
                           : "text-slate-400 hover:text-[#0b5cff] hover:bg-white hover:border-slate-200"
                       }`}
-                      title="Copy Link"
+                      title="Salin Link"
                     >
                       {copiedId === link.short_code ? (
                         <Check className="h-4 w-4" />
@@ -201,7 +201,7 @@ export default function LinksPage() {
                     <button
                       onClick={() => handleDelete(link.id)}
                       className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 shadow-sm hover:shadow rounded-lg transition-all"
-                      title="Delete"
+                      title="Hapus"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

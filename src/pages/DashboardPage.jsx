@@ -111,12 +111,12 @@ export default function DashboardPage() {
       <div className="flex-1 w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up">
         {/* Header Section */}
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">
-            Dashboard
+          <h1 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">
+            Dasbor
           </h1>
           <p className="text-slate-500 font-medium mt-1">
-            Welcome back,{" "}
-            <span className="text-slate-700 font-semibold">
+            Selamat datang kembali,{" "}
+            <span className="text-slate-700 font-bold">
               {user?.user_metadata?.full_name || "User"}
             </span>
             !
@@ -126,11 +126,11 @@ export default function DashboardPage() {
         {/* Top Cards Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Quick Create Card (Takes 2 Columns on Desktop) */}
-          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+          <div className="lg:col-span-2 bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/40 relative overflow-hidden">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">
-                  Quick create: Short link
+                <h2 className="text-xl font-extrabold text-slate-800">
+                  Buat Cepat: Shortlink
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
                   Domain:{" "}
@@ -139,40 +139,40 @@ export default function DashboardPage() {
                   </span>
                 </p>
               </div>
-              <div className="hidden sm:flex bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
-                <span className="text-blue-600 text-sm font-semibold">
-                  {100 - (stats?.activeLinks || 0)} links remaining
+              <div className="hidden sm:flex bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100/80 shadow-sm">
+                <span className="text-blue-600 text-sm font-bold tracking-wide">
+                  {user?.user_metadata?.max_links === -1 ? 'Tak Terbatas' : `${(user?.user_metadata?.max_links || 100) - (stats?.activeLinks || 0)} link tersisa`}
                 </span>
               </div>
             </div>
 
             <div className="mb-6">
               <label className="block text-sm font-bold text-slate-700 mb-2">
-                Enter your destination URL
+                Masukkan URL tujuan Anda
               </label>
               <form
                 onSubmit={handleQuickCreate}
                 className="flex gap-3 flex-col sm:flex-row"
               >
                 <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <Link2 className="h-5 w-5 text-slate-400" />
                   </div>
                   <input
                     type="url"
                     value={quickUrl}
                     onChange={(e) => setQuickUrl(e.target.value)}
-                    placeholder="https://example.com/my-long-url"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 transition-all outline-none text-slate-700"
+                    placeholder="https://example.com/url-panjang-anda"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 transition-all outline-none text-slate-700"
                     disabled={isCreating}
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="bg-[#0b5cff] hover:bg-[#094acc] text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-sm hover:shadow whitespace-nowrap"
+                  className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-7 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 whitespace-nowrap"
                   disabled={isCreating}
                 >
-                  {isCreating ? "Creating..." : "Shorten URL"}
+                  {isCreating ? "Membuat..." : "Persingkat URL"}
                 </Button>
               </form>
             </div>
@@ -187,19 +187,19 @@ export default function DashboardPage() {
               />
               <label
                 htmlFor="quickQr"
-                className="text-sm font-medium text-slate-600 cursor-pointer select-none"
+                className="text-sm font-bold text-slate-600 cursor-pointer select-none"
               >
-                Also generate a QR Code for this link
+                Buat juga QR Code untuk link ini
               </label>
             </div>
           </div>
 
           {/* Monthly Usage Card */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col">
-            <h2 className="text-xl font-bold text-slate-800 mb-1">
-              Monthly Usage
+          <div className="bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/40 flex flex-col">
+            <h2 className="text-xl font-extrabold text-slate-800 mb-1">
+              Penggunaan Bulanan
             </h2>
-            <p className="text-slate-500 text-sm mb-6">Current Billing Cycle</p>
+            <p className="text-slate-500 text-sm mb-6">Siklus Tagihan Saat Ini</p>
 
             <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-6 flex-1">
               {/* Short Links Stat */}
@@ -207,17 +207,17 @@ export default function DashboardPage() {
                 <div className="flex justify-between font-bold text-slate-700 mb-2 text-sm items-center">
                   <div className="flex items-center gap-1.5">
                     <Link2 className="w-4 h-4 text-[#0b5cff]" />
-                    <span>Short links</span>
+                    <span>Shortlink</span>
                   </div>
                   <span className="text-slate-500">
-                    {stats?.activeLinks || 0} / 100
+                    {stats?.activeLinks || 0} / {user?.user_metadata?.max_links === -1 ? 'Tak Terbatas' : (user?.user_metadata?.max_links || 100)}
                   </span>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden">
                   <div
-                    className="bg-[#0b5cff] h-full rounded-full transition-all duration-500 ease-out"
+                    className="bg-gradient-to-r from-[#0b5cff] to-indigo-500 h-full rounded-full transition-all duration-500 ease-out"
                     style={{
-                      width: `${Math.min(((stats?.activeLinks || 0) / 100) * 100, 100)}%`,
+                      width: `${user?.user_metadata?.max_links === -1 ? 0 : Math.min(((stats?.activeLinks || 0) / (user?.user_metadata?.max_links || 100)) * 100, 100)}%`,
                     }}
                   ></div>
                 </div>
@@ -228,15 +228,15 @@ export default function DashboardPage() {
                 <div className="flex justify-between font-bold text-slate-700 mb-2 text-sm items-center">
                   <div className="flex items-center gap-1.5">
                     <MousePointerClick className="w-4 h-4 text-emerald-500" />
-                    <span>Total Clicks</span>
+                    <span>Total Klik</span>
                   </div>
                   <span className="text-slate-500">
                     {stats?.totalClicks || 0}
                   </span>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden">
                   <div
-                    className="bg-emerald-500 h-full rounded-full transition-all duration-500 ease-out"
+                    className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full rounded-full transition-all duration-500 ease-out shadow-sm"
                     style={{
                       width: `${Math.min(((stats?.totalClicks || 0) / 1000) * 100, 100)}%`, // Assuming 1000 is a mock limit for progress bar
                     }}
@@ -248,19 +248,19 @@ export default function DashboardPage() {
         </div>
 
         {/* Link List Section */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 border-b border-slate-100 bg-white gap-4">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-[#0b5cff]" />
-              Your Recent Links
+        <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:p-8 border-b border-slate-100 bg-white gap-4">
+            <h2 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+              <Activity className="w-6 h-6 text-[#0b5cff]" />
+              Link Terbaru Anda
             </h2>
             <div className="flex gap-3 w-full sm:w-auto">
               <select 
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full sm:w-auto bg-white border border-slate-200 hover:border-slate-300 rounded-lg text-sm px-4 py-2 text-slate-700 font-semibold focus:outline-none focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 transition-all cursor-pointer shadow-sm"
+                className="w-full sm:w-auto bg-slate-50 border border-slate-200 hover:border-[#0b5cff] rounded-xl text-sm px-4 py-2.5 text-slate-700 font-bold focus:outline-none focus:ring-4 focus:ring-[#0b5cff]/10 transition-all cursor-pointer"
               >
-                <option value="">All Categories</option>
+                <option value="">Semua Kategori</option>
                 {Array.from(new Set(links.map(l => l.category).filter(Boolean))).map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -268,37 +268,37 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 p-2 sm:p-4">
             {linksLoading && (
               <div className="text-center py-12">
                 <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mx-auto"></div>
                 <p className="mt-4 text-slate-500 font-medium">
-                  Loading your links...
+                  Memuat link Anda...
                 </p>
               </div>
             )}
 
             {!linksLoading && filteredLinks.length === 0 && (
               <div className="py-20 text-center bg-slate-50/50">
-                <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  <Link2 className="h-8 w-8 text-slate-400" />
+                <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                  <Link2 className="h-10 w-10 text-blue-500" />
                 </div>
-                <p className="text-slate-600 font-semibold mb-1 text-lg">
-                  {searchQuery ? "No results found" : "No links created yet"}
+                <p className="text-slate-700 font-extrabold mb-1 text-xl">
+                  {searchQuery ? "Tidak ada hasil" : "Belum ada link yang dibuat"}
                 </p>
-                <p className="text-slate-500 text-sm">
+                <p className="text-slate-500 text-sm font-medium">
                   {searchQuery
-                    ? "Try adjusting your search terms."
-                    : "Use the form above to create your first short link."}
+                    ? "Coba sesuaikan kata kunci pencarian Anda."
+                    : "Gunakan form di atas untuk membuat shortlink pertama Anda."}
                 </p>
               </div>
             )}
 
             {filteredLinks.slice(0, 10).map((link) => (
-              <div
-                key={link.id}
-                className="p-6 flex flex-col lg:flex-row gap-6 lg:items-center justify-between hover:bg-slate-50/80 transition-colors group"
-              >
+                <div
+                  key={link.id}
+                  className="p-5 flex flex-col lg:flex-row gap-6 lg:items-center justify-between hover:bg-slate-50/80 transition-all duration-300 group rounded-2xl border border-transparent hover:border-slate-200 hover:shadow-md hover:-translate-y-0.5 bg-white"
+                >
                 <div className="flex items-start gap-4 flex-1 min-w-0">
                   {/* Link Icon Avatar */}
                   <div className="hidden sm:flex mt-1 h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#0b5cff]">
@@ -355,7 +355,7 @@ export default function DashboardPage() {
                       {link.clicks_count || 0}
                     </p>
                     <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">
-                      Engagements
+                      Interaksi
                     </p>
                   </div>
 
@@ -363,7 +363,7 @@ export default function DashboardPage() {
                     <button
                       onClick={() => setShareLink(link)}
                       className="p-2.5 text-slate-400 hover:text-slate-800 hover:bg-white border border-transparent hover:border-slate-200 shadow-sm hover:shadow rounded-lg transition-all"
-                      title="Share Access"
+                      title="Bagikan Akses"
                     >
                       <Share2 className="h-4 w-4" />
                     </button>
@@ -381,7 +381,7 @@ export default function DashboardPage() {
                           ? "bg-green-50 text-green-600 border-green-200"
                           : "text-slate-400 hover:text-[#0b5cff] hover:bg-white hover:border-slate-200"
                       }`}
-                      title="Copy Link"
+                      title="Salin Link"
                     >
                       {copiedId === link.short_code ? (
                         <Check className="h-4 w-4" />
@@ -392,16 +392,16 @@ export default function DashboardPage() {
                     <button
                       onClick={() => handleDelete(link.id)}
                       className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 shadow-sm hover:shadow rounded-lg transition-all"
-                      title="Delete"
+                      title="Hapus"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
       </div>
 
       <QRCodeModal

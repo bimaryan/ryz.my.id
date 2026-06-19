@@ -40,20 +40,20 @@ export default function AnalyticsPage() {
         <div className="space-y-8">
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                Analytics
+              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">
+                Analitik
               </h1>
               <p className="text-slate-500 font-medium mt-1">
-                Detailed insights into your audience and link performance.
+                Wawasan mendetail tentang audiens dan performa link Anda.
               </p>
             </div>
-            <div className="bitly-card px-6 py-4 flex items-center gap-4">
-              <div className="p-2 bg-blue-50 text-[#0b5cff] rounded">
+            <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 px-6 py-4 flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 text-[#0b5cff] rounded-2xl shadow-sm">
                 <BarChart3 className="h-6 w-6" />
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase font-bold tracking-wide">
-                  Total Clicks
+                  Total Klik
                 </p>
                 <p className="text-2xl font-extrabold text-slate-900">
                   {getTotalClicks()}
@@ -69,13 +69,13 @@ export default function AnalyticsPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Device Distribution */}
-              <div className="bitly-card p-6">
-                <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
-                  <Smartphone className="h-5 w-5 text-slate-400" /> Devices
+              <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 p-6 sm:p-8">
+                <h2 className="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                  <Smartphone className="h-6 w-6 text-slate-400" /> Perangkat
                 </h2>
                 {data.devices.length === 0 ? (
                   <p className="text-slate-500 text-center py-8 font-medium">
-                    No data available yet.
+                    Belum ada data yang tersedia.
                   </p>
                 ) : (
                   <div className="space-y-6">
@@ -113,13 +113,13 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Referrers */}
-              <div className="bitly-card p-6">
-                <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
-                  <Globe className="h-5 w-5 text-slate-400" /> Top Referrers
+              <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 p-6 sm:p-8">
+                <h2 className="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                  <Globe className="h-6 w-6 text-slate-400" /> Sumber Rujukan Teratas
                 </h2>
                 {data.referrers.length === 0 ? (
                   <p className="text-slate-500 text-center py-8 font-medium">
-                    No data available yet.
+                    Belum ada data yang tersedia.
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -136,8 +136,8 @@ export default function AnalyticsPage() {
                             {ref.name}
                           </span>
                         </div>
-                        <span className="bg-slate-100 px-3 py-1 rounded text-slate-700 font-bold text-sm">
-                          {ref.value} clicks
+                        <span className="bg-slate-100 px-3 py-1 rounded-lg text-slate-700 font-bold text-sm">
+                          {ref.value} klik
                         </span>
                       </div>
                     ))}
@@ -146,38 +146,37 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Recent Clicks Activity */}
-              <div className="bitly-card lg:col-span-2 overflow-hidden">
-                <div className="p-6 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-slate-400" /> Recent Clicks
-                    Log
+              <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 lg:col-span-2 overflow-hidden">
+                <div className="p-6 sm:p-8 border-b border-slate-100 bg-white">
+                  <h2 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                    <Clock className="h-6 w-6 text-slate-400" /> Log Klik Terbaru
                   </h2>
                 </div>
                 {data.recentClicks.length === 0 ? (
                   <p className="text-slate-500 text-center py-8 font-medium">
-                    No clicks recorded yet.
+                    Belum ada klik yang tercatat.
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-600">
-                      <thead className="text-xs uppercase bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                      <thead className="text-xs uppercase bg-slate-50/80 text-slate-500 font-bold border-b border-slate-100">
                         <tr>
-                          <th className="px-6 py-4">Time</th>
-                          <th className="px-6 py-4">Link</th>
-                          <th className="px-6 py-4">Location (IP)</th>
-                          <th className="px-6 py-4">Device / Browser</th>
+                          <th className="px-6 sm:px-8 py-5">Waktu</th>
+                          <th className="px-6 sm:px-8 py-5">Link</th>
+                          <th className="px-6 sm:px-8 py-5">Lokasi (IP)</th>
+                          <th className="px-6 sm:px-8 py-5">Perangkat / Browser</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {data.recentClicks.map((click) => (
                           <tr
                             key={click.id}
-                            className="hover:bg-slate-50 transition-colors"
+                            className="hover:bg-slate-50/80 transition-all duration-300 group"
                           >
-                            <td className="px-6 py-4 font-mono text-xs whitespace-nowrap text-slate-500">
+                            <td className="px-6 sm:px-8 py-5 font-mono text-xs whitespace-nowrap text-slate-500">
                               {new Date(click.created_at).toLocaleString()}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 sm:px-8 py-5">
                               <span className="text-slate-900 font-bold block">
                                 {click.linkTitle}
                               </span>
@@ -185,7 +184,7 @@ export default function AnalyticsPage() {
                                 /{click.shortCode}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 sm:px-8 py-5">
                               <span className="font-mono text-xs text-slate-500">
                                 {click.ip_address || "Unknown"}
                               </span>{" "}
@@ -194,7 +193,7 @@ export default function AnalyticsPage() {
                                 {click.country || "-"}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 sm:px-8 py-5">
                               <span className="block capitalize font-bold text-slate-800">
                                 {click.device_type || "Desktop"}
                               </span>

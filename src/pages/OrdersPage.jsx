@@ -139,55 +139,55 @@ export default function OrdersPage() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
-              <ShoppingCart className="text-[#0b5cff] w-8 h-8" /> Orders
+            <h1 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight flex items-center gap-3">
+              <ShoppingCart className="text-[#0b5cff] w-8 h-8" /> Pesanan
             </h1>
             <p className="text-slate-500 font-medium mt-1">
-              Manage your sales, update shipping status, and track packages.
+              Kelola penjualan Anda, perbarui status pengiriman, dan lacak paket.
             </p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/40 flex flex-col sm:flex-row gap-4 justify-between">
           <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#8290a3]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by customer, product, or Order ID..."
-              className="w-full pl-10 pr-4 py-2 bg-[#f4f6fa] border border-transparent focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-lg text-sm transition-all outline-none"
+              placeholder="Cari pelanggan, produk, atau ID Pesanan..."
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl text-sm transition-all outline-none text-slate-700 font-medium"
             />
           </div>
           <div className="relative min-w-[160px]">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full appearance-none pl-4 pr-10 py-2 bg-white border border-slate-200 hover:border-slate-300 focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 rounded-lg text-sm font-medium text-slate-700 transition-all outline-none shadow-sm cursor-pointer"
+              className="w-full appearance-none pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 hover:border-[#0b5cff] focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl text-sm font-bold text-slate-700 transition-all outline-none shadow-sm cursor-pointer"
             >
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid (Awaiting Processing)</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="failed">Failed/Canceled</option>
+              <option value="">Semua Status</option>
+              <option value="pending">Tertunda (Pending)</option>
+              <option value="paid">Dibayar (Paid)</option>
+              <option value="processing">Diproses (Processing)</option>
+              <option value="shipped">Dikirim (Shipped)</option>
+              <option value="delivered">Diterima (Delivered)</option>
+              <option value="failed">Gagal/Dibatalkan</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Orders Table */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase font-bold text-slate-500">
+              <thead className="bg-slate-50/80 border-b border-slate-100 text-xs uppercase font-bold text-slate-500">
                 <tr>
-                  <th className="px-6 py-4">Order Info</th>
-                  <th className="px-6 py-4">Customer</th>
-                  <th className="px-6 py-4">Status & Shipping</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 sm:px-8 py-5">Info Pesanan</th>
+                  <th className="px-6 sm:px-8 py-5">Pelanggan</th>
+                  <th className="px-6 sm:px-8 py-5">Status & Pengiriman</th>
+                  <th className="px-6 sm:px-8 py-5 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -195,89 +195,91 @@ export default function OrdersPage() {
                   <tr>
                     <td colSpan="4" className="px-6 py-12 text-center text-slate-500">
                       <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mx-auto mb-4"></div>
-                      Loading orders...
+                      Memuat pesanan...
                     </td>
                   </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="px-6 py-12 text-center">
-                      <ShoppingCart className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                      <p className="text-slate-500 font-medium">No orders found.</p>
+                      <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                        <ShoppingCart className="w-10 h-10 text-blue-500" />
+                      </div>
+                      <p className="text-slate-500 font-medium text-lg">Belum ada pesanan ditemukan.</p>
                     </td>
                   </tr>
                 ) : (
                   filteredOrders.map(order => (
-                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4 align-top">
+                    <tr key={order.id} className="hover:bg-slate-50/80 transition-all duration-300 group">
+                      <td className="px-6 sm:px-8 py-5 align-top">
                         <div className="font-bold text-slate-800 text-base">{order.product_name}</div>
-                        {order.variant_name && <div className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded inline-block mt-1">Variant: {order.variant_name}</div>}
+                        {order.variant_name && <div className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md inline-block mt-2">Varian: {order.variant_name}</div>}
                         <div className="text-slate-500 font-medium mt-1">ID: <span className="text-slate-400 text-xs font-mono">{order.id.split('-')[0]}</span></div>
-                        <div className="font-black text-[#0b5cff] mt-2">Rp {order.amount?.toLocaleString('id-ID')}</div>
-                        <div className="text-xs text-slate-400 mt-1">{new Date(order.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                        <div className="font-black text-[#0b5cff] mt-2 text-lg">Rp {order.amount?.toLocaleString('id-ID')}</div>
+                        <div className="text-xs text-slate-400 mt-1">{new Date(order.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</div>
                       </td>
-                      <td className="px-6 py-4 align-top max-w-[250px]">
+                      <td className="px-6 sm:px-8 py-5 align-top max-w-[250px]">
                         <div className="font-bold text-slate-800">{order.customer_name}</div>
                         <div className="text-slate-500 text-xs mt-1 space-y-0.5">
                           {order.customer_email && <div>✉️ {order.customer_email}</div>}
                           {order.customer_phone && <div>📞 {order.customer_phone}</div>}
                         </div>
                         {order.customer_address && (
-                          <div className="mt-3 text-xs bg-slate-50 border border-slate-100 p-2 rounded-lg">
-                            <span className="font-bold text-slate-600 block mb-1">Address:</span>
+                          <div className="mt-3 text-xs bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                            <span className="font-bold text-slate-600 block mb-1">Alamat:</span>
                             {order.customer_address}
                           </div>
                         )}
                         {order.custom_answers && Object.keys(order.custom_answers).length > 0 && (
                           <div className="mt-2 text-xs">
-                            <span className="font-bold text-slate-600 block mb-1">Answers:</span>
+                            <span className="font-bold text-slate-600 block mb-1">Jawaban Form:</span>
                             {Object.entries(order.custom_answers).map(([k, v]) => (
                               <div key={k} className="truncate text-slate-500">• {v}</div>
                             ))}
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 align-top">
+                      <td className="px-6 sm:px-8 py-5 align-top">
                         {editingOrderId === order.id ? (
-                          <div className="space-y-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                          <div className="space-y-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50">
                             <div>
                               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Status</label>
                               <select 
                                 value={editStatus}
                                 onChange={e => setEditStatus(e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded-lg text-sm px-3 py-1.5 focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 outline-none"
+                                className="w-full bg-white border border-slate-200 rounded-xl text-sm px-3 py-2 focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 outline-none transition-all"
                               >
-                                <option value="pending">Pending</option>
-                                <option value="paid">Paid</option>
-                                <option value="processing">Processing</option>
-                                <option value="shipped">Shipped</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="failed">Failed/Canceled</option>
+                                <option value="pending">Tertunda</option>
+                                <option value="paid">Dibayar</option>
+                                <option value="processing">Diproses</option>
+                                <option value="shipped">Dikirim</option>
+                                <option value="delivered">Diterima</option>
+                                <option value="failed">Gagal/Dibatalkan</option>
                               </select>
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Courier (Biteship)</label>
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Kurir Pengiriman</label>
                               <div className="relative">
                                 <select 
                                   value={editCourier}
                                   onChange={e => setEditCourier(e.target.value)}
-                                  className="w-full appearance-none bg-white border border-slate-200 rounded-lg text-sm px-3 py-1.5 focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 outline-none"
+                                  className="w-full appearance-none bg-white border border-slate-200 rounded-xl text-sm px-3 py-2 focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 outline-none transition-all"
                                 >
-                                  <option value="">Select Courier...</option>
+                                  <option value="">Pilih Kurir...</option>
                                   {couriers.map(c => (
                                     <option key={c.courier_code} value={c.courier_code}>{c.courier_name}</option>
                                   ))}
                                 </select>
-                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                               </div>
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tracking Number / Resi</label>
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nomor Resi / Pelacakan</label>
                               <input 
                                 type="text"
                                 value={editTrackingNumber}
                                 onChange={e => setEditTrackingNumber(e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded-lg text-sm px-3 py-1.5 focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 outline-none"
-                                placeholder="Tracking / Receipt Number"
+                                className="w-full bg-white border border-slate-200 rounded-xl text-sm px-3 py-2 focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 outline-none transition-all"
+                                placeholder="Nomor Resi Pengiriman"
                               />
                             </div>
                           </div>
@@ -285,11 +287,11 @@ export default function OrdersPage() {
                           <div className="space-y-3">
                             <div>{getStatusBadge(order.status)}</div>
                             {(order.shipping_courier || order.tracking_number) && (
-                              <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-1 mt-2">
-                                {order.shipping_courier && <div className="text-xs text-slate-500"><span className="font-bold text-slate-700">Courier:</span> {order.shipping_courier}</div>}
+                              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1 mt-2">
+                                {order.shipping_courier && <div className="text-xs text-slate-500"><span className="font-bold text-slate-700">Kurir:</span> {order.shipping_courier}</div>}
                                 {order.tracking_number && (
                                   <div className="text-xs text-slate-500">
-                                    <span className="font-bold text-slate-700">Resi:</span> <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200 select-all">{order.tracking_number}</span>
+                                    <span className="font-bold text-slate-700">Resi:</span> <span className="font-mono bg-white px-2 py-0.5 rounded-md border border-slate-200 select-all shadow-sm">{order.tracking_number}</span>
                                   </div>
                                 )}
                               </div>
@@ -297,38 +299,38 @@ export default function OrdersPage() {
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 align-top text-right">
+                      <td className="px-6 sm:px-8 py-5 align-top text-right">
                         {editingOrderId === order.id ? (
                           <div className="flex flex-col gap-2 items-end">
                             <button 
                               onClick={() => saveOrderUpdate(order.id)}
                               disabled={isSaving}
-                              className="bg-[#0b5cff] hover:bg-[#094acc] text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm"
+                              className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-blue-500/20 hover:-translate-y-0.5"
                             >
-                              <Save className="w-3.5 h-3.5" /> {isSaving ? 'Saving...' : 'Save'}
+                              <Save className="w-3.5 h-3.5" /> {isSaving ? 'Menyimpan...' : 'Simpan'}
                             </button>
                             <button 
                               onClick={cancelEditing}
-                              className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                              className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-5 py-2 rounded-xl text-xs font-bold transition-all"
                             >
-                              Cancel
+                              Batal
                             </button>
                           </div>
                         ) : (
                           <div className="flex flex-col gap-2 items-end">
                             <button 
                               onClick={() => startEditing(order)}
-                              className="border border-slate-200 hover:border-[#0b5cff] text-slate-600 hover:text-[#0b5cff] bg-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
+                              className="border border-transparent hover:border-slate-200 text-slate-500 hover:text-[#0b5cff] bg-slate-50 hover:bg-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
                             >
-                              <Edit className="w-3.5 h-3.5" /> Manage
+                              <Edit className="w-3.5 h-3.5" /> Kelola
                             </button>
                             <a 
                               href={`/track/${order.id}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-xs font-bold text-[#0b5cff] hover:underline"
+                              className="text-xs font-bold text-[#0b5cff] hover:text-indigo-600 hover:underline transition-colors mt-1"
                             >
-                              View Track Page
+                              Lihat Pelacakan
                             </a>
                           </div>
                         )}

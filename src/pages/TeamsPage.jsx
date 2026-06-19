@@ -87,18 +87,18 @@ export default function TeamsPage() {
   return (
     <>
       <DashboardLayout>
-      <SEO title="Teams & Collaboration | RYZ Shortlink" />
+      <SEO title="Tim & Kolaborasi | RYZ Shortlink" />
 
       <div className="flex-1 w-full max-w-7xl mx-auto animate-fade-in-up">
         <div className="space-y-8">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Teams</h1>
-              <p className="text-slate-500 font-medium mt-1">Collaborate on links, custom domains, and analytics with your team.</p>
+              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">Tim</h1>
+              <p className="text-slate-500 font-medium mt-1">Berkolaborasi dalam tautan, domain kustom, dan analitik bersama tim Anda.</p>
             </div>
-            <Button size="md" onClick={() => setIsAddModalOpen(true)} className="bitly-button-primary shadow-md">
-              <Plus className="h-4 w-4 mr-2" /> Create Team
+            <Button size="md" onClick={() => setIsAddModalOpen(true)} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 whitespace-nowrap">
+              <Plus className="h-4 w-4 mr-2" /> Buat Tim
             </Button>
           </div>
 
@@ -109,45 +109,45 @@ export default function TeamsPage() {
             )}
 
             {!isLoading && teams.length === 0 && (
-              <div className="col-span-full bitly-card p-12 text-center bg-slate-50 border-dashed border-2">
-                <div className="h-16 w-16 rounded-full bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  <Users className="h-8 w-8 text-[#0b5cff]" />
+              <div className="col-span-full bg-white border-dashed border-2 border-slate-200 rounded-3xl p-12 text-center">
+                <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                  <Users className="h-10 w-10 text-[#0b5cff]" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Work better together</h3>
-                <p className="text-slate-500 font-medium mb-6 max-w-md mx-auto">Create a team workspace to share links, manage custom domains, and view analytics collaboratively.</p>
-                <Button onClick={() => setIsAddModalOpen(true)} className="bitly-button-primary">Create Your First Team</Button>
+                <h3 className="text-2xl font-extrabold text-slate-800 mb-3">Bekerja lebih baik bersama-sama</h3>
+                <p className="text-slate-500 font-medium mb-8 max-w-md mx-auto">Buat ruang kerja tim untuk membagikan tautan, mengelola domain kustom, dan melihat analitik secara kolaboratif.</p>
+                <Button onClick={() => setIsAddModalOpen(true)} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5">Buat Tim Pertama Anda</Button>
               </div>
             )}
 
             {teams.map(team => (
-              <div key={team.id} className="bitly-card flex flex-col hover:-translate-y-1 transition-transform duration-200">
-                <Link to={`/dashboard/teams/${team.id}`} className="p-6 flex-1 hover:bg-slate-50/50 transition-colors block">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0b5cff] to-[#094bdd] flex items-center justify-center text-white text-xl font-bold shadow-sm">
+              <div key={team.id} className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 flex flex-col hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 group overflow-hidden">
+                <Link to={`/dashboard/teams/${team.id}`} className="p-6 sm:p-8 flex-1 group-hover:bg-slate-50/50 transition-colors block">
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#0b5cff] to-indigo-600 flex items-center justify-center text-white text-2xl font-extrabold shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
                       {team.name.charAt(0).toUpperCase()}
                     </div>
-                    <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded uppercase tracking-wider">
+                    <span className="px-3 py-1 bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 text-slate-600 text-xs font-bold rounded-lg uppercase tracking-widest shadow-sm">
                       {team.plan_type}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-1">{team.name}</h3>
-                  <p className="text-sm text-slate-500 line-clamp-2 min-h-[40px]">{team.description || 'No description provided.'}</p>
+                  <h3 className="text-xl font-extrabold text-slate-800 mb-2">{team.name}</h3>
+                  <p className="text-sm text-slate-500 font-medium line-clamp-2 min-h-[40px] leading-relaxed">{team.description || 'Tidak ada deskripsi.'}</p>
                 </Link>
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
-                    <Users className="h-4 w-4 text-slate-400" />
-                    {team.members_count} Member{team.members_count !== 1 ? 's' : ''}
+                <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between mt-auto">
+                  <div className="flex items-center gap-2 text-sm font-bold text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                    <Users className="h-4 w-4 text-[#0b5cff]" />
+                    {team.members_count} Anggota
                   </div>
                   <div className="flex gap-2">
                     <button 
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditTeamData(team); setNameInput(team.name); setDescInput(team.description || ''); }}
-                      className="text-slate-500 hover:text-slate-900 hover:bg-slate-200 h-8 w-8 flex items-center justify-center rounded-md transition-colors" title="Settings">
-                      <Settings className="h-4 w-4" />
+                      className="text-slate-500 hover:text-slate-800 hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm h-10 w-10 flex items-center justify-center rounded-xl transition-all" title="Pengaturan">
+                      <Settings className="h-5 w-5" />
                     </button>
                     <button 
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setInviteTeamData(team); }}
-                      className="text-[#0b5cff] hover:bg-blue-50 h-8 w-8 flex items-center justify-center rounded-md transition-colors" title="Invite Members">
-                      <UserPlus className="h-4 w-4" />
+                      className="text-[#0b5cff] hover:bg-blue-50 border border-transparent hover:border-blue-100 h-10 w-10 flex items-center justify-center rounded-xl transition-all" title="Undang Anggota">
+                      <UserPlus className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
@@ -160,42 +160,42 @@ export default function TeamsPage() {
 
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900">Create a New Team</h3>
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/80">
+              <h3 className="text-xl font-extrabold text-slate-800">Buat Tim Baru</h3>
             </div>
             
             <form onSubmit={handleCreateTeam} className="p-6 space-y-5">
               <div>
                 <Input 
-                  label={<span className="text-slate-700 font-bold">Team Name</span>} 
-                  placeholder="e.g. Marketing Dept" 
+                  label={<span className="text-slate-700 font-bold">Nama Tim</span>} 
+                  placeholder="misal: Divisi Marketing" 
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="bitly-input"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Description <span className="font-normal text-slate-400">(Optional)</span></label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Deskripsi <span className="font-normal text-slate-400">(Opsional)</span></label>
                 <textarea 
-                  className="bitly-input w-full p-4 rounded-lg border border-slate-300 focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 bg-white min-h-[100px] resize-none"
-                  placeholder="What is this team for?"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none p-4 min-h-[100px] resize-none"
+                  placeholder="Untuk apa tim ini?"
                   value={descInput}
                   onChange={(e) => setDescInput(e.target.value)}
                 />
               </div>
 
               {addError && (
-                <div className="p-3 bg-red-50 text-red-600 text-sm font-bold border border-red-200 rounded-lg">
+                <div className="p-4 bg-red-50 text-red-600 text-sm font-bold border border-red-100 rounded-xl">
                   {addError}
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <Button type="button" onClick={() => setIsAddModalOpen(false)} className="bitly-button-secondary">Cancel</Button>
-                <Button type="submit" isLoading={isSubmitting} className="bitly-button-primary">Create Workspace</Button>
+              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
+                <Button type="button" onClick={() => setIsAddModalOpen(false)} variant="secondary">Batal</Button>
+                <Button type="submit" isLoading={isSubmitting} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5">Buat Ruang Kerja</Button>
               </div>
             </form>
           </div>
@@ -204,46 +204,46 @@ export default function TeamsPage() {
 
       {editTeamData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900">Edit Team Settings</h3>
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/80">
+              <h3 className="text-xl font-extrabold text-slate-800">Pengaturan Tim</h3>
             </div>
             
             <form onSubmit={handleUpdateTeam} className="p-6 space-y-5">
               <div>
                 <Input 
-                  label={<span className="text-slate-700 font-bold">Team Name</span>} 
-                  placeholder="e.g. Marketing Dept" 
+                  label={<span className="text-slate-700 font-bold">Nama Tim</span>} 
+                  placeholder="misal: Divisi Marketing" 
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="bitly-input"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Description <span className="font-normal text-slate-400">(Optional)</span></label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Deskripsi <span className="font-normal text-slate-400">(Opsional)</span></label>
                 <textarea 
-                  className="bitly-input w-full p-4 rounded-lg border border-slate-300 focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 bg-white min-h-[100px] resize-none"
-                  placeholder="What is this team for?"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none p-4 min-h-[100px] resize-none"
+                  placeholder="Untuk apa tim ini?"
                   value={descInput}
                   onChange={(e) => setDescInput(e.target.value)}
                 />
               </div>
 
               {addError && (
-                <div className="p-3 bg-red-50 text-red-600 text-sm font-bold border border-red-200 rounded-lg">
+                <div className="p-4 bg-red-50 text-red-600 text-sm font-bold border border-red-100 rounded-xl">
                   {addError}
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                <Button type="button" onClick={() => handleDeleteTeamConfirm(editTeamData.id)} className="text-red-600 hover:bg-red-50 font-bold">
-                  Delete Team
+              <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+                <Button type="button" onClick={() => handleDeleteTeamConfirm(editTeamData.id)} className="text-red-600 hover:bg-red-50 font-bold px-4 py-2 rounded-xl">
+                  Hapus Tim
                 </Button>
                 <div className="flex gap-3">
-                  <Button type="button" onClick={() => setEditTeamData(null)} className="bitly-button-secondary">Cancel</Button>
-                  <Button type="submit" isLoading={isSubmitting} className="bitly-button-primary">Save Changes</Button>
+                  <Button type="button" onClick={() => setEditTeamData(null)} variant="secondary">Batal</Button>
+                  <Button type="submit" isLoading={isSubmitting} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5">Simpan Perubahan</Button>
                 </div>
               </div>
             </form>
@@ -253,46 +253,46 @@ export default function TeamsPage() {
 
       {inviteTeamData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900">Invite to {inviteTeamData.name}</h3>
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/80">
+              <h3 className="text-xl font-extrabold text-slate-800">Undang ke {inviteTeamData.name}</h3>
             </div>
             
             <form onSubmit={handleInvite} className="p-6 space-y-5">
               <div>
                 <Input 
-                  label={<span className="text-slate-700 font-bold">User Email</span>} 
+                  label={<span className="text-slate-700 font-bold">Email Pengguna</span>} 
                   placeholder="user@example.com" 
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="bitly-input"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
                   autoFocus
                 />
-                <p className="text-xs text-slate-500 mt-1">The user must already have an account.</p>
+                <p className="text-xs text-slate-500 mt-2 font-medium">Pengguna tersebut harus sudah memiliki akun terdaftar.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Role</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Peran (Role)</label>
                 <select 
-                  className="bitly-input w-full px-4 h-11 rounded-lg border border-slate-300 focus:border-[#0b5cff] bg-white"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5 h-[46px]"
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
                 >
-                  <option value="member">Member</option>
+                  <option value="member">Anggota (Member)</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
 
               {addError && (
-                <div className="p-3 bg-red-50 text-red-600 text-sm font-bold border border-red-200 rounded-lg">
+                <div className="p-4 bg-red-50 text-red-600 text-sm font-bold border border-red-100 rounded-xl">
                   {addError}
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <Button type="button" onClick={() => setInviteTeamData(null)} className="bitly-button-secondary">Cancel</Button>
-                <Button type="submit" isLoading={isSubmitting} className="bitly-button-primary">Send Invite</Button>
+              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
+                <Button type="button" onClick={() => setInviteTeamData(null)} variant="secondary">Batal</Button>
+                <Button type="submit" isLoading={isSubmitting} className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5">Kirim Undangan</Button>
               </div>
             </form>
           </div>
@@ -307,12 +307,13 @@ export default function TeamsPage() {
           if (teamToDelete) {
             await deleteTeam(teamToDelete)
             setEditTeamData(null)
-            import('react-hot-toast').then(({ default: toast }) => toast.success('Team has been deleted.'))
+            import('react-hot-toast').then(({ default: toast }) => toast.success('Tim telah dihapus.'))
             setTeamToDelete(null)
           }
         }}
-        title="Delete Team"
-        message="This action cannot be undone. Are you sure you want to delete this team?"
+        title="Hapus Tim"
+        message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus tim ini?"
+        confirmText="Hapus Tim"
       />
     </>
   )

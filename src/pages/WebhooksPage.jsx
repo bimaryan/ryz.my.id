@@ -62,26 +62,26 @@ export default function WebhooksPage() {
         <div className="space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                Webhooks
+              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">
+                Webhook
               </h1>
               <p className="text-slate-500 font-medium mt-1">
-                Send real-time data to your servers when events happen.
+                Kirim data secara real-time ke server Anda saat ada aktivitas.
               </p>
             </div>
             <Button
               size="md"
               onClick={() => setIsAddModalOpen(true)}
-              className="bitly-button-primary shadow-md"
+              className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 whitespace-nowrap"
             >
-              <Plus className="h-4 w-4 mr-2" /> Add Webhook
+              <Plus className="h-4 w-4 mr-2" /> Tambah Webhook
             </Button>
           </div>
 
-          <div className="bitly-card overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-900">
-                Configured Endpoints
+          <div className="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-200/40 overflow-hidden">
+            <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-100 bg-white">
+              <h2 className="text-xl font-extrabold text-slate-800">
+                Titik Akhir (Endpoints) yang Dikonfigurasi
               </h2>
             </div>
 
@@ -93,21 +93,21 @@ export default function WebhooksPage() {
               )}
 
               {!isLoading && webhooks.length === 0 && (
-                <div className="py-16 text-center bg-slate-50">
-                  <div className="h-12 w-12 rounded bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4">
-                    <Webhook className="h-6 w-6 text-slate-400" />
+                <div className="py-16 text-center bg-white">
+                  <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                    <Webhook className="h-10 w-10 text-[#0b5cff]" />
                   </div>
-                  <h3 className="font-bold text-slate-900 mb-1">
-                    No webhooks configured
+                  <h3 className="text-xl font-extrabold text-slate-800 mb-2">
+                    Belum ada webhook yang dikonfigurasi
                   </h3>
-                  <p className="text-slate-500 text-sm font-medium mb-4">
-                    Add an endpoint to receive real-time event payloads.
+                  <p className="text-slate-500 font-medium mb-6 max-w-md mx-auto">
+                    Tambahkan titik akhir (endpoint) untuk menerima payload data aktivitas secara real-time.
                   </p>
                   <Button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="bitly-button-secondary"
+                    className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5"
                   >
-                    Add Webhook
+                    Tambah Webhook
                   </Button>
                 </div>
               )}
@@ -115,13 +115,13 @@ export default function WebhooksPage() {
               {webhooks.map((webhook) => (
                 <div
                   key={webhook.id}
-                  className={`p-6 flex flex-col md:flex-row gap-6 md:items-center justify-between transition-colors ${!webhook.is_active ? "bg-slate-50 opacity-75" : "hover:bg-slate-50"}`}
+                  className={`p-6 sm:px-8 flex flex-col md:flex-row gap-6 md:items-center justify-between transition-all duration-300 group ${!webhook.is_active ? "bg-slate-50 opacity-75" : "hover:bg-slate-50/80"}`}
                 >
-                  <div className="flex flex-row items-center gap-4">
+                  <div className="flex flex-row items-center gap-5">
                     <div
-                      className={`h-10 w-10 rounded-lg flex items-center justify-center border shrink-0 ${webhook.is_active ? "bg-[#0b5cff]/10 border-[#0b5cff]/20 text-[#0b5cff]" : "bg-slate-100 border-slate-200 text-slate-400"}`}
+                      className={`h-12 w-12 rounded-2xl flex items-center justify-center border shrink-0 ${webhook.is_active ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100/50 text-[#0b5cff] shadow-sm" : "bg-slate-100 border-slate-200 text-slate-400"}`}
                     >
-                      <Webhook className="h-5 w-5" />
+                      <Webhook className="h-6 w-6" />
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-1">
@@ -134,9 +134,9 @@ export default function WebhooksPage() {
                           {webhook.event_type}
                         </span>
                         <span
-                          className={`text-xs font-medium ${webhook.is_active ? "text-green-600" : "text-slate-500"}`}
+                          className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${webhook.is_active ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-600"}`}
                         >
-                          {webhook.is_active ? "Active" : "Paused"}
+                          {webhook.is_active ? "Aktif" : "Jeda"}
                         </span>
                       </div>
                     </div>
@@ -156,22 +156,22 @@ export default function WebhooksPage() {
                       }
                     >
                       <Power className="h-4 w-4 mr-2" />
-                      {webhook.is_active ? "Pause" : "Activate"}
+                      {webhook.is_active ? "Jeda" : "Aktifkan"}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-slate-500 hover:bg-slate-100"
+                      className="text-slate-500 hover:bg-slate-100 font-bold"
                     >
-                      <Activity className="h-4 w-4 mr-2" /> Logs
+                      <Activity className="h-4 w-4 mr-2" /> Log
                     </Button>
                     <div className="h-6 w-px bg-slate-200 mx-2"></div>
                     <button
                       onClick={() => handleDelete(webhook.id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                      title="Delete Webhook"
+                      className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                      title="Hapus Webhook"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
@@ -183,9 +183,9 @@ export default function WebhooksPage() {
 
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900">Add Webhook</h3>
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/80">
+              <h3 className="text-xl font-extrabold text-slate-800">Tambah Webhook</h3>
             </div>
 
             <form onSubmit={handleAddWebhook} className="p-6 space-y-5">
@@ -193,51 +193,51 @@ export default function WebhooksPage() {
                 <Input
                   label={
                     <span className="text-slate-700 font-bold">
-                      Payload URL
+                      URL Payload
                     </span>
                   }
-                  placeholder="https://your-server.com/webhook"
+                  placeholder="https://server-anda.com/webhook"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
-                  className="bitly-input"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5"
                   autoFocus
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">
-                  Event Type
+                  Tipe Event
                 </label>
                 <select
-                  className="bitly-input w-full px-4 h-11 rounded-lg border border-slate-300 focus:border-[#0b5cff] focus:ring-2 focus:ring-[#0b5cff]/20 bg-white"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl transition-all outline-none px-4 py-2.5 h-[46px]"
                   value={eventInput}
                   onChange={(e) => setEventInput(e.target.value)}
                 >
-                  <option value="link.clicked">Link Clicked</option>
-                  <option value="link.created">Link Created</option>
+                  <option value="link.clicked">Tautan Diklik (link.clicked)</option>
+                  <option value="link.created">Tautan Dibuat (link.created)</option>
                 </select>
               </div>
 
               {addError && (
-                <div className="p-3 bg-red-50 text-red-600 text-sm font-bold border border-red-200 rounded-lg">
+                <div className="p-4 bg-red-50 text-red-600 text-sm font-bold border border-red-100 rounded-xl">
                   {addError}
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
                 <Button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="bitly-button-secondary"
+                  variant="secondary"
                 >
-                  Cancel
+                  Batal
                 </Button>
                 <Button
                   type="submit"
                   isLoading={isSubmitting}
-                  className="bitly-button-primary"
+                  className="bg-gradient-to-r from-[#0b5cff] to-indigo-600 hover:from-[#094acc] hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5"
                 >
-                  Add Endpoint
+                  Tambah Endpoint
                 </Button>
               </div>
             </form>
@@ -250,12 +250,12 @@ export default function WebhooksPage() {
         onConfirm={async () => {
           if (webhookToDelete) {
             await deleteWebhook(webhookToDelete);
-            toast.success("Webhook deleted");
+            toast.success("Webhook dihapus");
             setWebhookToDelete(null);
           }
         }}
-        title="Delete Webhook"
-        message="Are you sure you want to delete this webhook?"
+        title="Hapus Webhook"
+        message="Apakah Anda yakin ingin menghapus webhook ini?"
       />
     </DashboardLayout>
   );

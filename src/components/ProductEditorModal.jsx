@@ -295,6 +295,17 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                   </label>
                 </div>
                 <div className="text-sm text-slate-600">Unlimited</div>
+                {formData.item_quantity_enabled && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-2">Stock Amount</label>
+                    <Input 
+                      type="number"
+                      placeholder="e.g. 100"
+                      value={formData.stock || ''}
+                      onChange={(e) => handleUpdate('stock', e.target.value)}
+                    />
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     Limit qty per checkout <Info className="w-4 h-4 text-slate-400" />

@@ -1,14 +1,16 @@
 -- Aktifkan ekstensi HTTP jika belum aktif
 CREATE EXTENSION IF NOT EXISTS http WITH SCHEMA extensions;
 
--- Buat fungsi RPC untuk request token Midtrans
+-- Hapus fungsi lama jika ada perbedaan parameter
+DROP FUNCTION IF EXISTS get_midtrans_token(text, integer, text, text, text, text, boolean);
+
 CREATE OR REPLACE FUNCTION get_midtrans_token(
   p_order_id text,
   p_gross_amount int,
   p_first_name text,
   p_phone text,
   p_address text,
-  p_server_key text,
+  p_default_server_key text,
   p_is_production boolean
 )
 RETURNS jsonb
@@ -20,7 +22,14 @@ DECLARE
   v_response extensions.http_response;
   v_auth_string text;
   v_midtrans_url text;
+  v_page_id uuid;
+  v_user_id uuid;
+  v_metadata jsonb;
+  v_server_key text;
 BEGIN
+  -- Karena menggunakan sistem terpusat (terima beres), gunakan API Key utama platform
+  v_server_key := p_default_server_key;
+
   -- Buat payload JSON
   v_request_body := jsonb_build_object(
     'transaction_details', jsonb_build_object(
@@ -42,7 +51,7 @@ BEGIN
   END IF;
 
   -- Encode Server Key menjadi Base64 (Server Key + ":")
-  v_auth_string := encode(CAST(p_server_key || ':' AS bytea), 'base64');
+  v_auth_string := encode(CAST(v_server_key || ':' AS bytea), 'base64');
 
   -- Lakukan pemanggilan HTTP POST ke Midtrans
   SELECT * INTO v_response FROM extensions.http((
