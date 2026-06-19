@@ -27,7 +27,13 @@ app.use(checkBans);
 
 // Security Check Endpoint for Frontend
 app.get('/api/check-security', (req, res) => {
-    res.json({ success: true, message: 'You are allowed to access this site.' });
+    res.json({ 
+        success: true, 
+        message: 'You are allowed to access this site.', 
+        detected_ip: req.ip,
+        headers_forwarded: req.headers['x-forwarded-for'],
+        remote_address: req.connection?.remoteAddress
+    });
 });
 
 app.use(cors());
