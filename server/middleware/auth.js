@@ -4,6 +4,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Try to load .env from the server folder first (for 1Panel), then fallback to ../../.env.local
+dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../.env.local') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
