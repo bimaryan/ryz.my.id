@@ -570,17 +570,32 @@ export default function SettingsPage() {
                                       const orderId = `PLAN_${planName.toUpperCase()}_${Date.now()}`;
                                       
                                       toast.loading("Memulai pembayaran...", { id: "payment_toast" });
-                                      const { data: result, error: rpcError } = await supabase.rpc('get_midtrans_token', {
-                                        p_order_id: orderId,
-                                        p_gross_amount: priceIDR,
-                                        p_first_name: user?.user_metadata?.full_name || 'Creator',
-                                        p_phone: user?.user_metadata?.whatsapp_number || '081234567890',
-                                        p_address: '',
-                                        p_default_server_key: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'SB-Mid-server-0TGPuhniptPemYTjz0tJl9K8',
-                                        p_is_production: import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true'
+                                      const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id';
+                                      const tokenResponse = await fetch(`${apiUrl}/api/midtrans/token`, {
+                                        method: 'POST',
+                                        headers: {
+                                          'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                          order_id: orderId,
+                                          gross_amount: priceIDR,
+                                          customer_details: {
+                                            first_name: user?.user_metadata?.full_name || 'Creator',
+                                            phone: user?.user_metadata?.whatsapp_number || '081234567890',
+                                            email: user?.email || 'creator@example.com'
+                                          },
+                                          item_details: [{
+                                            id: `plan_${planName}`,
+                                            price: priceIDR,
+                                            quantity: 1,
+                                            name: `RYZLink ${planName} Plan`
+                                          }]
+                                        })
                                       });
                                       
-                                      if (rpcError) {
+                                      const result = await tokenResponse.json();
+                                      
+                                      if (!tokenResponse.ok) {
                                         toast.error("Gagal terhubung ke server pembayaran.", { id: "payment_toast" });
                                         return;
                                       }

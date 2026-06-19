@@ -151,19 +151,35 @@ export default function PublicPage() {
 
       if (orderError) throw orderError;
 
-      // 2. Minta Token Snap dari Midtrans (Lewat Supabase RPC Backend)
-      const { data: result, error: rpcError } = await supabase.rpc('get_midtrans_token', {
-        p_order_id: orderData.id,
-        p_gross_amount: parseInt(grandTotal),
-        p_first_name: checkoutForm.name,
-        p_phone: checkoutForm.phone || '08123456789',
-        p_address: checkoutForm.address || '',
-        p_default_server_key: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'SB-Mid-server-0TGPuhniptPemYTjz0tJl9K8',
-        p_is_production: import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true'
+      // 2. Minta Token Snap dari Midtrans (Lewat Backend Express kita yang AMAN)
+      const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id';
+      
+      const tokenResponse = await fetch(`${apiUrl}/api/midtrans/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          order_id: orderData.id,
+          gross_amount: parseInt(grandTotal),
+          customer_details: {
+            first_name: checkoutForm.name,
+            phone: checkoutForm.phone || '08123456789',
+            email: checkoutForm.email || 'customer@example.com'
+          },
+          item_details: [{
+            id: selectedProduct.id,
+            price: parseInt(finalPrice),
+            quantity: 1,
+            name: selectedProduct.title.substring(0, 50)
+          }]
+        })
       });
 
-      if (rpcError) {
-        console.error("Supabase RPC Error:", rpcError);
+      const result = await tokenResponse.json();
+
+      if (!tokenResponse.ok) {
+        console.error("Backend API Error:", result);
         toast.error("Gagal terhubung ke server pembayaran.");
         return;
       }
@@ -183,7 +199,8 @@ export default function PublicPage() {
       // 3. Panggil Snap Pay
       window.snap.pay(result.token, {
         onSuccess: async function(snapResult) {
-          await supabase.from('orders').update({ status: 'paid', midtrans_order_id: snapResult.order_id }).eq('id', orderData.id);
+          // KITA TIDAK LAGI MENGUBAH STATUS DI FRONTEND! (Hacker bisa memalsukan ini)
+          // Webhook Midtrans yang akan memberi tahu Backend kita secara rahasia.
           
           if (selectedProduct.item_quantity_enabled && selectedProduct.id) {
             await supabase.rpc('decrement_product_stock', {
@@ -272,7 +289,7 @@ export default function PublicPage() {
           setIsCheckoutOpen(false);
         },
         onError: async function(snapResult) {
-          await supabase.from('orders').update({ status: 'failed', midtrans_order_id: snapResult.order_id }).eq('id', orderData.id);
+          // Webhook Backend yang akan mengubah status gagal
           toast.error("Pembayaran Gagal!");
           setIsCheckoutOpen(false);
         },
