@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import * as LucideIcons from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from "../hooks/useAuth";
 import { supabase } from '../lib/supabase';
 import SEO from '../components/SEO';
 
