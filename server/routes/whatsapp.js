@@ -97,10 +97,6 @@ router.post("/create-session", async (req, res) => {
       auth: state,
       printQRInTerminal: false,
       browser: Browsers.macOS("Safari"),
-      logger: {
-        level: "debug",
-        log: (msg) => console.log(`[BAILEYS_LOG] ${msg}`),
-      },
     });
 
     activeSessions.set(newSession.id, { socket: sock, state, saveCreds });
