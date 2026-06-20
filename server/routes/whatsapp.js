@@ -91,15 +91,23 @@ router.post("/create-session", async (req, res) => {
     const sessionPath = `./sessions/${user_id}-${session_name}`;
     console.log(`[BAILEYS] Initializing session di ${sessionPath}`);
 
+    // ✅ FIX: Bersihkan folder sisa jika sebelumnya pernah gagal/nyangkut
+    if (fs.existsSync(sessionPath)) {
+      console.log(`[BAILEYS] Menghapus folder sisa sesi lama...`);
+      fs.rmSync(sessionPath, { recursive: true, force: true });
+    }
+
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
+    // ✅ FIX: Konfigurasi Baileys yang lebih stabil
     const sock = makeWASocket({
       auth: state,
-      printQRInTerminal: false,
-      browser: Browsers.macOS("Safari"),
-      connectTimeoutMs: 60_000, // ✅ 60 detik timeout
+      printQRInTerminal: true, // Ubah ke true agar mempermudah debug di server
+      browser: ['Ubuntu', 'Chrome', '20.0.04'], // Standar browser yang jarang diblokir WA
+      connectTimeoutMs: 60_000,
       defaultQueryTimeoutMs: 60_000,
-      keepAliveIntervalMs: 30_000, // Keep connection alive
+      keepAliveIntervalMs: 10_000, // Dipercepat sedikit agar koneksi stabil
+      syncFullHistory: false, // Mencegah server kehabisan RAM/Timeout saat inisialisasi awal
     });
 
     activeSessions.set(newSession.id, { socket: sock, state, saveCreds });
@@ -107,9 +115,11 @@ router.post("/create-session", async (req, res) => {
 
     // ✅ Track QR & connection state
     let qrReceived = false;
+    
+    // ✅ FIX: Naikkan timeout menjadi 60 detik agar backend tidak memutus Baileys terlalu cepat
     const qrTimeout = setTimeout(async () => {
       if (!qrReceived) {
-        console.log(`[QR_TIMEOUT] QR tidak muncul dalam 30 detik, disconnect & cleanup`);
+        console.log(`[QR_TIMEOUT] QR tidak muncul dalam 60 detik, disconnect & cleanup`);
         try {
           await sock.end();
         } catch (e) {
@@ -117,7 +127,7 @@ router.post("/create-session", async (req, res) => {
         }
         activeSessions.delete(newSession.id);
       }
-    }, 30_000);
+    }, 60_000); 
 
     // ============================================================================
     // EVENT LISTENERS
@@ -347,7 +357,8 @@ router.post("/send-message", async (req, res) => {
       const sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
-        browser: Browsers.macOS("Safari"),
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
+        syncFullHistory: false,
       });
 
       sock.ev.on("creds.update", saveCreds);
