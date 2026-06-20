@@ -21,12 +21,24 @@ export default function WhatsAppPage() {
   const [messageType, setMessageType] = useState("text");
   const [mediaUrl, setMediaUrl] = useState("");
   const [sending, setSending] = useState(false);
+  const [pollingQR, setPollingQR] = useState(false); // ✅ NEW
 
   useEffect(() => {
     if (user) {
       loadSessions();
     }
   }, [user]);
+
+  // ✅ NEW: Polling untuk QR Code (cek setiap 2 detik)
+  useEffect(() => {
+    if (!pollingQR || !selectedSession) return;
+
+    const interval = setInterval(() => {
+      refreshQR(selectedSession.id);
+    }, 2000); // Refresh setiap 2 detik
+
+    return () => clearInterval(interval);
+  }, [pollingQR, selectedSession]);
 
   const loadSessions = async () => {
     if (!user) return;
@@ -78,9 +90,23 @@ export default function WhatsAppPage() {
 
       const data = await res.json();
       if (data.success) {
-        alert("Session berhasil dibuat! Silakan scan QR Code.");
         setSessionName("");
         await loadSessions();
+        
+        // ✅ NEW: Mulai polling QR Code
+        const newSession = await fetch(`${API_URL}/whatsapp/sessions/${user.id}`)
+          .then(r => r.json())
+          .then(d => d.data?.find(s => s.session_id === sessionName.trim()));
+        
+        if (newSession) {
+          setSelectedSession(newSession);
+          setPollingQR(true); // ✅ Mulai polling
+          
+          // ✅ NEW: Stop polling setelah 60 detik (timeout)
+          setTimeout(() => {
+            setPollingQR(false);
+          }, 60000);
+        }
       }
     } catch (err) {
       console.error("Create session error:", err);
@@ -93,11 +119,21 @@ export default function WhatsAppPage() {
       const res = await fetch(`${API_URL}/whatsapp/session/${sessionId}`);
       const data = await res.json();
       if (data.success) {
+        // ✅ UPDATE: Update session yang selected juga
+        setSelectedSession((prev) =>
+          prev && prev.id === sessionId ? { ...prev, ...data.data } : prev,
+        );
+        
         setSessions((prev) =>
           prev.map((s) =>
-            s.id === sessionId ? { ...s, qr_code: data.data.qr_code } : s,
+            s.id === sessionId ? { ...s, ...data.data } : s,
           ),
         );
+
+        // ✅ NEW: Stop polling jika sudah connected
+        if (data.data.status === "connected") {
+          setPollingQR(false);
+        }
       }
     } catch (err) {
       console.error("Refresh QR error:", err);
@@ -116,6 +152,7 @@ export default function WhatsAppPage() {
       if (data.success) {
         alert("Session dihapus");
         setSelectedSession(null);
+        setPollingQR(false); // ✅ Stop polling
         await loadSessions();
       }
     } catch (err) {
@@ -206,7 +243,13 @@ export default function WhatsAppPage() {
                   {sessions.map((session) => (
                     <div
                       key={session.id}
-                      onClick={() => setSelectedSession(session)}
+                      onClick={() => {
+                        setSelectedSession(session);
+                        // ✅ NEW: Mulai polling saat select session pending
+                        if (session.status === "pending" && !session.qr_code) {
+                          setPollingQR(true);
+                        }
+                      }}
                       className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                         selectedSession?.id === session.id
                           ? "border-blue-500 bg-blue-50"
@@ -237,7 +280,9 @@ export default function WhatsAppPage() {
                           }}
                           className="text-xs px-2 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200"
                         >
-                          Refresh QR
+                          {pollingQR && selectedSession?.id === session.id
+                            ? "Mencari..."
+                            : "Refresh QR"}
                         </button>
                         <button
                           onClick={(e) => {
@@ -265,21 +310,35 @@ export default function WhatsAppPage() {
                   </h2>
 
                   {selectedSession.status === "pending" &&
-                    selectedSession.qr_code && (
-                      <div className="text-center">
-                        <img
-                          src={selectedSession.qr_code}
-                          alt="QR Code"
-                          className="mx-auto w-64 h-64"
-                        />
-                        <p className="text-slate-600 mt-4">
-                          Scan QR Code ini dengan WhatsApp Anda
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          QR Code akan kadaluarsa dalam 1 menit
-                        </p>
+                    selectedSession.qr_code ? (
+                    <div className="text-center">
+                      <img
+                        src={selectedSession.qr_code}
+                        alt="QR Code"
+                        className="mx-auto w-64 h-64"
+                      />
+                      <p className="text-slate-600 mt-4">
+                        Scan QR Code ini dengan WhatsApp Anda
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        QR Code akan kadaluarsa dalam 1 menit
+                      </p>
+                    </div>
+                  ) : selectedSession.status === "pending" &&
+                    !selectedSession.qr_code ? (
+                    // ✅ NEW: Tampilkan loading state
+                    <div className="text-center py-8">
+                      <div className="inline-block">
+                        <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full" />
                       </div>
-                    )}
+                      <p className="text-slate-600 mt-4">
+                        Mempersiapkan QR Code...
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Ini membutuhkan beberapa detik
+                      </p>
+                    </div>
+                  ) : null}
 
                   {selectedSession.status === "connected" && (
                     <div className="text-center py-8">
