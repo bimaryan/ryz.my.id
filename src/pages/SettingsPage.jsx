@@ -113,17 +113,6 @@ export default function SettingsPage() {
     }
   }, [activeTab, fetchBillingHistory, fetchLogs])
 
-  useEffect(() => {
-    if (!document.querySelector('script[src*="snap.js"]')) {
-      const scriptTag = document.createElement('script');
-      scriptTag.src = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true' 
-        ? 'https://app.midtrans.com/snap/snap.js'
-        : 'https://app.sandbox.midtrans.com/snap/snap.js';
-      scriptTag.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
-      document.head.appendChild(scriptTag);
-    }
-  }, []);
-
   const { register: registerProfile, handleSubmit: handleSubmitProfile, reset: resetProfile, formState: { errors: profileErrors, isSubmitting: isProfileSubmitting } } = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -629,7 +618,7 @@ export default function SettingsPage() {
                                       
                                       toast.loading("Memulai pembayaran...", { id: "payment_toast" });
                                       const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id';
-                                      const tokenResponse = await fetch(`${apiUrl}/api/midtrans/token`, {
+                                      const invoiceResponse = await fetch(`${apiUrl}/api/pakasir/create-invoice`, {
                                         method: 'POST',
                                         headers: {
                                           'Content-Type': 'application/json'
@@ -637,36 +626,47 @@ export default function SettingsPage() {
                                         body: JSON.stringify({
                                           order_id: orderId,
                                           gross_amount: priceIDR,
-                                          customer_details: {
-                                            first_name: user?.user_metadata?.full_name || 'Creator',
-                                            phone: user?.user_metadata?.whatsapp_number || '081234567890',
-                                            email: user?.email || 'creator@example.com'
-                                          },
+                                          customer_name: user?.user_metadata?.full_name || 'Creator',
+                                          customer_phone: user?.user_metadata?.whatsapp_number || '081234567890',
+                                          customer_email: user?.email || 'creator@example.com',
+                                          description: `Langganan ${planName.charAt(0).toUpperCase() + planName.slice(1)} RYZLink`,
                                           item_details: [{
-                                            id: `plan_${planName}`,
+                                            name: `RYZLink ${planName} Plan`,
                                             price: priceIDR,
-                                            quantity: 1,
-                                            name: `RYZLink ${planName} Plan`
+                                            quantity: 1
                                           }]
                                         })
                                       });
                                       
-                                      const result = await tokenResponse.json();
+                                      const result = await invoiceResponse.json();
                                       
-                                      if (!tokenResponse.ok) {
+                                      if (!invoiceResponse.ok) {
                                         toast.error("Gagal terhubung ke server pembayaran.", { id: "payment_toast" });
                                         return;
                                       }
                                       
                                       if (result && result.error) {
-                                        toast.error("Gagal memulai pembayaran Midtrans.", { id: "payment_toast" });
+                                        toast.error("Gagal memulai pembayaran Pakasir.", { id: "payment_toast" });
                                         return;
                                       }
                                       
-                                      if (result && result.token) {
+                                      if (result && result.payment_url) {
                                         toast.dismiss("payment_toast");
-                                        window.snap.pay(result.token, {
-                                          onSuccess: async function(resultSnap) {
+                                        const paymentUrl = result.payment_url;
+                                        
+                                        // Buka payment URL Pakasir di tab baru
+                                        window.open(paymentUrl, '_blank');
+                                        
+                                        toast.success("Menunggu pembayaran... Selesaikan pembayaran di jendela baru.", { id: "waiting_payment", duration: 5000 });
+                                        
+                                        // Polling untuk cek status pembayaran
+                                        const checkInterval = setInterval(async () => {
+                                          const statusResponse = await fetch(`${apiUrl}/api/pakasir/check-status/${orderId}`);
+                                          const statusData = await statusResponse.json();
+                                          
+                                          if (statusData.status === 'completed' || statusData.status === 'paid' || statusData.status === 'success') {
+                                            clearInterval(checkInterval);
+                                            
                                             toast.loading("Memperbarui akun...", { id: "update_toast" });
                                             const res = await updateProfile({ 
                                               plan_type: planName,
@@ -681,7 +681,7 @@ export default function SettingsPage() {
                                                 plan_name: planName,
                                                 amount: priceIDR,
                                                 status: 'paid',
-                                                midtrans_order_id: resultSnap?.order_id || orderId
+                                                pakasir_order_id: orderId
                                               });
                                               fetchBillingHistory();
                                               setSuccessMsg(`Berhasil berlangganan ${planName}! Anda sekarang bisa menggunakan fitur PRO.`);
@@ -690,17 +690,11 @@ export default function SettingsPage() {
                                               setErrorMsg('Gagal memperbarui akun setelah pembayaran.');
                                               toast.error("Gagal memperbarui akun.", { id: "update_toast" });
                                             }
-                                          },
-                                          onPending: function() {
-                                            toast.success("Pembayaran tertunda. Selesaikan pembayaran Anda.");
-                                          },
-                                          onError: function() {
-                                            toast.error("Pembayaran gagal.");
-                                          },
-                                          onClose: function() {
-                                            toast.error("Anda menutup jendela pembayaran.");
+                                          } else if (statusData.status === 'failed' || statusData.status === 'expired' || statusData.status === 'cancelled') {
+                                            clearInterval(checkInterval);
+                                            toast.error("Pembayaran gagal atau kadaluarsa!", { id: "payment_failed" });
                                           }
-                                        });
+                                        }, 3000); // Cek setiap 3 detik
                                       }
                                     } else {
                                       setErrorMsg('Contact sales for enterprise plans.');

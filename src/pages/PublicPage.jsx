@@ -154,7 +154,7 @@ export default function PublicPage() {
       // 2. Minta Token Snap dari Midtrans (Lewat Backend Express kita yang AMAN)
       const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id';
       
-      const tokenResponse = await fetch(`${apiUrl}/api/midtrans/token`, {
+      const invoiceResponse = await fetch(`${apiUrl}/api/pakasir/create-invoice`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -162,45 +162,52 @@ export default function PublicPage() {
         body: JSON.stringify({
           order_id: orderData.id,
           gross_amount: parseInt(grandTotal),
-          customer_details: {
-            first_name: checkoutForm.name,
-            phone: checkoutForm.phone || '08123456789',
-            email: checkoutForm.email || 'customer@example.com'
-          },
+          customer_name: checkoutForm.name,
+          customer_phone: checkoutForm.phone || '08123456789',
+          customer_email: checkoutForm.email || 'customer@example.com',
+          description: selectedProduct.title.substring(0, 50),
           item_details: [{
-            id: selectedProduct.id,
+            name: selectedProduct.title.substring(0, 50),
             price: parseInt(finalPrice),
-            quantity: 1,
-            name: selectedProduct.title.substring(0, 50)
+            quantity: 1
           }]
         })
       });
 
-      const result = await tokenResponse.json();
+      const result = await invoiceResponse.json();
 
-      if (!tokenResponse.ok) {
+      if (!invoiceResponse.ok) {
         console.error("Backend API Error:", result);
         toast.error("Gagal terhubung ke server pembayaran.");
         return;
       }
 
       if (result && result.error) {
-        console.error("Midtrans Error:", result);
+        console.error("Pakasir Error:", result);
         const errorMsgs = result.message?.error_messages;
         toast.error("Gagal memulai pembayaran: " + (errorMsgs ? errorMsgs[0] : "Kesalahan Konfigurasi"));
         return;
       }
 
-      if (!result || !result.token) {
-        toast.error("Gagal mendapatkan token pembayaran.");
+      if (!result || !(result.payment_url || result.invoice?.payment_url)) {
+        toast.error("Gagal mendapatkan link pembayaran.");
         return;
       }
 
-      // 3. Panggil Snap Pay
-      window.snap.pay(result.token, {
-        onSuccess: async function(snapResult) {
-          // KITA TIDAK LAGI MENGUBAH STATUS DI FRONTEND! (Hacker bisa memalsukan ini)
-          // Webhook Midtrans yang akan memberi tahu Backend kita secara rahasia.
+      // 3. Buka Payment URL Pakasir
+      const paymentUrl = result.payment_url || result.invoice?.payment_url;
+      window.open(paymentUrl, '_blank');
+      
+      toast.success("Menunggu pembayaran... Selesaikan pembayaran di jendela baru.", { id: "waiting_payment", duration: 5000 });
+      setIsCheckoutOpen(false);
+      
+      // Polling untuk cek status pembayaran
+      const checkInterval = setInterval(async () => {
+        const statusResponse = await fetch(`${apiUrl}/api/pakasir/check-status/${orderData.id}`);
+        const statusData = await statusResponse.json();
+        
+        if (statusData.status === 'completed' || statusData.status === 'paid' || statusData.status === 'success') {
+          clearInterval(checkInterval);
           
           if (selectedProduct.item_quantity_enabled && selectedProduct.id) {
             await supabase.rpc('decrement_product_stock', {
@@ -278,25 +285,15 @@ export default function PublicPage() {
             }
           }
 
-          setIsCheckoutOpen(false);
           // Redirect to track page
           setTimeout(() => {
             window.location.href = `/track/${orderData.id}`;
           }, 1500);
-        },
-        onPending: function(snapResult) {
-          toast.success("Menunggu Pembayaran!");
-          setIsCheckoutOpen(false);
-        },
-        onError: async function(snapResult) {
-          // Webhook Backend yang akan mengubah status gagal
-          toast.error("Pembayaran Gagal!");
-          setIsCheckoutOpen(false);
-        },
-        onClose: function() {
-          toast.error('Anda menutup popup tanpa menyelesaikan pembayaran.');
+        } else if (statusData.status === 'failed' || statusData.status === 'expired' || statusData.status === 'cancelled') {
+          clearInterval(checkInterval);
+          toast.error("Pembayaran gagal atau kadaluarsa!", { id: "payment_failed" });
         }
-      });
+      }, 3000); // Cek setiap 3 detik
 
     } catch (err) {
       console.error("Checkout Error:", err);
@@ -304,23 +301,8 @@ export default function PublicPage() {
     }
   };
 
-  useEffect(() => {
-    // Load Midtrans Snap Script
-    const scriptTag = document.createElement('script');
-    scriptTag.src = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true' 
-      ? 'https://app.midtrans.com/snap/snap.js'
-      : 'https://app.sandbox.midtrans.com/snap/snap.js';
-    scriptTag.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
-    
-    // Hanya tambahkan jika belum ada
-    if (!document.querySelector(`script[src="${scriptTag.src}"]`)) {
-      document.body.appendChild(scriptTag);
-    }
-
-    return () => {
-      // document.body.removeChild(scriptTag);
-    }
-  }, []);
+  // No need for Snap script - using Pakasir payment links
+  useEffect(() => {}, []);
 
   const handleShare = async () => {
     const url = window.location.href;

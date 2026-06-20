@@ -8,7 +8,7 @@ import { securityHeaders, apiLimiter, checkBans, maliciousScanner, autoBanIp, au
 
 // Import Routes
 import linksRouter from './routes/links.js';
-import midtransRouter from './routes/midtrans.js';
+import pakasirRouter from './routes/pakasir.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Try to load .env from the server folder first (for 1Panel), then fallback to ../.env.local (for local dev)
@@ -65,7 +65,7 @@ app.use('/api/v1', requireApiKey);
 
 // Mount Routes
 app.use('/api/v1/links', linksRouter);
-app.use('/api/midtrans', midtransRouter);
+app.use('/api/pakasir', pakasirRouter);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
