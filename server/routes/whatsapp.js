@@ -87,7 +87,7 @@ router.post("/create-session", async (req, res) => {
 
     console.log(`[CREATE_SESSION] Session baru dibuat: ${newSession.id}`);
 
-    // Initialize Baileys
+    // Initialize Baileys dengan proper config
     const sessionPath = `./sessions/${user_id}-${session_name}`;
     console.log(`[BAILEYS] Initializing session di ${sessionPath}`);
 
@@ -97,13 +97,30 @@ router.post("/create-session", async (req, res) => {
       auth: state,
       printQRInTerminal: false,
       browser: Browsers.macOS("Safari"),
+      connectTimeoutMs: 60_000, // ✅ 60 detik timeout
+      defaultQueryTimeoutMs: 60_000,
+      keepAliveIntervalMs: 30_000, // Keep connection alive
     });
 
     activeSessions.set(newSession.id, { socket: sock, state, saveCreds });
     console.log(`[BAILEYS] Socket ditambahkan ke activeSessions`);
 
+    // ✅ Track QR & connection state
+    let qrReceived = false;
+    const qrTimeout = setTimeout(async () => {
+      if (!qrReceived) {
+        console.log(`[QR_TIMEOUT] QR tidak muncul dalam 30 detik, disconnect & cleanup`);
+        try {
+          await sock.end();
+        } catch (e) {
+          console.error(`[QR_TIMEOUT] Error ending socket:`, e);
+        }
+        activeSessions.delete(newSession.id);
+      }
+    }, 30_000);
+
     // ============================================================================
-    // EVENT LISTENERS - Improved with better logging
+    // EVENT LISTENERS
     // ============================================================================
 
     sock.ev.on("connection.update", async (update) => {
@@ -113,10 +130,13 @@ router.post("/create-session", async (req, res) => {
 
       // QR Code Generated
       if (qr) {
+        qrReceived = true;
+        clearTimeout(qrTimeout); // Cancel timeout kalau QR sudah muncul
+        
         try {
           console.log(`[QR_CODE] Generating QR Code...`);
           const qrDataUrl = await QRCode.toDataURL(qr);
-          const qrExpires = new Date(Date.now() + 5 * 60 * 1000); // ✅ Extended: 5 menit
+          const qrExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 menit
 
           console.log(`[QR_CODE] Saving QR to DB, expires at ${qrExpires}`);
 
@@ -144,16 +164,25 @@ router.post("/create-session", async (req, res) => {
         console.log(`[CONNECTION] Connection closed`);
         console.log(`[DISCONNECT] lastDisconnect:`, lastDisconnect);
 
+        clearTimeout(qrTimeout);
+
         const shouldReconnect =
           lastDisconnect?.error?.output?.statusCode !==
           DisconnectReason.loggedOut;
 
         console.log(`[DISCONNECT] shouldReconnect=${shouldReconnect}`);
 
-        await supabaseAdmin
-          .from("whatsapp_sessions")
-          .update({ status: "disconnected" })
-          .eq("id", newSession.id);
+        // Update status ke disconnected HANYA jika QR sudah dikirim
+        if (qrReceived) {
+          console.log(`[DISCONNECT] QR was received, updating status to disconnected`);
+          await supabaseAdmin
+            .from("whatsapp_sessions")
+            .update({ status: "disconnected" })
+            .eq("id", newSession.id);
+        } else {
+          console.log(`[DISCONNECT] QR was never received, marking as pending for retry`);
+          // Jangan ubah status, biarkan pending untuk retry
+        }
 
         activeSessions.delete(newSession.id);
 
@@ -170,6 +199,8 @@ router.post("/create-session", async (req, res) => {
       // Connection Open (Success)
       if (connection === "open") {
         console.log(`[CONNECTION] ✅ Connection OPEN - Session connected!`);
+        clearTimeout(qrTimeout);
+
         const { error: updateError } = await supabaseAdmin
           .from("whatsapp_sessions")
           .update({
