@@ -617,6 +617,15 @@ export default function SettingsPage() {
                                       const orderId = `PLAN_${planName.toUpperCase()}_${Date.now()}`;
                                       
                                       toast.loading("Memulai pembayaran...", { id: "payment_toast" });
+                                      
+                                      // Buat entry billing_history terlebih dahulu dengan status pending
+                                      await addBillingRecord({
+                                        plan_name: planName,
+                                        amount: priceIDR,
+                                        status: 'pending',
+                                        midtrans_order_id: orderId // Agar webhook bisa menemukan
+                                      });
+                                      
                                       const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id';
                                       const invoiceResponse = await fetch(`${apiUrl}/api/pakasir/create-invoice`, {
                                         method: 'POST',
@@ -677,12 +686,6 @@ export default function SettingsPage() {
                                               plan_expires_at: planName === 'free' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
                                             });
                                             if (res.success) {
-                                              await addBillingRecord({
-                                                plan_name: planName,
-                                                amount: priceIDR,
-                                                status: 'paid',
-                                                pakasir_order_id: orderId
-                                              });
                                               fetchBillingHistory();
                                               setSuccessMsg(`Berhasil berlangganan ${planName}! Anda sekarang bisa menggunakan fitur PRO.`);
                                               toast.success("Akun berhasil di-upgrade!", { id: "update_toast" });

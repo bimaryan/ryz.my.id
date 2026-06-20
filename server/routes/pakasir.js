@@ -60,22 +60,41 @@ router.post('/webhook', async (req, res) => {
 
     console.log(`[PAKASIR WEBHOOK] Updating order ${order_id} to ${dbStatus}`);
 
-    // Update orders table - using id UUID!
-    const { data, error } = await supabase
+    // Try updating ORDERS table first
+    let updateResult = null;
+    let tableUsed = null;
+
+    const { data: orderData, error: orderError } = await supabase
       .from('orders')
-      .update({
-        status: dbStatus
-      })
+      .update({ status: dbStatus })
       .eq('id', order_id)
       .select();
 
-    if (error) {
-      console.error('[PAKASIR WEBHOOK] Supabase Error:', error);
-      return res.status(500).json({ success: false, message: 'Database error', error: error });
+    if (!orderError && orderData && orderData.length > 0) {
+      updateResult = orderData;
+      tableUsed = 'orders';
+    } else {
+      // If not found in orders, try BILLING_HISTORY table
+      console.log('[PAKASIR WEBHOOK] Not found in orders, trying billing_history...');
+      const { data: billingData, error: billingError } = await supabase
+        .from('billing_history')
+        .update({ status: dbStatus })
+        .eq('midtrans_order_id', order_id)
+        .select();
+
+      if (!billingError && billingData && billingData.length > 0) {
+        updateResult = billingData;
+        tableUsed = 'billing_history';
+      }
     }
 
-    console.log('[PAKASIR WEBHOOK] Update Result:', data);
-    res.json({ success: true, message: 'Webhook received', data: data });
+    if (!updateResult) {
+      console.error('[PAKASIR WEBHOOK] No record found for order_id:', order_id);
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    console.log(`[PAKASIR WEBHOOK] Updated ${tableUsed} successfully:`, updateResult);
+    res.json({ success: true, message: 'Webhook received', data: updateResult, table: tableUsed });
   } catch (error) {
     console.error('[PAKASIR WEBHOOK] Error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
@@ -87,19 +106,32 @@ router.get('/check-status/:orderId', async (req, res) => {
     const { orderId } = req.params;
     console.log('[PAKASIR] Checking status for:', orderId);
 
-    const { data, error } = await supabase
+    let status = 'pending';
+
+    // Try ORDERS first
+    const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .select('status')
       .eq('id', orderId)
       .single();
 
-    if (error) {
-      console.error('[PAKASIR] Check Error:', error);
-      return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!orderError && orderData) {
+      status = orderData.status;
+    } else {
+      // Try BILLING_HISTORY
+      const { data: billingData, error: billingError } = await supabase
+        .from('billing_history')
+        .select('status')
+        .eq('midtrans_order_id', orderId)
+        .single();
+
+      if (!billingError && billingData) {
+        status = billingData.status;
+      }
     }
 
-    console.log('[PAKASIR] Status:', data.status);
-    res.json({ success: true, status: data.status });
+    console.log('[PAKASIR] Final Status:', status);
+    res.json({ success: true, status: status });
   } catch (error) {
     console.error('[PAKASIR] Check Error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
