@@ -27,6 +27,7 @@ import OrderTrackingPage from '@/pages/OrderTrackingPage'
 import FormsPage from '@/pages/FormsPage'
 import FormBuilderPage from '@/pages/FormBuilderPage'
 import PublicFormPage from '@/pages/PublicFormPage'
+import WhatsAppPage from '@/pages/WhatsAppPage'
 
 export const routes = [
   // Public routes
@@ -175,6 +176,11 @@ export const routes = [
   {
     path: '/dashboard/forms/:id/responses',
     element: FormBuilderPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/whatsapp',
+    element: WhatsAppPage,
     protected: true,
   },
 

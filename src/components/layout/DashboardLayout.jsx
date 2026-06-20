@@ -18,7 +18,8 @@ import {
   User,
   ShoppingCart,
   AlertTriangle,
-  FileText
+  FileText,
+  MessageSquare
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -107,6 +108,7 @@ export default function DashboardLayout({ children }) {
     { name: "Orders", path: "/dashboard/orders", icon: ShoppingCart },
     { name: "Forms", path: "/dashboard/forms", icon: FileText },
     { name: "Pages", path: "/dashboard/pages", icon: LayoutTemplate },
+    { name: "WhatsApp", path: "/dashboard/whatsapp", icon: MessageSquare },
     { name: "Webhooks", path: "/dashboard/webhooks", icon: Webhook },
     { name: "API Keys", path: "/dashboard/api-keys", icon: Shield },
     { name: "Teams", path: "/dashboard/teams", icon: Users },
