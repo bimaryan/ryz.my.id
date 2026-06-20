@@ -11,8 +11,12 @@ import path from "path";
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
-dotenv.config();    
-const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, process.env.SUPABASE_SERVICE_ROLE_KEY);
+dotenv.config();
+// ✅ FIX: Gunakan SERVICE_ROLE_KEY untuk bypass RLS
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 const router = express.Router();
 
