@@ -3,8 +3,8 @@ import {
   makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
-  Browsers,
 } from "baileys";
+import pino from "pino"; // ✅ Wajib diinstall: npm install pino
 import QRCode from "qrcode";
 import fs from "fs";
 import path from "path";
@@ -87,8 +87,15 @@ router.post("/create-session", async (req, res) => {
 
     console.log(`[CREATE_SESSION] Session baru dibuat: ${newSession.id}`);
 
+    // ✅ FIX: Paksa pembuatan folder 'sessions' jika belum ada di server
+    const baseSessionPath = path.resolve('./sessions');
+    if (!fs.existsSync(baseSessionPath)) {
+      fs.mkdirSync(baseSessionPath, { recursive: true });
+      console.log(`[BAILEYS] Folder 'sessions' utama berhasil dibuat.`);
+    }
+
     // Initialize Baileys dengan proper config
-    const sessionPath = `./sessions/${user_id}-${session_name}`;
+    const sessionPath = path.join(baseSessionPath, `${user_id}-${session_name}`);
     console.log(`[BAILEYS] Initializing session di ${sessionPath}`);
 
     // ✅ FIX: Bersihkan folder sisa jika sebelumnya pernah gagal/nyangkut
@@ -99,15 +106,17 @@ router.post("/create-session", async (req, res) => {
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
-    // ✅ FIX: Konfigurasi Baileys yang lebih stabil
+    // ✅ FIX: Konfigurasi Baileys dengan Pino Logger & Config Stabil
     const sock = makeWASocket({
       auth: state,
-      printQRInTerminal: true, // Ubah ke true agar mempermudah debug di server
-      browser: ['Ubuntu', 'Chrome', '20.0.04'], // Standar browser yang jarang diblokir WA
+      printQRInTerminal: true, 
+      logger: pino({ level: 'info' }), // Ini akan memunculkan error detail di terminal
+      browser: ['Ubuntu', 'Chrome', '20.0.04'], 
       connectTimeoutMs: 60_000,
       defaultQueryTimeoutMs: 60_000,
-      keepAliveIntervalMs: 10_000, // Dipercepat sedikit agar koneksi stabil
-      syncFullHistory: false, // Mencegah server kehabisan RAM/Timeout saat inisialisasi awal
+      keepAliveIntervalMs: 10_000,
+      syncFullHistory: false, 
+      generateHighQualityLinkPreview: false
     });
 
     activeSessions.set(newSession.id, { socket: sock, state, saveCreds });
@@ -116,7 +125,6 @@ router.post("/create-session", async (req, res) => {
     // ✅ Track QR & connection state
     let qrReceived = false;
     
-    // ✅ FIX: Naikkan timeout menjadi 60 detik agar backend tidak memutus Baileys terlalu cepat
     const qrTimeout = setTimeout(async () => {
       if (!qrReceived) {
         console.log(`[QR_TIMEOUT] QR tidak muncul dalam 60 detik, disconnect & cleanup`);
@@ -191,7 +199,6 @@ router.post("/create-session", async (req, res) => {
             .eq("id", newSession.id);
         } else {
           console.log(`[DISCONNECT] QR was never received, marking as pending for retry`);
-          // Jangan ubah status, biarkan pending untuk retry
         }
 
         activeSessions.delete(newSession.id);
@@ -354,11 +361,15 @@ router.post("/send-message", async (req, res) => {
       }
 
       const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+      
+      // ✅ Update Config Baileys untuk Pemulihan Sesi agar Konsisten
       const sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
+        logger: pino({ level: 'silent' }), // Silent mode saat kirim pesan agar terminal rapi
         browser: ['Ubuntu', 'Chrome', '20.0.04'],
         syncFullHistory: false,
+        generateHighQualityLinkPreview: false
       });
 
       sock.ev.on("creds.update", saveCreds);
@@ -518,7 +529,7 @@ router.delete("/session/:sessionId", async (req, res) => {
 
     // Remove local files
     if (sessionInfo) {
-      const sessionPath = `./sessions/${sessionInfo.user_id}-${sessionInfo.session_id}`;
+      const sessionPath = path.resolve(`./sessions/${sessionInfo.user_id}-${sessionInfo.session_id}`);
       if (fs.existsSync(sessionPath)) {
         try {
           fs.rmSync(sessionPath, { recursive: true, force: true });
