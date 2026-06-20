@@ -8,11 +8,11 @@ import {
 import QRCode from "qrcode";
 import fs from "fs";
 import path from "path";
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
+import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
 
 dotenv.config();
-// ✅ FIX: Gunakan SERVICE_ROLE_KEY untuk bypass RLS
+
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -45,6 +45,8 @@ router.post("/create-session", async (req, res) => {
   try {
     const { user_id, session_name } = req.body;
 
+    console.log(`[CREATE_SESSION] user_id=${user_id}, session_name=${session_name}`);
+
     if (!user_id || !session_name) {
       return res.status(400).json({
         success: false,
@@ -52,7 +54,7 @@ router.post("/create-session", async (req, res) => {
       });
     }
 
-    // Gunakan .maybeSingle() agar tidak throw error jika data tidak ditemukan
+    // Cek session exist
     const { data: existingSession, error: findError } = await supabaseAdmin
       .from("whatsapp_sessions")
       .select("*")
@@ -63,13 +65,14 @@ router.post("/create-session", async (req, res) => {
     if (findError) throw findError;
 
     if (existingSession) {
+      console.log(`[CREATE_SESSION] Session sudah ada: ${existingSession.id}`);
       return res.status(400).json({
         success: false,
         error: "Session dengan nama tersebut sudah ada",
       });
     }
 
-    // Simpan session baru ke DB
+    // Insert session baru
     const { data: newSession, error: insertError } = await supabaseAdmin
       .from("whatsapp_sessions")
       .insert({
@@ -82,40 +85,74 @@ router.post("/create-session", async (req, res) => {
 
     if (insertError) throw insertError;
 
-    // Inisialisasi Baileys
+    console.log(`[CREATE_SESSION] Session baru dibuat: ${newSession.id}`);
+
+    // Initialize Baileys
     const sessionPath = `./sessions/${user_id}-${session_name}`;
+    console.log(`[BAILEYS] Initializing session di ${sessionPath}`);
+
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
     const sock = makeWASocket({
       auth: state,
       printQRInTerminal: false,
       browser: Browsers.macOS("Safari"),
+      logger: {
+        level: "debug",
+        log: (msg) => console.log(`[BAILEYS_LOG] ${msg}`),
+      },
     });
 
     activeSessions.set(newSession.id, { socket: sock, state, saveCreds });
+    console.log(`[BAILEYS] Socket ditambahkan ke activeSessions`);
 
-    // Event: QR Code & Connection Status
+    // ============================================================================
+    // EVENT LISTENERS - Improved with better logging
+    // ============================================================================
+
     sock.ev.on("connection.update", async (update) => {
       const { connection, qr, lastDisconnect } = update;
 
-      if (qr) {
-        const qrDataUrl = await QRCode.toDataURL(qr);
-        const qrExpires = new Date(Date.now() + 60 * 1000); // 1 menit
+      console.log(`[CONNECTION_UPDATE] connection=${connection}, qr=${qr ? "YES" : "NO"}`);
 
-        await supabaseAdmin
-          .from("whatsapp_sessions")
-          .update({
-            qr_code: qrDataUrl,
-            qr_expires_at: qrExpires,
-            status: "pending",
-          })
-          .eq("id", newSession.id);
+      // QR Code Generated
+      if (qr) {
+        try {
+          console.log(`[QR_CODE] Generating QR Code...`);
+          const qrDataUrl = await QRCode.toDataURL(qr);
+          const qrExpires = new Date(Date.now() + 5 * 60 * 1000); // ✅ Extended: 5 menit
+
+          console.log(`[QR_CODE] Saving QR to DB, expires at ${qrExpires}`);
+
+          const { error: updateError } = await supabaseAdmin
+            .from("whatsapp_sessions")
+            .update({
+              qr_code: qrDataUrl,
+              qr_expires_at: qrExpires,
+              status: "pending",
+            })
+            .eq("id", newSession.id);
+
+          if (updateError) {
+            console.error(`[QR_CODE] ERROR saving QR:`, updateError);
+          } else {
+            console.log(`[QR_CODE] ✅ QR saved successfully`);
+          }
+        } catch (err) {
+          console.error(`[QR_CODE] ERROR generating QR:`, err);
+        }
       }
 
+      // Connection Closed
       if (connection === "close") {
+        console.log(`[CONNECTION] Connection closed`);
+        console.log(`[DISCONNECT] lastDisconnect:`, lastDisconnect);
+
         const shouldReconnect =
           lastDisconnect?.error?.output?.statusCode !==
           DisconnectReason.loggedOut;
+
+        console.log(`[DISCONNECT] shouldReconnect=${shouldReconnect}`);
 
         await supabaseAdmin
           .from("whatsapp_sessions")
@@ -124,26 +161,48 @@ router.post("/create-session", async (req, res) => {
 
         activeSessions.delete(newSession.id);
 
-        // Jika user sengaja logout dari HP, hapus session lokal
         if (!shouldReconnect) {
-          fs.rmSync(sessionPath, { recursive: true, force: true });
+          console.log(`[SESSION] User logged out, removing session folder`);
+          try {
+            fs.rmSync(sessionPath, { recursive: true, force: true });
+          } catch (err) {
+            console.error(`[SESSION] Error removing folder:`, err);
+          }
         }
       }
 
+      // Connection Open (Success)
       if (connection === "open") {
-        await supabaseAdmin
+        console.log(`[CONNECTION] ✅ Connection OPEN - Session connected!`);
+        const { error: updateError } = await supabaseAdmin
           .from("whatsapp_sessions")
           .update({
             status: "connected",
             qr_code: null,
-            // Catatan: Jangan menyimpan object `state` secara utuh ke JSONB karena struktur sirkular
+            qr_expires_at: null,
           })
           .eq("id", newSession.id);
+
+        if (updateError) {
+          console.error(`[CONNECTION] ERROR updating status:`, updateError);
+        } else {
+          console.log(`[CONNECTION] ✅ Status updated to connected`);
+        }
       }
     });
 
-    // Simpan credentials ketika berubah ke lokal
-    sock.ev.on("creds.update", saveCreds);
+    // Credentials Update
+    sock.ev.on("creds.update", () => {
+      console.log(`[CREDS] Credentials updated`);
+      saveCreds();
+    });
+
+    // Error Handler
+    sock.ev.on("error", (err) => {
+      console.error(`[SOCKET_ERROR]`, err);
+    });
+
+    console.log(`[CREATE_SESSION] ✅ Response sent, waiting for QR...`);
 
     res.json({
       success: true,
@@ -153,7 +212,7 @@ router.post("/create-session", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Create Session Error:", err);
+    console.error("[CREATE_SESSION] ❌ ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -166,6 +225,8 @@ router.get("/session/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
 
+    console.log(`[GET_SESSION] Fetching session: ${sessionId}`);
+
     const { data: session, error } = await supabaseAdmin
       .from("whatsapp_sessions")
       .select("*")
@@ -174,9 +235,11 @@ router.get("/session/:sessionId", async (req, res) => {
 
     if (error) throw error;
 
+    console.log(`[GET_SESSION] ✅ Session found, status=${session.status}, qr=${session.qr_code ? "YES" : "NO"}`);
+
     res.json({ success: true, data: session });
   } catch (err) {
-    console.error("Get Session Error:", err);
+    console.error("[GET_SESSION] ❌ ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -186,7 +249,7 @@ router.get("/session/:sessionId", async (req, res) => {
  * POST /api/whatsapp/send-message
  */
 router.post("/send-message", async (req, res) => {
-  let dbMessage = null; // Simpan reference DB message agar bisa di-update di blok catch
+  let dbMessage = null;
 
   try {
     const {
@@ -197,6 +260,8 @@ router.post("/send-message", async (req, res) => {
       media_url,
       user_id,
     } = req.body;
+
+    console.log(`[SEND_MESSAGE] session_id=${session_id}, recipient=${recipient}`);
 
     if (!session_id || !recipient || !message_content || !user_id) {
       return res.status(400).json({
@@ -212,14 +277,16 @@ router.post("/send-message", async (req, res) => {
       .single();
 
     if (sessionError) throw sessionError;
+
     if (session.status !== "connected") {
+      console.log(`[SEND_MESSAGE] Session not connected: ${session.status}`);
       return res.status(400).json({
         success: false,
         error: "Session tidak terhubung. Silakan scan QR Code ulang.",
       });
     }
 
-    // 1. Simpan status pesan 'queued' ke DB
+    // Save message to DB
     const insertResult = await supabaseAdmin
       .from("whatsapp_messages")
       .insert({
@@ -237,11 +304,13 @@ router.post("/send-message", async (req, res) => {
     if (insertResult.error) throw insertResult.error;
     dbMessage = insertResult.data;
 
-    // 2. Ambil atau restore session
+    console.log(`[SEND_MESSAGE] Message saved to DB: ${dbMessage.id}`);
+
+    // Get or restore session
     let sessionData = activeSessions.get(session.id);
 
     if (!sessionData) {
-      // Restore logic
+      console.log(`[SEND_MESSAGE] Session not in memory, restoring...`);
       const sessionPath = `./sessions/${session.user_id}-${session.session_id}`;
       if (!fs.existsSync(sessionPath)) {
         throw new Error("Sesi lokal tidak ditemukan. Silakan login ulang.");
@@ -258,14 +327,12 @@ router.post("/send-message", async (req, res) => {
       sessionData = { socket: sock, state, saveCreds };
       activeSessions.set(session.id, sessionData);
 
-      // Tunggu sebentar hingga socket benar-benar open
-      await sock.waitForConnectionUpdate(
-        (update) => update.connection === "open",
-      );
+      console.log(`[SEND_MESSAGE] Session restored`);
     }
 
-    // 3. Format nomor dan Kirim pesan
+    // Send message
     const formattedNumber = formatPhoneNumber(recipient);
+    console.log(`[SEND_MESSAGE] Formatted number: ${formattedNumber}`);
 
     if (message_type === "text") {
       await sessionData.socket.sendMessage(formattedNumber, {
@@ -278,7 +345,9 @@ router.post("/send-message", async (req, res) => {
       });
     }
 
-    // 4. Update status DB menjadi 'sent'
+    console.log(`[SEND_MESSAGE] ✅ Message sent`);
+
+    // Update DB status
     await supabaseAdmin
       .from("whatsapp_messages")
       .update({
@@ -292,9 +361,8 @@ router.post("/send-message", async (req, res) => {
       data: { message_id: dbMessage.id, status: "sent" },
     });
   } catch (err) {
-    console.error("Send Message Error:", err);
+    console.error("[SEND_MESSAGE] ❌ ERROR:", err);
 
-    // Perbaikan: Update status failed menggunakan ID pesan yang spesifik
     if (dbMessage && dbMessage.id) {
       await supabaseAdmin
         .from("whatsapp_messages")
@@ -321,6 +389,8 @@ router.get("/messages/:userId", async (req, res) => {
     const from = (page - 1) * limit;
     const to = page * limit - 1;
 
+    console.log(`[GET_MESSAGES] userId=${userId}, page=${page}`);
+
     const {
       data: messages,
       error,
@@ -334,6 +404,8 @@ router.get("/messages/:userId", async (req, res) => {
 
     if (error) throw error;
 
+    console.log(`[GET_MESSAGES] ✅ Found ${messages.length} messages`);
+
     res.json({
       success: true,
       data: messages,
@@ -342,7 +414,7 @@ router.get("/messages/:userId", async (req, res) => {
       limit,
     });
   } catch (err) {
-    console.error("Get Messages Error:", err);
+    console.error("[GET_MESSAGES] ❌ ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -355,6 +427,8 @@ router.get("/sessions/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
+    console.log(`[GET_SESSIONS] userId=${userId}`);
+
     const { data: sessions, error } = await supabaseAdmin
       .from("whatsapp_sessions")
       .select("*")
@@ -363,9 +437,11 @@ router.get("/sessions/:userId", async (req, res) => {
 
     if (error) throw error;
 
+    console.log(`[GET_SESSIONS] ✅ Found ${sessions.length} sessions`);
+
     res.json({ success: true, data: sessions });
   } catch (err) {
-    console.error("Get Sessions Error:", err);
+    console.error("[GET_SESSIONS] ❌ ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -378,7 +454,8 @@ router.delete("/session/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
 
-    // Ambil data session dari DB terlebih dahulu untuk mendapatkan nama foldernya
+    console.log(`[DELETE_SESSION] sessionId=${sessionId}`);
+
     const { data: sessionInfo, error: fetchError } = await supabaseAdmin
       .from("whatsapp_sessions")
       .select("user_id, session_id")
@@ -387,28 +464,34 @@ router.delete("/session/:sessionId", async (req, res) => {
 
     if (fetchError) throw fetchError;
 
-    // 1. Hapus dan logout dari active sessions
+    // Logout & remove from memory
     if (activeSessions.has(sessionId)) {
       const session = activeSessions.get(sessionId);
       if (session.socket) {
         try {
           await session.socket.logout();
+          console.log(`[DELETE_SESSION] Socket logged out`);
         } catch (e) {
-          /* ignore */
+          console.error(`[DELETE_SESSION] Logout error:`, e);
         }
       }
       activeSessions.delete(sessionId);
     }
 
-    // 2. Bersihkan file/folder lokal (Mencegah Storage Leak)
+    // Remove local files
     if (sessionInfo) {
       const sessionPath = `./sessions/${sessionInfo.user_id}-${sessionInfo.session_id}`;
       if (fs.existsSync(sessionPath)) {
-        fs.rmSync(sessionPath, { recursive: true, force: true });
+        try {
+          fs.rmSync(sessionPath, { recursive: true, force: true });
+          console.log(`[DELETE_SESSION] Local folder removed`);
+        } catch (err) {
+          console.error(`[DELETE_SESSION] Error removing folder:`, err);
+        }
       }
     }
 
-    // 3. Hapus dari DB
+    // Remove from DB
     const { error: deleteError } = await supabaseAdmin
       .from("whatsapp_sessions")
       .delete()
@@ -416,9 +499,11 @@ router.delete("/session/:sessionId", async (req, res) => {
 
     if (deleteError) throw deleteError;
 
+    console.log(`[DELETE_SESSION] ✅ Session deleted`);
+
     res.json({ success: true, message: "Session berhasil dihapus" });
   } catch (err) {
-    console.error("Delete Session Error:", err);
+    console.error("[DELETE_SESSION] ❌ ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

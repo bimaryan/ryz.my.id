@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import * as LucideIcons from "lucide-react";
@@ -21,7 +21,9 @@ export default function WhatsAppPage() {
   const [messageType, setMessageType] = useState("text");
   const [mediaUrl, setMediaUrl] = useState("");
   const [sending, setSending] = useState(false);
-  const [pollingQR, setPollingQR] = useState(false); // ✅ NEW
+  const [pollingQR, setPollingQR] = useState(false);
+  const [qrStatus, setQrStatus] = useState(""); // ✅ NEW: Debug status
+  const pollingIntervalRef = useRef(null); // ✅ NEW: Track interval
 
   useEffect(() => {
     if (user) {
@@ -29,23 +31,51 @@ export default function WhatsAppPage() {
     }
   }, [user]);
 
-  // ✅ NEW: Polling untuk QR Code (cek setiap 2 detik)
+  // ✅ IMPROVED: More aggressive QR polling (every 1 second)
   useEffect(() => {
-    if (!pollingQR || !selectedSession) return;
+    if (!pollingQR || !selectedSession) {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      return;
+    }
 
-    const interval = setInterval(() => {
+    console.log(`[QR_POLL] Starting QR poll for session: ${selectedSession.id}`);
+    setQrStatus("Polling...");
+
+    // Initial refresh immediately
+    refreshQR(selectedSession.id);
+
+    // Then poll every 1 second (instead of 2)
+    pollingIntervalRef.current = setInterval(() => {
       refreshQR(selectedSession.id);
-    }, 2000); // Refresh setiap 2 detik
+    }, 1000);
 
-    return () => clearInterval(interval);
-  }, [pollingQR, selectedSession]);
+    // Stop polling after 120 seconds (was 60)
+    const timeout = setTimeout(() => {
+      console.log(`[QR_POLL] Timeout reached, stopping poll`);
+      setPollingQR(false);
+      setQrStatus("QR Expired - Please try again");
+      clearInterval(pollingIntervalRef.current);
+    }, 120000);
+
+    return () => {
+      clearInterval(pollingIntervalRef.current);
+      clearTimeout(timeout);
+    };
+  }, [pollingQR, selectedSession?.id]);
 
   const loadSessions = async () => {
     if (!user) return;
     try {
       setLoading(true);
+      console.log(`[LOAD_SESSIONS] Fetching sessions for user: ${user.id}`);
+
       const res = await fetch(`${API_URL}/whatsapp/sessions/${user.id}`);
       const data = await res.json();
+
+      console.log(`[LOAD_SESSIONS] Response:`, data);
+
       if (data.success) {
         setSessions(data.data);
         if (data.data.length > 0) {
@@ -54,7 +84,8 @@ export default function WhatsAppPage() {
         }
       }
     } catch (err) {
-      console.error("Load sessions error:", err);
+      console.error("[LOAD_SESSIONS] Error:", err);
+      setQrStatus(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -63,14 +94,14 @@ export default function WhatsAppPage() {
   const loadMessages = async (sessionId) => {
     try {
       const res = await fetch(
-        `${API_URL}/whatsapp/messages/${user.id}?page=1&limit=20`,
+        `${API_URL}/whatsapp/messages/${user.id}?page=1&limit=20`
       );
       const data = await res.json();
       if (data.success) {
         setMessages(data.data);
       }
     } catch (err) {
-      console.error("Load messages error:", err);
+      console.error("[LOAD_MESSAGES] Error:", err);
     }
   };
 
@@ -79,6 +110,9 @@ export default function WhatsAppPage() {
     if (!sessionName.trim() || !user) return;
 
     try {
+      console.log(`[CREATE_SESSION] Creating session: ${sessionName}`);
+      setQrStatus("Creating session...");
+
       const res = await fetch(`${API_URL}/whatsapp/create-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -89,28 +123,45 @@ export default function WhatsAppPage() {
       });
 
       const data = await res.json();
+      console.log(`[CREATE_SESSION] Response:`, data);
+
       if (data.success) {
         setSessionName("");
+        setQrStatus("Session created, loading QR...");
+
+        // Reload sessions
         await loadSessions();
-        
-        // ✅ NEW: Mulai polling QR Code
-        const newSession = await fetch(`${API_URL}/whatsapp/sessions/${user.id}`)
-          .then(r => r.json())
-          .then(d => d.data?.find(s => s.session_id === sessionName.trim()));
-        
-        if (newSession) {
-          setSelectedSession(newSession);
-          setPollingQR(true); // ✅ Mulai polling
-          
-          // ✅ NEW: Stop polling setelah 60 detik (timeout)
-          setTimeout(() => {
-            setPollingQR(false);
-          }, 60000);
-        }
+
+        // Find and select the newly created session
+        setTimeout(async () => {
+          const updatedRes = await fetch(
+            `${API_URL}/whatsapp/sessions/${user.id}`
+          );
+          const updatedData = await updatedRes.json();
+
+          if (updatedData.success) {
+            const newSession = updatedData.data.find(
+              (s) => s.session_id === sessionName.trim()
+            );
+            if (newSession) {
+              console.log(`[CREATE_SESSION] New session found:`, newSession);
+              setSelectedSession(newSession);
+
+              // ✅ Start aggressive polling
+              if (newSession.status === "pending") {
+                console.log(`[CREATE_SESSION] Starting QR polling`);
+                setPollingQR(true);
+                setQrStatus("Waiting for QR code...");
+              }
+            }
+          }
+        }, 500);
+      } else {
+        setQrStatus(`Error: ${data.error}`);
       }
     } catch (err) {
-      console.error("Create session error:", err);
-      alert("Gagal membuat session: " + err.message);
+      console.error("[CREATE_SESSION] Error:", err);
+      setQrStatus(`Error: ${err.message}`);
     }
   };
 
@@ -118,25 +169,50 @@ export default function WhatsAppPage() {
     try {
       const res = await fetch(`${API_URL}/whatsapp/session/${sessionId}`);
       const data = await res.json();
+
+      console.log(`[REFRESH_QR] Session ${sessionId}:`, {
+        status: data.data?.status,
+        qr_exists: !!data.data?.qr_code,
+        qr_expires_at: data.data?.qr_expires_at,
+      });
+
       if (data.success) {
-        // ✅ UPDATE: Update session yang selected juga
-        setSelectedSession((prev) =>
-          prev && prev.id === sessionId ? { ...prev, ...data.data } : prev,
-        );
-        
+        // ✅ Update both selected and sessions list
+        setSelectedSession((prev) => {
+          if (prev && prev.id === sessionId) {
+            return { ...prev, ...data.data };
+          }
+          return prev;
+        });
+
         setSessions((prev) =>
           prev.map((s) =>
-            s.id === sessionId ? { ...s, ...data.data } : s,
-          ),
+            s.id === sessionId ? { ...s, ...data.data } : s
+          )
         );
 
-        // ✅ NEW: Stop polling jika sudah connected
+        // ✅ Update status text
+        if (data.data.qr_code) {
+          setQrStatus("QR Code Ready!");
+        } else if (data.data.status === "connected") {
+          setQrStatus("✅ Connected!");
+          setPollingQR(false); // Stop polling
+        } else {
+          setQrStatus(`Status: ${data.data.status}`);
+        }
+
+        // Auto-stop polling if connected
         if (data.data.status === "connected") {
+          console.log(`[REFRESH_QR] Session connected, stopping poll`);
           setPollingQR(false);
         }
+      } else {
+        console.error(`[REFRESH_QR] Error:`, data.error);
+        setQrStatus(`Error: ${data.error}`);
       }
     } catch (err) {
-      console.error("Refresh QR error:", err);
+      console.error("[REFRESH_QR] Error:", err);
+      setQrStatus(`Network error: ${err.message}`);
     }
   };
 
@@ -152,11 +228,12 @@ export default function WhatsAppPage() {
       if (data.success) {
         alert("Session dihapus");
         setSelectedSession(null);
-        setPollingQR(false); // ✅ Stop polling
+        setPollingQR(false);
+        setQrStatus("");
         await loadSessions();
       }
     } catch (err) {
-      console.error("Delete session error:", err);
+      console.error("[DELETE_SESSION] Error:", err);
     }
   };
 
@@ -188,7 +265,7 @@ export default function WhatsAppPage() {
         await loadMessages(selectedSession.id);
       }
     } catch (err) {
-      console.error("Send message error:", err);
+      console.error("[SEND_MESSAGE] Error:", err);
       alert("Gagal mengirim pesan: " + err.message);
     } finally {
       setSending(false);
@@ -233,7 +310,7 @@ export default function WhatsAppPage() {
                   />
                   <button
                     type="submit"
-                    className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium"
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700"
                   >
                     Buat Session Baru
                   </button>
@@ -245,9 +322,10 @@ export default function WhatsAppPage() {
                       key={session.id}
                       onClick={() => {
                         setSelectedSession(session);
-                        // ✅ NEW: Mulai polling saat select session pending
+                        // Auto-start polling if pending & no QR
                         if (session.status === "pending" && !session.qr_code) {
                           setPollingQR(true);
+                          setQrStatus("Waiting for QR code...");
                         }
                       }}
                       className={`p-4 rounded-lg border cursor-pointer transition-colors ${
@@ -281,7 +359,7 @@ export default function WhatsAppPage() {
                           className="text-xs px-2 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200"
                         >
                           {pollingQR && selectedSession?.id === session.id
-                            ? "Mencari..."
+                            ? "Polling..."
                             : "Refresh QR"}
                         </button>
                         <button
@@ -309,33 +387,42 @@ export default function WhatsAppPage() {
                     Session Details
                   </h2>
 
+                  {/* ✅ Debug Status */}
+                  {qrStatus && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                      Status: {qrStatus}
+                    </div>
+                  )}
+
                   {selectedSession.status === "pending" &&
-                    selectedSession.qr_code ? (
+                  selectedSession.qr_code ? (
                     <div className="text-center">
                       <img
                         src={selectedSession.qr_code}
                         alt="QR Code"
-                        className="mx-auto w-64 h-64"
+                        className="mx-auto w-64 h-64 border-2 border-green-400 rounded-lg p-2"
                       />
-                      <p className="text-slate-600 mt-4">
-                        Scan QR Code ini dengan WhatsApp Anda
+                      <p className="text-slate-600 mt-4 font-medium">
+                        ✅ Scan QR Code ini dengan WhatsApp Anda
                       </p>
                       <p className="text-sm text-slate-500">
-                        QR Code akan kadaluarsa dalam 1 menit
+                        Tekan tombol "Refresh QR" jika QR tidak merespons
                       </p>
                     </div>
                   ) : selectedSession.status === "pending" &&
                     !selectedSession.qr_code ? (
-                    // ✅ NEW: Tampilkan loading state
                     <div className="text-center py-8">
                       <div className="inline-block">
                         <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full" />
                       </div>
-                      <p className="text-slate-600 mt-4">
+                      <p className="text-slate-600 mt-4 font-medium">
                         Mempersiapkan QR Code...
                       </p>
                       <p className="text-sm text-slate-500">
-                        Ini membutuhkan beberapa detik
+                        Tunggu 2-5 detik, QR akan muncul otomatis
+                      </p>
+                      <p className="text-xs text-slate-400 mt-2">
+                        💡 Cek browser console (F12) untuk debug details
                       </p>
                     </div>
                   ) : null}
@@ -344,7 +431,10 @@ export default function WhatsAppPage() {
                     <div className="text-center py-8">
                       <LucideIcons.CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
                       <p className="text-lg font-medium text-slate-900">
-                        Session Terhubung!
+                        ✅ Session Terhubung!
+                      </p>
+                      <p className="text-sm text-slate-600 mt-2">
+                        Anda sekarang bisa mengirim pesan
                       </p>
                     </div>
                   )}
@@ -419,7 +509,7 @@ export default function WhatsAppPage() {
                     <button
                       type="submit"
                       disabled={sending}
-                      className="w-full bg-green-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full bg-green-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-green-700"
                     >
                       {sending ? (
                         <>
