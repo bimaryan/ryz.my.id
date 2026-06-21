@@ -1,6 +1,6 @@
 import React from 'react'
 import SEO from '@/components/SEO'
-import { Book, Code, Webhook, Globe, ArrowRight, Server, Shield, Link as LinkIcon, BarChart3, Users, Zap, Bot, MessageSquare } from 'lucide-react'
+import { Book, Code, Webhook, Globe, ArrowRight, Server, Shield, Link as LinkIcon, BarChart3, Users, Zap, Bot, MessageSquare, MousePointerClick } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function DocsPage() {
@@ -76,7 +76,7 @@ export default function DocsPage() {
           </p>
           
           {/* Section 1: Auth */}
-          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm mb-10 transition-transform hover:scale-[1.01] duration-300">
+          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm mb-10 transition-transform hover:scale-[1.01] duration-300" id="auth">
              <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><Shield className="text-[#0b5cff] w-8 h-8"/> Autentikasi</h2>
              <p className="text-slate-600 mb-6 leading-relaxed">Setiap request ke REST API RYZLink wajib menyertakan API Key yang valid. Anda dapat membuat API Key di halaman Pengaturan Dashboard.</p>
              <div className="bg-slate-900 p-5 rounded-2xl shadow-inner overflow-x-auto">
@@ -85,7 +85,7 @@ export default function DocsPage() {
           </div>
 
           {/* Section 2: WhatsApp API */}
-          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm mb-10 transition-transform hover:scale-[1.01] duration-300">
+          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm mb-10 transition-transform hover:scale-[1.01] duration-300" id="whatsapp-api">
              <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><Bot className="text-green-500 w-8 h-8"/> WhatsApp Gateway API</h2>
              <p className="text-slate-600 mb-8 leading-relaxed">Kirim pesan WhatsApp otomatis (Notifikasi, OTP, Broadcast) dari sistem eksternal Anda menggunakan REST API kami.</p>
              
@@ -112,9 +112,9 @@ export default function DocsPage() {
              </div>
           </div>
 
-          {/* Section 3: Webhooks & Chatbot */}
-          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm transition-transform hover:scale-[1.01] duration-300">
-             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><Webhook className="text-purple-500 w-8 h-8"/> Webhook & Integrasi Chatbot</h2>
+          {/* Section 3: WhatsApp Webhooks */}
+          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm mb-10 transition-transform hover:scale-[1.01] duration-300" id="whatsapp-webhook">
+             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><Webhook className="text-purple-500 w-8 h-8"/> WhatsApp Webhook (Chatbot)</h2>
              <p className="text-slate-600 mb-8 leading-relaxed">Webhook digunakan agar server Anda menerima notifikasi secara <strong>real-time</strong> setiap kali ada pesan masuk ke nomor WhatsApp Anda. Ini adalah fondasi utama untuk membangun Chatbot AI atau Customer Service Otomatis.</p>
              
              <div className="mb-8">
@@ -135,17 +135,51 @@ export default function DocsPage() {
 }`}</pre>
                 </div>
              </div>
+          </div>
 
-             <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 p-6 sm:p-8 rounded-2xl relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10"><Bot className="w-24 h-24 text-indigo-500"/></div>
-               <h3 className="font-black text-indigo-900 mb-4 flex items-center gap-2 text-lg relative z-10"><Code className="w-5 h-5 text-indigo-600"/> Contoh Alur Pembuatan Chatbot AI</h3>
-               <ol className="list-decimal list-inside text-sm text-indigo-800 space-y-3 font-medium relative z-10">
-                 <li>Pelanggan mengirim pesan WA ke nomor bisnis Anda.</li>
-                 <li>RYZLink langsung meneruskan pesan tersebut (via metode POST) ke <strong>URL Webhook</strong> Server Anda.</li>
-                 <li>Server Anda membaca isi pesan, memproses *logic* internal, atau meneruskannya ke API ChatGPT/Gemini untuk mendapatkan respon yang relevan.</li>
-                 <li>Setelah meracik balasan, Server Anda menembak balik <strong>POST /api/v1/whatsapp/send</strong> RYZLink menggunakan respon teks dari AI tersebut.</li>
-                 <li>Pesan sukses dibalas secara otomatis dalam hitungan detik!</li>
-               </ol>
+          {/* Section 4: Shortlink API */}
+          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm mb-10 transition-transform hover:scale-[1.01] duration-300" id="shortlink-api">
+             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><LinkIcon className="text-blue-500 w-8 h-8"/> Shortlink API</h2>
+             <p className="text-slate-600 mb-8 leading-relaxed">Buat tautan pendek (shortlink) secara otomatis dari aplikasi Anda. Sangat berguna untuk menyingkat URL sebelum dikirim via WhatsApp atau SMS agar lebih rapi.</p>
+             
+             <EndpointBlock 
+               method="POST" 
+               path="/api/v1/links" 
+               description="Membuat tautan pendek baru ke dalam akun Anda." 
+               requestBody={`{\n  "original_url": "https://website-anda.com/promo/ramadhan-2026?utm_source=wa",\n  "custom_slug": "promo-ramadhan", // Opsional\n  "title": "Promo Ramadhan", // Opsional\n  "tags": ["promo", "sosmed"] // Opsional\n}`}
+               responseBody={`{\n  "success": true,\n  "data": {\n    "id": "lnk_abc123",\n    "original_url": "https://website-anda.com/promo/ramadhan-2026?utm_source=wa",\n    "short_code": "promo-ramadhan",\n    "short_url": "https://ryz.my.id/promo-ramadhan",\n    "created_at": "2026-06-21T10:00:00Z"\n  }\n}`}
+             />
+          </div>
+
+          {/* Section 5: Shortlink Webhooks */}
+          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm transition-transform hover:scale-[1.01] duration-300" id="shortlink-webhook">
+             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><MousePointerClick className="text-orange-500 w-8 h-8"/> Shortlink Webhook (Event Klik)</h2>
+             <p className="text-slate-600 mb-8 leading-relaxed">Dapatkan notifikasi <strong>real-time</strong> ke server Anda setiap kali tautan Anda diklik. Sangat berguna untuk memicu *event* lanjutan atau *tracking* kustom.</p>
+             
+             <div className="mb-8">
+                <p className="font-bold text-xs text-slate-500 uppercase tracking-widest mb-3">Payload Klik Tautan (Dikirim RYZLink ke URL Webhook Anda)</p>
+                <div className="bg-slate-900 p-5 rounded-2xl shadow-inner overflow-x-auto">
+<pre className="text-sm text-slate-300 font-mono leading-relaxed">{`{
+  "event": "link.clicked",
+  "link_id": "lnk_abc123",
+  "timestamp": "2026-06-21T10:05:30Z",
+  "data": {
+    "short_code": "promo-ramadhan",
+    "ip_address": "114.122.x.x",
+    "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0...)",
+    "country": "Indonesia",
+    "city": "Jakarta",
+    "device_type": "mobile",
+    "browser": "Safari",
+    "referrer": "instagram.com"
+  }
+}`}</pre>
+                </div>
+             </div>
+             
+             <div className="bg-orange-50 border border-orange-100 p-6 rounded-2xl text-sm text-orange-800">
+               <strong className="block mb-2 text-orange-900">💡 Tips Penggunaan Super Canggih:</strong>
+               Gabungkan Webhook Shortlink dengan WhatsApp API! Misalnya: Ketika pelanggan mengklik link penagihan <code>ryz.my.id/inv-123</code>, server Anda menerima notifikasi klik (webhook), dan seketika itu juga Anda bisa menggunakan API WhatsApp untuk mengirim pesan *"Terima kasih sudah membuka invoice, silakan balas pesan ini jika ada kendala pembayaran"*. 
              </div>
           </div>
 
