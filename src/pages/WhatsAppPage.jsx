@@ -25,7 +25,15 @@ export default function WhatsAppPage() {
   const [recipient, setRecipient] = useState("");
   const [messageContent, setMessageContent] = useState("");
   const [messageType, setMessageType] = useState("text");
-  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaFile, setMediaFile] = useState(null);
+  
+  // Audio Recording States
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
   const [sending, setSending] = useState(false);
   const [pollingQR, setPollingQR] = useState(false);
   const [qrStatus, setQrStatus] = useState(""); // ✅ NEW: Debug status
@@ -261,23 +269,86 @@ export default function WhatsAppPage() {
     }
   };
 
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        setAudioBlob(blob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } catch (err) {
+      toast.error("Gagal mengakses microphone: " + err.message);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      clearInterval(recordingTimerRef.current);
+    }
+  };
+
+  const discardRecording = () => {
+    setAudioBlob(null);
+    setRecordingTime(0);
+  };
+
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!selectedSession || !recipient || !messageContent || !user) return;
+    if (!selectedSession || !recipient || !user) return;
+    
+    // Validasi konten
+    if (messageType === "text" && !messageContent) return;
+    if (messageType === "audio" && !audioBlob && !mediaFile) {
+      toast.error("Harap rekam suara atau unggah file audio.");
+      return;
+    }
+    if (["image", "video", "document"].includes(messageType) && !mediaFile) {
+      toast.error("Harap unggah file media.");
+      return;
+    }
 
     try {
       setSending(true);
+      
+      const formData = new FormData();
+      formData.append("session_id", selectedSession.id);
+      formData.append("user_id", user.id);
+      formData.append("recipient", recipient);
+      formData.append("message_type", messageType);
+      formData.append("message_content", messageContent);
+
+      if (messageType === "audio" && audioBlob) {
+        formData.append("media_file", audioBlob, "voice-note.webm");
+      } else if (mediaFile) {
+        formData.append("media_file", mediaFile);
+      }
+
       const res = await fetch(`${API_URL}/whatsapp/send-message`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: selectedSession.id,
-          user_id: user.id,
-          recipient: recipient,
-          message_type: messageType,
-          message_content: messageContent,
-          media_url: messageType !== "text" ? mediaUrl : null,
-        }),
+        body: formData,
       });
 
       const data = await res.json();
@@ -285,8 +356,12 @@ export default function WhatsAppPage() {
         toast.success("Pesan berhasil dikirim!");
         setRecipient("");
         setMessageContent("");
-        setMediaUrl("");
+        setMediaFile(null);
+        setAudioBlob(null);
+        setRecordingTime(0);
         await loadMessages(selectedSession.id);
+      } else {
+        toast.error(data.error || "Gagal mengirim pesan");
       }
     } catch (err) {
       console.error("[SEND_MESSAGE] Error:", err);
@@ -516,24 +591,63 @@ export default function WhatsAppPage() {
                       </select>
                     </div>
 
-                    {messageType !== "text" && (
+                    {messageType === "audio" ? (
+                      <div className="border border-slate-300 rounded-lg p-4 bg-slate-50">
+                        <label className="block text-sm font-medium text-slate-700 mb-3">
+                          Voice Note / Rekaman Suara
+                        </label>
+                        {!isRecording && !audioBlob && (
+                          <div className="flex gap-3 items-center">
+                            <button type="button" onClick={startRecording} className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg font-medium transition-colors">
+                              <LucideIcons.Mic className="w-5 h-5" /> Mulai Merekam
+                            </button>
+                            <span className="text-sm text-slate-400">atau</span>
+                            <input
+                              type="file"
+                              accept="audio/*"
+                              className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                              onChange={(e) => setMediaFile(e.target.files[0])}
+                            />
+                          </div>
+                        )}
+                        {isRecording && (
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 text-red-600 animate-pulse">
+                              <span className="w-3 h-3 bg-red-600 rounded-full"></span>
+                              <span className="font-mono font-medium">{formatTime(recordingTime)}</span>
+                            </div>
+                            <button type="button" onClick={stopRecording} className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-sm">
+                              Berhenti Merekam
+                            </button>
+                          </div>
+                        )}
+                        {audioBlob && !isRecording && (
+                          <div className="flex items-center gap-4 bg-white p-2 border border-slate-200 rounded-lg">
+                            <audio src={URL.createObjectURL(audioBlob)} controls className="h-10 w-full max-w-xs" />
+                            <button type="button" onClick={discardRecording} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Hapus rekaman">
+                              <LucideIcons.Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : messageType !== "text" ? (
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                          URL Media
+                          Unggah File Media ({messageType})
                         </label>
                         <input
-                          type="url"
-                          placeholder="https://example.com/image.jpg"
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-                          value={mediaUrl}
-                          onChange={(e) => setMediaUrl(e.target.value)}
+                          type="file"
+                          accept={messageType === 'image' ? 'image/*' : messageType === 'video' ? 'video/*' : '.pdf,.doc,.docx,.xls,.xlsx'}
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          onChange={(e) => setMediaFile(e.target.files[0])}
                         />
+                        {mediaFile && <p className="text-xs text-slate-500 mt-1">Terpilih: {mediaFile.name}</p>}
                       </div>
-                    )}
+                    ) : null}
 
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">
-                        Isi Pesan
+                        Isi Pesan {messageType !== 'text' && '(Opsional / Caption)'}
                       </label>
                       <textarea
                         placeholder="Tulis pesan Anda disini..."
@@ -541,7 +655,7 @@ export default function WhatsAppPage() {
                         className="w-full px-4 py-2 border border-slate-300 rounded-lg resize-none"
                         value={messageContent}
                         onChange={(e) => setMessageContent(e.target.value)}
-                        required
+                        required={messageType === 'text'}
                       />
                     </div>
 

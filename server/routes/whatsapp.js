@@ -12,6 +12,7 @@ import path from "path";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import multer from "multer";
 
 dotenv.config();
 
@@ -19,6 +20,9 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
+// Setup multer for memory storage
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } }); // 15MB limit
 
 const router = express.Router();
 
@@ -325,7 +329,7 @@ router.get("/session/:sessionId", async (req, res) => {
  * 3. Kirim Pesan WhatsApp
  * POST /api/whatsapp/send-message
  */
-router.post("/send-message", async (req, res) => {
+router.post("/send-message", upload.single('media_file'), async (req, res) => {
   let dbMessage = null;
 
   try {
@@ -333,17 +337,17 @@ router.post("/send-message", async (req, res) => {
       session_id,
       recipient,
       message_type = "text",
-      message_content,
+      message_content = "", // text might be empty if it's just audio
       media_url,
       user_id,
     } = req.body;
 
     console.log(`[SEND_MESSAGE] session_id=${session_id}, recipient=${recipient}`);
 
-    if (!session_id || !recipient || !message_content || !user_id) {
+    if (!session_id || !recipient || !user_id) {
       return res.status(400).json({
         success: false,
-        error: "session_id, user_id, recipient, dan message_content dibutuhkan",
+        error: "session_id, user_id, dan recipient dibutuhkan",
       });
     }
 
@@ -419,32 +423,37 @@ router.post("/send-message", async (req, res) => {
     const formattedNumber = formatPhoneNumber(recipient);
     console.log(`[SEND_MESSAGE] Formatted number: ${formattedNumber}`);
 
+    const hasFile = req.file && req.file.buffer;
+
     if (message_type === "text") {
       await sessionData.socket.sendMessage(formattedNumber, {
         text: message_content,
       });
-    } else if (message_type === "image" && media_url) {
-      await sessionData.socket.sendMessage(formattedNumber, {
-        image: { url: media_url },
-        caption: message_content,
-      });
-    } else if (message_type === "document" && media_url) {
-      await sessionData.socket.sendMessage(formattedNumber, {
-        document: { url: media_url },
-        mimetype: "application/pdf",
-        fileName: "document.pdf",
-        caption: message_content,
-      });
-    } else if (message_type === "video" && media_url) {
-      await sessionData.socket.sendMessage(formattedNumber, {
-        video: { url: media_url },
-        caption: message_content,
-      });
-    } else if (message_type === "audio" && media_url) {
-      await sessionData.socket.sendMessage(formattedNumber, {
-        audio: { url: media_url },
-        mimetype: 'audio/mp4'
-      });
+    } else if (message_type === "image") {
+      if (hasFile) {
+        await sessionData.socket.sendMessage(formattedNumber, { image: req.file.buffer, caption: message_content });
+      } else if (media_url) {
+        await sessionData.socket.sendMessage(formattedNumber, { image: { url: media_url }, caption: message_content });
+      }
+    } else if (message_type === "document") {
+      if (hasFile) {
+        await sessionData.socket.sendMessage(formattedNumber, { document: req.file.buffer, mimetype: req.file.mimetype || "application/octet-stream", fileName: req.file.originalname || "document.pdf", caption: message_content });
+      } else if (media_url) {
+        await sessionData.socket.sendMessage(formattedNumber, { document: { url: media_url }, mimetype: "application/pdf", fileName: "document.pdf", caption: message_content });
+      }
+    } else if (message_type === "video") {
+      if (hasFile) {
+        await sessionData.socket.sendMessage(formattedNumber, { video: req.file.buffer, caption: message_content });
+      } else if (media_url) {
+        await sessionData.socket.sendMessage(formattedNumber, { video: { url: media_url }, caption: message_content });
+      }
+    } else if (message_type === "audio") {
+      // Baileys requires 'ptt: true' for it to render as a Voice Note
+      if (hasFile) {
+        await sessionData.socket.sendMessage(formattedNumber, { audio: req.file.buffer, mimetype: req.file.mimetype || "audio/mp4", ptt: true });
+      } else if (media_url) {
+        await sessionData.socket.sendMessage(formattedNumber, { audio: { url: media_url }, mimetype: 'audio/mp4', ptt: true });
+      }
     }
 
     console.log(`[SEND_MESSAGE] ✅ Message sent`);
