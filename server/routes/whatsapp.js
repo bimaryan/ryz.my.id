@@ -3,6 +3,7 @@ import {
   makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
+  fetchLatestBaileysVersion
 } from "baileys";
 import pino from "pino"; // ✅ Wajib diinstall: npm install pino
 import QRCode from "qrcode";
@@ -106,8 +107,12 @@ router.post("/create-session", async (req, res) => {
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
+    const { version, isLatest } = await fetchLatestBaileysVersion();
+    console.log(`[BAILEYS] using WA v${version.join('.')}, isLatest: ${isLatest}`);
+
     // ✅ FIX: Konfigurasi Baileys dengan Pino Logger & Config Stabil
     const sock = makeWASocket({
+      version,
       auth: state,
       printQRInTerminal: true, 
       logger: pino({ level: 'info' }), // Ini akan memunculkan error detail di terminal
@@ -362,8 +367,11 @@ router.post("/send-message", async (req, res) => {
 
       const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
       
+      const { version } = await fetchLatestBaileysVersion();
+
       // ✅ Update Config Baileys untuk Pemulihan Sesi agar Konsisten
       const sock = makeWASocket({
+        version,
         auth: state,
         printQRInTerminal: false,
         logger: pino({ level: 'silent' }), // Silent mode saat kirim pesan agar terminal rapi
