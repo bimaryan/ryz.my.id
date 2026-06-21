@@ -91,9 +91,9 @@ export default function DocsPage() {
              
              <EndpointBlock 
                method="POST" 
-               path="/api/v1/whatsapp/send" 
+               path="/api/whatsapp/send-message" 
                description="Mengirim pesan teks langsung ke nomor tujuan yang diinginkan." 
-               requestBody={`{\n  "session_id": "ID_SESI_WA_ANDA",\n  "recipient": "6281234567890",\n  "message_type": "text",\n  "message_content": "Halo! Pesanan Anda dengan nomor #ORD-001 telah dikirim. Terima kasih!"\n}`}
+               requestBody={`{\n  "session_id": "ID_SESI_WA_ANDA",\n  "user_id": "ID_USER_ANDA",\n  "recipient": "6281234567890",\n  "message_type": "text",\n  "message_content": "Halo! Pesanan Anda dengan nomor #ORD-001 telah dikirim. Terima kasih!"\n}`}
                responseBody={`{\n  "success": true,\n  "data": {\n    "message_id": "msg_xyz123",\n    "status": "queued",\n    "recipient": "6281234567890"\n  }\n}`}
              />
              
@@ -101,9 +101,10 @@ export default function DocsPage() {
                <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2"><LinkIcon className="w-5 h-5 text-slate-500"/> Pengiriman Media (Gambar, Video, Audio, Dokumen)</h3>
                <p className="text-sm text-slate-600 mb-5">Untuk mengirim file media, gunakan format <code className="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-xs text-pink-600">multipart/form-data</code> dan lampirkan file Anda pada parameter <code className="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-xs text-pink-600">media_file</code>.</p>
                <div className="bg-slate-900 rounded-xl p-5 overflow-x-auto shadow-inner">
-                  <pre className="text-sm text-slate-300 font-mono leading-relaxed">{`curl -X POST https://ryz.my.id/api/v1/whatsapp/send \\
+                  <pre className="text-sm text-slate-300 font-mono leading-relaxed">{`curl -X POST https://ryz.my.id/api/whatsapp/send-message \\
   -H "Authorization: Bearer sk_live_your_api_key" \\
   -F "session_id=ID_SESI_WA_ANDA" \\
+  -F "user_id=ID_USER_ANDA" \\
   -F "recipient=6281234567890" \\
   -F "message_type=image" \\
   -F "message_content=Ini adalah bukti pembayaran Anda" \\
@@ -146,7 +147,7 @@ export default function DocsPage() {
                method="POST" 
                path="/api/v1/links" 
                description="Membuat tautan pendek baru ke dalam akun Anda." 
-               requestBody={`{\n  "original_url": "https://website-anda.com/promo/ramadhan-2026?utm_source=wa",\n  "custom_slug": "promo-ramadhan", // Opsional\n  "title": "Promo Ramadhan", // Opsional\n  "tags": ["promo", "sosmed"] // Opsional\n}`}
+               requestBody={`{\n  "original_url": "https://website-anda.com/promo/ramadhan-2026?utm_source=wa",\n  "short_code": "promo-ramadhan", // Opsional (Dulu disebut custom_slug)\n  "title": "Promo Ramadhan", // Opsional\n  "category": "promo" // Opsional\n}`}
                responseBody={`{\n  "success": true,\n  "data": {\n    "id": "lnk_abc123",\n    "original_url": "https://website-anda.com/promo/ramadhan-2026?utm_source=wa",\n    "short_code": "promo-ramadhan",\n    "short_url": "https://ryz.my.id/promo-ramadhan",\n    "created_at": "2026-06-21T10:00:00Z"\n  }\n}`}
              />
           </div>
