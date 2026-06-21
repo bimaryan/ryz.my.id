@@ -105,151 +105,117 @@ router.post("/create-session", async (req, res) => {
       fs.rmSync(sessionPath, { recursive: true, force: true });
     }
 
-    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+    const connectToWA = async (isReconnect = false) => {
+      const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    console.log(`[BAILEYS] using WA v${version.join('.')}, isLatest: ${isLatest}`);
-
-    // ✅ FIX: Konfigurasi Baileys dengan Pino Logger & Config Stabil
-    const sock = makeWASocket({
-      version,
-      auth: state,
-      printQRInTerminal: true, 
-      logger: pino({ level: 'info' }), // Ini akan memunculkan error detail di terminal
-      browser: ['Ubuntu', 'Chrome', '20.0.04'], 
-      connectTimeoutMs: 60_000,
-      defaultQueryTimeoutMs: 60_000,
-      keepAliveIntervalMs: 10_000,
-      syncFullHistory: false, 
-      generateHighQualityLinkPreview: false
-    });
-
-    activeSessions.set(newSession.id, { socket: sock, state, saveCreds });
-    console.log(`[BAILEYS] Socket ditambahkan ke activeSessions`);
-
-    // ✅ Track QR & connection state
-    let qrReceived = false;
-    
-    const qrTimeout = setTimeout(async () => {
-      if (!qrReceived) {
-        console.log(`[QR_TIMEOUT] QR tidak muncul dalam 60 detik, disconnect & cleanup`);
-        try {
-          await sock.end();
-        } catch (e) {
-          console.error(`[QR_TIMEOUT] Error ending socket:`, e);
-        }
-        activeSessions.delete(newSession.id);
+      const { version, isLatest } = await fetchLatestBaileysVersion();
+      if (!isReconnect) {
+        console.log(`[BAILEYS] using WA v${version.join('.')}, isLatest: ${isLatest}`);
       }
-    }, 60_000); 
 
-    // ============================================================================
-    // EVENT LISTENERS
-    // ============================================================================
+      const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: true, 
+        logger: pino({ level: 'info' }),
+        browser: ['Ubuntu', 'Chrome', '20.0.04'], 
+        connectTimeoutMs: 60_000,
+        defaultQueryTimeoutMs: 60_000,
+        keepAliveIntervalMs: 10_000,
+        syncFullHistory: false, 
+        generateHighQualityLinkPreview: false
+      });
 
-    sock.ev.on("connection.update", async (update) => {
-      const { connection, qr, lastDisconnect } = update;
+      activeSessions.set(newSession.id, { socket: sock, state, saveCreds });
 
-      console.log(`[CONNECTION_UPDATE] connection=${connection}, qr=${qr ? "YES" : "NO"}`);
-
-      // QR Code Generated
-      if (qr) {
-        qrReceived = true;
-        clearTimeout(qrTimeout); // Cancel timeout kalau QR sudah muncul
-        
-        try {
-          console.log(`[QR_CODE] Generating QR Code...`);
-          const qrDataUrl = await QRCode.toDataURL(qr);
-          const qrExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 menit
-
-          console.log(`[QR_CODE] Saving QR to DB, expires at ${qrExpires}`);
-
-          const { error: updateError } = await supabaseAdmin
-            .from("whatsapp_sessions")
-            .update({
-              qr_code: qrDataUrl,
-              qr_expires_at: qrExpires,
-              status: "pending",
-            })
-            .eq("id", newSession.id);
-
-          if (updateError) {
-            console.error(`[QR_CODE] ERROR saving QR:`, updateError);
-          } else {
-            console.log(`[QR_CODE] ✅ QR saved successfully`);
+      let qrReceived = false;
+      let qrTimeout;
+      
+      if (!isReconnect) {
+        qrTimeout = setTimeout(async () => {
+          if (!qrReceived) {
+            console.log(`[QR_TIMEOUT] QR tidak muncul dalam 60 detik, disconnect & cleanup`);
+            try { await sock.end(); } catch (e) {}
+            activeSessions.delete(newSession.id);
           }
-        } catch (err) {
-          console.error(`[QR_CODE] ERROR generating QR:`, err);
-        }
+        }, 60_000); 
       }
 
-      // Connection Closed
-      if (connection === "close") {
-        console.log(`[CONNECTION] Connection closed`);
-        console.log(`[DISCONNECT] lastDisconnect:`, lastDisconnect);
+      sock.ev.on("connection.update", async (update) => {
+        const { connection, qr, lastDisconnect } = update;
 
-        clearTimeout(qrTimeout);
+        if (qr) {
+          qrReceived = true;
+          clearTimeout(qrTimeout);
+          
+          try {
+            const qrDataUrl = await QRCode.toDataURL(qr);
+            const qrExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-        const shouldReconnect =
-          lastDisconnect?.error?.output?.statusCode !==
-          DisconnectReason.loggedOut;
+            await supabaseAdmin
+              .from("whatsapp_sessions")
+              .update({
+                qr_code: qrDataUrl,
+                qr_expires_at: qrExpires,
+                status: "pending",
+              })
+              .eq("id", newSession.id);
+          } catch (err) {
+            console.error(`[QR_CODE] ERROR generating QR:`, err);
+          }
+        }
 
-        console.log(`[DISCONNECT] shouldReconnect=${shouldReconnect}`);
+        if (connection === "close") {
+          clearTimeout(qrTimeout);
 
-        // Update status ke disconnected HANYA jika QR sudah dikirim
-        if (qrReceived) {
-          console.log(`[DISCONNECT] QR was received, updating status to disconnected`);
+          const shouldReconnect =
+            lastDisconnect?.error?.output?.statusCode !==
+            DisconnectReason.loggedOut;
+
+          console.log(`[DISCONNECT] shouldReconnect=${shouldReconnect}`);
+
+          if (shouldReconnect) {
+            console.log(`[DISCONNECT] Reconnecting...`);
+            connectToWA(true);
+          } else {
+            if (qrReceived) {
+              await supabaseAdmin
+                .from("whatsapp_sessions")
+                .update({ status: "disconnected" })
+                .eq("id", newSession.id);
+            }
+            activeSessions.delete(newSession.id);
+            console.log(`[SESSION] User logged out, removing session folder`);
+            try {
+              fs.rmSync(sessionPath, { recursive: true, force: true });
+            } catch (err) {}
+          }
+        }
+
+        if (connection === "open") {
+          console.log(`[CONNECTION] ✅ Connection OPEN - Session connected!`);
+          clearTimeout(qrTimeout);
+
           await supabaseAdmin
             .from("whatsapp_sessions")
-            .update({ status: "disconnected" })
+            .update({
+              status: "connected",
+              qr_code: null,
+              qr_expires_at: null,
+            })
             .eq("id", newSession.id);
-        } else {
-          console.log(`[DISCONNECT] QR was never received, marking as pending for retry`);
         }
+      });
 
-        activeSessions.delete(newSession.id);
+      sock.ev.on("creds.update", saveCreds);
 
-        if (!shouldReconnect) {
-          console.log(`[SESSION] User logged out, removing session folder`);
-          try {
-            fs.rmSync(sessionPath, { recursive: true, force: true });
-          } catch (err) {
-            console.error(`[SESSION] Error removing folder:`, err);
-          }
-        }
-      }
+      sock.ev.on("error", (err) => {
+        console.error(`[SOCKET_ERROR]`, err);
+      });
+    };
 
-      // Connection Open (Success)
-      if (connection === "open") {
-        console.log(`[CONNECTION] ✅ Connection OPEN - Session connected!`);
-        clearTimeout(qrTimeout);
-
-        const { error: updateError } = await supabaseAdmin
-          .from("whatsapp_sessions")
-          .update({
-            status: "connected",
-            qr_code: null,
-            qr_expires_at: null,
-          })
-          .eq("id", newSession.id);
-
-        if (updateError) {
-          console.error(`[CONNECTION] ERROR updating status:`, updateError);
-        } else {
-          console.log(`[CONNECTION] ✅ Status updated to connected`);
-        }
-      }
-    });
-
-    // Credentials Update
-    sock.ev.on("creds.update", () => {
-      console.log(`[CREDS] Credentials updated`);
-      saveCreds();
-    });
-
-    // Error Handler
-    sock.ev.on("error", (err) => {
-      console.error(`[SOCKET_ERROR]`, err);
-    });
+    // Start connection
+    connectToWA();
 
     console.log(`[CREATE_SESSION] ✅ Response sent, waiting for QR...`);
 
