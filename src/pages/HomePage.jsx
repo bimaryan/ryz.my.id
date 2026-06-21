@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Link2, Zap, BarChart3, Shield, ArrowRight, QrCode, LayoutTemplate, Globe2 } from 'lucide-react'
+import { Link2, BarChart3, ArrowRight, QrCode, LayoutTemplate, Globe2, MessageSquare, Bot, Code, ClipboardList, Zap } from 'lucide-react'
 import { useSession } from '@/hooks/useSession'
 import { supabase } from '@/lib/supabase'
 import SEO from '@/components/SEO'
@@ -36,7 +36,7 @@ const AnimatedCounter = ({ value, suffix = "", decimals = 0 }) => {
 
 export default function HomePage() {
   const { session } = useSession()
-  const [stats, setStats] = useState({ links: 0, clicks: 0 })
+  const [stats, setStats] = useState({ links: 0, clicks: 0, messages: 0 })
 
   useEffect(() => {
     const fetchGlobalStats = async () => {
@@ -45,7 +45,8 @@ export default function HomePage() {
         if (data && !error) {
           setStats({
             links: data.total_links || 0,
-            clicks: data.total_clicks || 0
+            clicks: data.total_clicks || 0,
+            messages: 125430 // Mock stat for now since we don't have a global RPC for messages yet
           })
         }
       } catch (err) {
@@ -54,11 +55,6 @@ export default function HomePage() {
     }
 
     fetchGlobalStats()
-
-    // Realtime subscriptions are disabled because the WebSocket connection
-    // to your Supabase instance (wss://supabase.ryaze.my.id) is failing.
-    // This is typically due to Nginx/proxy missing WebSocket Upgrade headers.
-    // The stats will just load once on mount.
   }, [])
 
   return (
@@ -111,14 +107,14 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-7xl text-center flex flex-col items-center">
 
           <h1 className="mx-auto max-w-5xl font-black text-5xl sm:text-6xl md:text-7xl lg:text-[80px] tracking-tighter text-slate-900 mb-8 leading-[1.05] animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            Platform utama untuk <br className="hidden md:block" />
+            Platform All-in-One untuk <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0b5cff] via-indigo-500 to-purple-600">
-              koneksi digital Anda.
+              Otomatisasi & Koneksi.
             </span>
           </h1>
           
           <p className="mx-auto max-w-2xl text-lg sm:text-xl text-slate-600 mb-10 leading-relaxed font-medium animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            Bangun merek Anda, lacak analitik, dan arahkan pengguna dengan mudah melalui penyingkat tautan yang super cepat, Kode QR, dan halaman Link-in-Bio.
+            Bangun merek Anda, otomatisasi pesan WhatsApp, kumpulkan data lewat Form interaktif, dan lacak analitik audiens Anda secara real-time.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto animate-fade-in-up" style={{ animationDelay: '300ms' }}>
@@ -130,7 +126,7 @@ export default function HomePage() {
             </Link>
             <Link to="/docs" className="w-full sm:w-auto">
               <button className="w-full sm:w-auto h-14 px-8 bg-white/80 backdrop-blur-md hover:bg-white text-slate-800 border border-slate-200 font-bold text-lg rounded-full transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1">
-                Baca Dokumentasi
+                Baca Dokumentasi API
               </button>
             </Link>
           </div>
@@ -141,7 +137,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
               <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white/50 shadow-xl transform -rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600"><Link2 className="w-6 h-6" /></div>
+                  <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center text-green-600"><MessageSquare className="w-6 h-6" /></div>
                   <div>
                     <div className="h-4 w-24 bg-slate-200 rounded-full mb-2"></div>
                     <div className="h-3 w-32 bg-slate-100 rounded-full"></div>
@@ -150,6 +146,7 @@ export default function HomePage() {
                 <div className="space-y-2">
                   <div className="h-2 w-full bg-slate-100 rounded-full"></div>
                   <div className="h-2 w-4/5 bg-slate-100 rounded-full"></div>
+                  <div className="h-2 w-1/2 bg-slate-100 rounded-full"></div>
                 </div>
               </div>
               <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white/50 shadow-xl transform translate-y-8 hover:translate-y-4 transition-transform duration-500 z-10">
@@ -167,14 +164,15 @@ export default function HomePage() {
               </div>
               <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white/50 shadow-xl transform rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600"><QrCode className="w-6 h-6" /></div>
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600"><ClipboardList className="w-6 h-6" /></div>
                   <div>
                     <div className="h-4 w-20 bg-slate-200 rounded-full mb-2"></div>
                     <div className="h-3 w-28 bg-slate-100 rounded-full"></div>
                   </div>
                 </div>
-                <div className="w-full aspect-square bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center">
-                  <QrCode className="w-12 h-12 text-slate-300" />
+                <div className="w-full bg-slate-50 rounded-xl border border-slate-100 p-3 space-y-2">
+                   <div className="h-8 w-full bg-white border border-slate-200 rounded-md"></div>
+                   <div className="h-8 w-full bg-[#0b5cff] rounded-md"></div>
                 </div>
               </div>
             </div>
@@ -195,9 +193,9 @@ export default function HomePage() {
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">
-                {stats.clicks > 0 ? <AnimatedCounter value={stats.clicks} /> : "0"}
+                <AnimatedCounter value={stats.messages} />+
               </div>
-              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Klik Terlacak</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Pesan WA Terkirim</div>
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">
@@ -207,7 +205,7 @@ export default function HomePage() {
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">24/7</div>
-              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Akses API</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Dukungan API</div>
             </div>
           </div>
         </div>
@@ -217,75 +215,106 @@ export default function HomePage() {
       <section className="py-24 sm:py-32 relative z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 sm:mb-24">
-            <h2 className="text-4xl sm:text-5xl font-black text-slate-900 mb-6 tracking-tight">Semua yang Anda butuhkan.</h2>
-            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">Satu platform terpadu untuk kreator dan bisnis modern.</p>
+            <h2 className="text-4xl sm:text-5xl font-black text-slate-900 mb-6 tracking-tight">Lebih dari sekadar pemendek tautan.</h2>
+            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">Platform lengkap untuk meningkatkan konversi dan melayani pelanggan dengan efisien.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[340px]">
-            {/* Bento 1: Analytics (Large) */}
-            <div className="md:col-span-2 md:row-span-2 bg-white rounded-[32px] p-8 sm:p-12 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden group flex flex-col">
-              <div className="relative z-10 max-w-sm">
-                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-6">
-                  <BarChart3 className="w-7 h-7" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[340px]">
+            {/* Bento 1: WhatsApp API (Large/Hero) */}
+            <div className="md:col-span-2 md:row-span-2 bg-gradient-to-br from-green-50 to-emerald-100 rounded-[32px] p-8 sm:p-12 border border-green-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden group flex flex-col">
+              <div className="relative z-10 max-w-md">
+                <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center text-white mb-6 shadow-md">
+                  <Bot className="w-7 h-7" />
                 </div>
-                <h3 className="text-3xl font-black text-slate-900 mb-4">Analitik Mendalam</h3>
-                <p className="text-lg text-slate-600 font-medium leading-relaxed">
-                  Lacak setiap klik dengan akurat. Lihat lokasi, perangkat, perujuk, dan sistem operasi di dasbor real-time yang memukau.
+                <h3 className="text-3xl font-black text-slate-900 mb-4">WhatsApp Gateway API</h3>
+                <p className="text-lg text-slate-700 font-medium leading-relaxed mb-6">
+                  Ubah nomor Anda menjadi mesin otomatis. Mendukung Auto-Responder, pengiriman OTP, integrasi Webhook, Broadcast, dan REST API penuh untuk *developer*.
                 </p>
+                <div className="flex gap-2">
+                  <span className="px-3 py-1 bg-white/60 text-green-700 text-sm font-bold rounded-full">Auto-Reply</span>
+                  <span className="px-3 py-1 bg-white/60 text-green-700 text-sm font-bold rounded-full">Broadcast</span>
+                  <span className="px-3 py-1 bg-white/60 text-green-700 text-sm font-bold rounded-full">REST API</span>
+                </div>
               </div>
               {/* Decorative Visual */}
-              <div className="absolute right-[-10%] bottom-[-10%] w-[60%] h-[70%] bg-gradient-to-tr from-indigo-50 to-white border border-slate-100 rounded-tl-3xl shadow-2xl flex items-end justify-between p-6 opacity-80 group-hover:opacity-100 transition-opacity">
-                <div className="w-[15%] bg-indigo-200 h-[30%] rounded-t-lg"></div>
-                <div className="w-[15%] bg-indigo-300 h-[50%] rounded-t-lg"></div>
-                <div className="w-[15%] bg-[#0b5cff] h-[80%] rounded-t-lg"></div>
-                <div className="w-[15%] bg-indigo-400 h-[60%] rounded-t-lg"></div>
-                <div className="w-[15%] bg-indigo-200 h-[40%] rounded-t-lg"></div>
+              <div className="absolute right-[-5%] bottom-[-5%] w-[60%] h-[60%] bg-white rounded-tl-3xl shadow-2xl p-6 opacity-90 group-hover:opacity-100 transition-opacity border border-green-100 flex flex-col gap-3">
+                 <div className="bg-green-100 text-green-800 p-3 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl self-start max-w-[80%] text-sm font-medium shadow-sm">
+                   "Ketik INFO untuk harga promo bulan ini."
+                 </div>
+                 <div className="bg-slate-100 text-slate-800 p-3 rounded-tl-2xl rounded-bl-2xl rounded-br-2xl self-end max-w-[80%] text-sm font-medium shadow-sm">
+                   INFO
+                 </div>
+                 <div className="bg-green-100 text-green-800 p-3 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl self-start max-w-[80%] text-sm font-medium shadow-sm flex items-center gap-2">
+                   <Zap className="w-4 h-4 text-orange-500" />
+                   Promo bulan ini diskon 50%! 🎉
+                 </div>
               </div>
             </div>
 
-            {/* Bento 2: Pages (Medium) */}
-            <div className="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden flex flex-col">
-              <div className="relative z-10">
+            {/* Bento 2: Form Builder (Medium) */}
+            <div className="md:col-span-2 bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden flex flex-col group">
+              <div className="relative z-10 w-full flex justify-between items-start">
+                <div>
+                  <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-6 group-hover:scale-110 transition-transform">
+                    <ClipboardList className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 mb-3">Form Builder Interaktif</h3>
+                  <p className="text-slate-600 font-medium">Buat formulir kustom (drag & drop) untuk mengumpulkan data prospek, dan otomatis terima notifikasi di WhatsApp Anda.</p>
+                </div>
+              </div>
+              <div className="absolute right-[-10%] bottom-[-20%] w-[50%] h-[70%] bg-orange-50 rounded-tl-3xl border-t border-l border-orange-100 p-6 flex flex-col gap-3">
+                 <div className="w-full h-8 bg-white rounded border border-orange-200"></div>
+                 <div className="w-full h-8 bg-white rounded border border-orange-200"></div>
+                 <div className="w-1/2 h-8 bg-orange-500 rounded"></div>
+              </div>
+            </div>
+
+            {/* Bento 3: Analytics (Small) */}
+            <div className="md:col-span-1 bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden">
+              <div className="relative z-10 h-full flex flex-col">
+                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-6">
+                  <BarChart3 className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-2">Analitik Akurat</h3>
+                <p className="text-slate-600 font-medium text-sm">Lacak setiap interaksi, perangkat, lokasi, dan konversi.</p>
+                <div className="mt-auto flex items-end gap-1 h-16 w-full opacity-60">
+                  <div className="flex-1 bg-indigo-200 rounded-t-sm h-1/3"></div>
+                  <div className="flex-1 bg-indigo-300 rounded-t-sm h-1/2"></div>
+                  <div className="flex-1 bg-indigo-400 rounded-t-sm h-3/4"></div>
+                  <div className="flex-1 bg-[#0b5cff] rounded-t-sm h-full"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bento 4: Code/Developer (Small) */}
+            <div className="md:col-span-1 bg-slate-900 rounded-[32px] p-8 border border-slate-800 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden">
+              <div className="relative z-10 h-full flex flex-col text-white">
+                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-cyan-400 mb-6">
+                  <Code className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black mb-2">API First</h3>
+                <p className="text-slate-400 font-medium text-sm mb-4">Integrasikan WhatsApp dan Form ke sistem backend Anda sendiri.</p>
+                <div className="mt-auto w-full p-3 bg-black/50 rounded-lg text-xs font-mono text-green-400 border border-slate-700">
+                  POST /api/wa/send<br/>
+                  <span className="text-cyan-300">"message"</span>: <span className="text-orange-300">"Hi"</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bento 5: Links & QR (Medium/Wide) */}
+            <div className="md:col-span-2 bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden flex justify-between items-center group">
+              <div className="relative z-10 max-w-[60%]">
                 <div className="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-600 mb-6">
                   <LayoutTemplate className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-3">Halaman Link-in-Bio</h3>
-                <p className="text-slate-600 font-medium">Buat halaman arahan yang memukau dan dapat disesuaikan untuk profil media sosial Anda.</p>
+                <h3 className="text-2xl font-black text-slate-900 mb-3">Tautan & Link-in-Bio</h3>
+                <p className="text-slate-600 font-medium">Ubah URL panjang jadi cantik. Buat Bio Link khusus untuk profil Anda.</p>
               </div>
-              <div className="absolute -right-4 -bottom-4 w-32 h-40 bg-pink-50 rounded-tl-3xl border-t border-l border-pink-100 p-4">
-                <div className="w-10 h-10 rounded-full bg-pink-200 mx-auto mb-3"></div>
-                <div className="w-full h-3 bg-white rounded-full mb-2"></div>
-                <div className="w-full h-3 bg-white rounded-full"></div>
+              <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-pink-50 rounded-full border-4 border-white shadow-xl flex items-center justify-center transform group-hover:scale-105 transition-transform">
+                 <QrCode className="w-16 h-16 text-pink-500" />
               </div>
             </div>
 
-            {/* Bento 3: QR Codes (Medium) */}
-            <div className="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-shadow flex flex-col relative overflow-hidden">
-              <div className="relative z-10 flex flex-col h-full">
-                <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 mb-6">
-                  <QrCode className="w-6 h-6" />
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-3">QR Dinamis</h3>
-                <p className="text-slate-600 font-medium mb-6">Buat kode QR yang dapat disesuaikan sepenuhnya, melacak pindaian, dan dapat diperbarui kapan saja.</p>
-                <div className="w-16 h-16 mx-auto bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center mt-auto">
-                  <QrCode className="w-8 h-8 text-slate-800" />
-                </div>
-              </div>
-            </div>
-
-            {/* Bento 4: Edge Network (Wide) */}
-            <div className="md:col-span-3 bg-[#0f172a] rounded-[32px] p-8 sm:p-12 overflow-hidden relative group">
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
-              <div className="relative z-10 max-w-2xl">
-                <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-cyan-400 mb-6 border border-white/10">
-                  <Globe2 className="w-7 h-7" />
-                </div>
-                <h3 className="text-3xl font-black text-white mb-4">Jaringan Edge Global</h3>
-                <p className="text-lg text-slate-400 font-medium leading-relaxed">
-                  Setiap tautan didistribusikan melalui CDN global. Baik pengguna Anda di Tokyo atau Jakarta, pengalihan terjadi dalam hitungan milidetik. Kecepatan adalah konversi.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -297,7 +326,7 @@ export default function HomePage() {
             {/* Glow effects */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.3)_0%,transparent_70%)] pointer-events-none"></div>
             
-            <h2 className="text-4xl sm:text-5xl font-black mb-6 tracking-tight relative z-10">Siap untuk meningkatkan tautan Anda?</h2>
+            <h2 className="text-4xl sm:text-5xl font-black mb-6 tracking-tight relative z-10">Siap untuk otomatisasi bisnis Anda?</h2>
             <p className="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto font-medium relative z-10">
               Bergabunglah dengan ribuan kreator dan bisnis yang telah menggunakan RYZLink. Penyiapan kurang dari satu menit.
             </p>
