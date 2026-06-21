@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Image as ImageIcon, Link as LinkIcon, Type, PlaySquare, ShoppingBag, Calendar, Star, DollarSign, BookOpen } from 'lucide-react'
+import { X, Image as ImageIcon, Link as LinkIcon, Type, PlaySquare, ShoppingBag, Calendar, Star, DollarSign, BookOpen, Folder, Layers } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'react-hot-toast'
 
@@ -12,6 +12,16 @@ const BLOCKS = [
     color: 'text-[#0b5cff]',
     bg: 'bg-blue-50',
     category: 'Basic'
+  },
+  {
+    id: 'folder',
+    title: 'Folder',
+    description: 'Group multiple links together in an accordion',
+    icon: Folder,
+    color: 'text-[#0b5cff]',
+    bg: 'bg-blue-50',
+    category: 'Basic',
+    badge: 'NEW'
   },
   {
     id: 'header',
@@ -29,6 +39,16 @@ const BLOCKS = [
     icon: ImageIcon,
     color: 'text-[#0b5cff]',
     bg: 'bg-blue-50',
+    category: 'Basic',
+    badge: 'NEW'
+  },
+  {
+    id: 'page_break',
+    title: 'Page Break',
+    description: 'Split your bio into multiple pages (Tabs)',
+    icon: Layers,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
     category: 'Basic',
     badge: 'NEW'
   },

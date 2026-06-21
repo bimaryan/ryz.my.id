@@ -82,7 +82,7 @@ export default function BlogPublicPage() {
   if (selectedChapter) {
     return (
       <div 
-        className={`min-h-screen flex flex-col font-sans ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
+        className={`min-h-screen flex flex-col font-sans pb-12 ${theme.bg_animation && theme.bg_animation !== 'none' ? theme.bg_animation : ''} ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
         style={{ background: bgStyle, color: textColor, ...fontStyle }}
       >
         <div className="sticky top-0 bg-black/5 backdrop-blur-md z-10 border-b border-black/10">
@@ -119,7 +119,7 @@ export default function BlogPublicPage() {
 
   return (
     <div 
-      className={`min-h-screen flex flex-col relative pb-10 font-sans ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
+      className={`min-h-screen flex flex-col relative pb-10 font-sans ${theme.bg_animation && theme.bg_animation !== 'none' ? theme.bg_animation : ''} ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
       style={{ background: bgStyle, color: textColor, ...fontStyle }}
     >
       {/* Header */}

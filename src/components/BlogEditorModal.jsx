@@ -132,9 +132,11 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
     if (!file) return;
 
     setIsUploading(true);
-    const url = await uploadImage(file);
-    if (url) {
-      handleUpdate('cover_image_url', url);
+    const res = await uploadImage(file);
+    if (res.success) {
+      handleUpdate('cover_image_url', res.url);
+    } else {
+      toast.error("Upload failed");
     }
     setIsUploading(false);
   };

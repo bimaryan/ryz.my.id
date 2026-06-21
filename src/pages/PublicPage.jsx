@@ -8,6 +8,7 @@ import ComplexBlockRender from '@/components/ComplexBlockRender'
 import { toast } from 'react-hot-toast'
 import { useBiteship } from '@/hooks/useBiteship'
 import emailjs from '@emailjs/browser'
+import FloatingParticles from '../components/FloatingParticles'
 
 const BRAND_COLORS = {
   instagram: '#E1306C',
@@ -38,6 +39,14 @@ export default function PublicPage() {
   const [selectedDestinationArea, setSelectedDestinationArea] = useState(null)
   const [shippingRates, setShippingRates] = useState([])
   const [selectedRate, setSelectedRate] = useState(null)
+  
+  // Page Break & Folder States
+  const [activePageIndex, setActivePageIndex] = useState(0)
+  const [expandedFolders, setExpandedFolders] = useState({})
+
+  const toggleFolder = (index) => {
+    setExpandedFolders(prev => ({ ...prev, [index]: !prev[index] }))
+  }
 
   const handleCalculateRates = async (destId) => {
     if (!biteshipOrigin?.origin_area_id || !destId || !selectedProduct) return;
@@ -414,15 +423,34 @@ export default function PublicPage() {
 
   const { theme, title, description, avatar_url, links } = page
 
+  // Partition links by page_break
+  const pagesData = [];
+  let currentPageLinks = [];
+  
+  if (links) {
+    links.forEach(link => {
+      if (link.type === 'page_break') {
+        pagesData.push(currentPageLinks);
+        currentPageLinks = [];
+      } else {
+        currentPageLinks.push(link);
+      }
+    });
+    pagesData.push(currentPageLinks);
+  }
+
+  const currentLinks = pagesData[activePageIndex] || [];
+
   return (
     <div 
-      className={`min-h-screen w-full flex flex-col items-center py-16 px-4 ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
+      className={`min-h-screen w-full flex flex-col items-center py-16 px-4 ${theme.bg_animation && theme.bg_animation !== 'none' ? theme.bg_animation : ''} ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
       style={{ 
         fontFamily: theme.font_family || 'Inter',
         background: theme.bg_type === 'gradient' ? theme.bg_value : theme.bg_type === 'image' ? `url(${theme.bg_value}) center/cover` : theme.bg_value || theme.bg_color,
         color: theme.text_color 
       }}
     >
+      <FloatingParticles count={80} color={theme.text_color} />
       <Helmet>
         <title>{title || `@${slug}`} | RYZLink</title>
         <meta name="description" content={description || `Link-in-Bio for ${title || slug}`} />
@@ -491,8 +519,8 @@ export default function PublicPage() {
 
         {/* Links & Blocks */}
         <div className={`w-full ${theme.layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
-          {links && links.length > 0 ? (
-            links.map((link, i) => {
+          {currentLinks && currentLinks.length > 0 ? (
+            currentLinks.map((link, i) => {
               if (link.type === 'header') {
                 return (
                   <div key={i} className={`w-full pt-10 pb-4 flex items-center justify-center gap-4 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ color: theme.text_color }}>
@@ -537,6 +565,39 @@ export default function PublicPage() {
                       </a>
                     ) : (
                       <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
+                    )}
+                  </div>
+                )
+              }
+
+              if (link.type === 'folder') {
+                const isExpanded = expandedFolders[i];
+                return (
+                  <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} transition-all duration-300 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ backgroundColor: theme.button_bg, color: theme.button_text }}>
+                    <button 
+                      onClick={() => toggleFolder(i)}
+                      className="w-full py-4 px-6 flex items-center justify-between font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                    >
+                      <span className="flex items-center gap-3">
+                        {link.icon && LucideIcons[link.icon] ? React.createElement(LucideIcons[link.icon], { className: "w-5 h-5" }) : <LucideIcons.Folder className="w-5 h-5"/>} 
+                        {link.title || 'Folder'}
+                      </span>
+                      <LucideIcons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isExpanded && (link.items && link.items.length > 0) && (
+                      <div className="px-6 pb-4 pt-1 flex flex-col gap-3 border-t border-current/10">
+                        {link.items.map((subLink, subIdx) => (
+                          <a 
+                            key={subIdx} 
+                            href={subLink.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="w-full text-center py-3 px-4 rounded-xl font-semibold bg-white/10 hover:bg-white/20 transition-colors"
+                          >
+                            {subLink.title || 'Link'}
+                          </a>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )
@@ -598,6 +659,29 @@ export default function PublicPage() {
             <p className="text-center opacity-50 w-full col-span-2">No links have been added yet.</p>
           )}
         </div>
+
+        {/* Tabs / Pagination */}
+        {pagesData.length > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
+            {pagesData.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setActivePageIndex(idx);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`w-10 h-10 rounded-full font-bold transition-all duration-300 ${activePageIndex === idx ? 'scale-110 shadow-lg' : 'opacity-50 hover:opacity-100 hover:scale-105'}`}
+                style={{ 
+                  backgroundColor: activePageIndex === idx ? theme.button_bg : 'transparent',
+                  color: activePageIndex === idx ? theme.button_text : theme.text_color,
+                  border: `2px solid ${activePageIndex === idx ? theme.button_bg : theme.text_color}`
+                }}
+              >
+                {idx + 1}
+              </button>
+            ))}
+          </div>
+        )}
         
         {/* Custom Footer */}
         {theme.footer_enabled && (
@@ -624,6 +708,7 @@ export default function PublicPage() {
         )}
       </div>
 
+      {/* Checkout Modal */}
       {isCheckoutOpen && selectedProduct && (
         <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col animate-fade-in-up overflow-y-auto">
           {/* Header */}

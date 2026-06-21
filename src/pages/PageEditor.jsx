@@ -12,6 +12,7 @@ import IconPicker from '@/components/IconPicker'
 import BlockPickerModal from '@/components/BlockPickerModal'
 import SEO from '@/components/SEO'
 import ComplexBlockRender from '@/components/ComplexBlockRender'
+import FloatingParticles from '@/components/FloatingParticles'
 import ProductEditorModal from '@/components/ProductEditorModal'
 import BlogEditorModal from '@/components/BlogEditorModal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
@@ -27,7 +28,7 @@ const getYouTubeEmbedUrl = (url) => {
     : null;
 };
 
-const FONTS = ['Inter', 'Roboto', 'Playfair Display', 'Outfit', 'Space Grotesk', 'Poppins', 'Montserrat', 'Lora', 'Plus Jakarta Sans', 'DM Sans', 'Syne', 'Oswald', 'Bebas Neue']
+const FONTS = ['Inter', 'Roboto', 'Playfair Display', 'Outfit', 'Space Grotesk', 'Poppins', 'Montserrat', 'Lora', 'Plus Jakarta Sans', 'DM Sans', 'Syne', 'Oswald', 'Bebas Neue', 'Lexend', 'Caveat', 'Comfortaa', 'Cinzel']
 
 const BRAND_COLORS = {
   instagram: '#E1306C',
@@ -45,72 +46,92 @@ const GRADIENTS = [
   'linear-gradient(to bottom right, #fc466b, #3f5efb)',
   'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)',
+  'linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)',
+  'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+  'linear-gradient(to right, #43e97b 0%, #38f9d7 100%)',
+  'linear-gradient(to right, #fa709a 0%, #fee140 100%)'
 ]
 
 const TEMPLATES = [
   {
     name: 'Minimal Light',
-    theme: { font_family: 'Inter', bg_type: 'color', bg_value: '#f4f6fa', text_color: '#273144', button_bg: '#ffffff', button_text: '#273144', button_style: 'rounded-xl', button_shadow: 'shadow-sm', button_border: 'border-transparent', button_animation: 'hover:scale-105 transition-transform' }
+    theme: { font_family: 'Inter', bg_type: 'color', bg_value: '#f4f6fa', text_color: '#273144', button_bg: '#ffffff', button_text: '#273144', button_style: 'rounded-xl', button_shadow: 'shadow-sm', button_border: 'border-transparent', button_animation: 'hover:scale-105 transition-transform', bg_animation: 'none' }
   },
   {
     name: 'Midnight Dark',
-    theme: { font_family: 'Outfit', bg_type: 'color', bg_value: '#0f172a', text_color: '#f8fafc', button_bg: '#1e293b', button_text: '#f8fafc', button_style: 'rounded-xl', button_shadow: 'shadow-md', button_border: 'border-slate-700', button_animation: 'hover:scale-105 transition-transform' }
+    theme: { font_family: 'Outfit', bg_type: 'color', bg_value: '#0f172a', text_color: '#f8fafc', button_bg: '#1e293b', button_text: '#f8fafc', button_style: 'rounded-xl', button_shadow: 'shadow-md', button_border: 'border-slate-700', button_animation: 'hover:scale-105 transition-transform', bg_animation: 'none' }
   },
   {
-    name: 'Sunset Glass',
-    theme: { font_family: 'Space Grotesk', bg_type: 'gradient', bg_value: 'linear-gradient(to bottom right, #fc466b, #3f5efb)', text_color: '#ffffff', button_bg: 'rgba(255, 255, 255, 0.1)', button_text: '#ffffff', button_style: 'rounded-xl backdrop-blur-md', button_shadow: 'shadow-xl', button_border: 'border-white/20', button_animation: 'hover:bg-white/20 transition-all' }
+    name: 'Animated Aurora',
+    theme: { font_family: 'Space Grotesk', bg_type: 'gradient', bg_value: 'linear-gradient(45deg, #ff9a9e, #fecfef, #a1c4fd)', text_color: '#1e293b', button_bg: 'rgba(255, 255, 255, 0.5)', button_text: '#1e293b', button_style: 'rounded-2xl backdrop-blur-md', button_shadow: 'shadow-xl', button_border: 'border-white/40', button_animation: 'hover:bg-white/70 transition-all', bg_animation: 'animate-gradient-xy' }
   },
   {
-    name: 'Cyberpunk',
-    theme: { font_family: 'Space Grotesk', bg_type: 'color', bg_value: '#000000', text_color: '#00ff00', button_bg: '#000000', button_text: '#00ff00', button_style: 'rounded-none', button_shadow: 'shadow-[4px_4px_0_#00ff00]', button_border: 'border border-[#00ff00]', button_animation: 'hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all' }
+    name: 'Moving Cyber',
+    theme: { font_family: 'Space Grotesk', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #000000, #1a0033, #000000)', text_color: '#00ff00', button_bg: 'rgba(0, 0, 0, 0.8)', button_text: '#00ff00', button_style: 'rounded-none', button_shadow: 'shadow-[4px_4px_0_#00ff00]', button_border: 'border border-[#00ff00]', button_animation: 'hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all', bg_animation: 'animate-gradient-x' }
   },
   {
     name: 'Elegant',
-    theme: { font_family: 'Playfair Display', bg_type: 'color', bg_value: '#fdfbf7', text_color: '#2c3e50', button_bg: '#ffffff', button_text: '#2c3e50', button_style: 'rounded-none', button_shadow: 'shadow-none', button_border: 'border border-slate-300', button_animation: 'hover:bg-slate-50 transition-colors' }
+    theme: { font_family: 'Playfair Display', bg_type: 'color', bg_value: '#fdfbf7', text_color: '#2c3e50', button_bg: '#ffffff', button_text: '#2c3e50', button_style: 'rounded-none', button_shadow: 'shadow-none', button_border: 'border border-slate-300', button_animation: 'hover:bg-slate-50 transition-colors', bg_animation: 'none' }
   },
   {
-    name: 'Neon Cyber',
-    theme: { font_family: 'Space Grotesk', bg_type: 'color', bg_value: '#09090b', text_color: '#f8fafc', button_bg: 'transparent', button_text: '#06b6d4', button_style: 'rounded-md', button_shadow: 'shadow-[0_0_15px_rgba(6,182,212,0.5)]', button_border: 'border-2 border-[#06b6d4]', button_animation: 'hover:scale-105 transition-transform' }
+    name: 'Flowing Ocean',
+    theme: { font_family: 'Plus Jakarta Sans', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #4facfe, #00f2fe, #4facfe)', text_color: '#ffffff', button_bg: 'rgba(255, 255, 255, 0.2)', button_text: '#ffffff', button_style: 'rounded-full backdrop-blur-sm', button_shadow: 'shadow-md', button_border: 'border border-transparent', button_animation: 'hover:shadow-xl transition-shadow hover:bg-white/30', bg_animation: 'animate-gradient-x' }
+  },
+  {
+    name: 'Sunset Glass',
+    theme: { font_family: 'Space Grotesk', bg_type: 'gradient', bg_value: 'linear-gradient(to bottom right, #fc466b, #3f5efb)', text_color: '#ffffff', button_bg: 'rgba(255, 255, 255, 0.1)', button_text: '#ffffff', button_style: 'rounded-xl backdrop-blur-md', button_shadow: 'shadow-xl', button_border: 'border-white/20', button_animation: 'hover:bg-white/20 transition-all', bg_animation: 'none' }
   },
   {
     name: 'Pastel Dream',
-    theme: { font_family: 'Outfit', bg_type: 'gradient', bg_value: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)', text_color: '#475569', button_bg: '#ffffff', button_text: '#334155', button_style: 'rounded-full', button_shadow: 'shadow-xl', button_border: 'border border-transparent', button_animation: 'hover:-translate-y-1 transition-transform' }
-  },
-  {
-    name: 'Emerald Glass',
-    theme: { font_family: 'Plus Jakarta Sans', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #11998e, #38ef7d)', text_color: '#ffffff', button_bg: 'rgba(255, 255, 255, 0.2)', button_text: '#ffffff', button_style: 'rounded-2xl backdrop-blur-lg', button_shadow: 'shadow-lg', button_border: 'border border-white/30', button_animation: 'hover:bg-white/30 transition-colors' }
+    theme: { font_family: 'Outfit', bg_type: 'gradient', bg_value: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)', text_color: '#475569', button_bg: '#ffffff', button_text: '#334155', button_style: 'rounded-full', button_shadow: 'shadow-xl', button_border: 'border border-transparent', button_animation: 'hover:-translate-y-1 transition-transform', bg_animation: 'none' }
   },
   {
     name: 'Brutalist Neo',
-    theme: { font_family: 'Syne', bg_type: 'color', bg_value: '#f4f4f0', text_color: '#111111', button_bg: '#e8ff5a', button_text: '#111111', button_style: 'rounded-none', button_shadow: 'shadow-[6px_6px_0_#111111]', button_border: 'border-2 border-[#111111]', button_animation: 'hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0_#111111] transition-all' }
+    theme: { font_family: 'Syne', bg_type: 'color', bg_value: '#f4f4f0', text_color: '#111111', button_bg: '#e8ff5a', button_text: '#111111', button_style: 'rounded-none', button_shadow: 'shadow-[6px_6px_0_#111111]', button_border: 'border-2 border-[#111111]', button_animation: 'hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0_#111111] transition-all', bg_animation: 'none' }
   },
   {
     name: 'Monochrome Noir',
-    theme: { font_family: 'DM Sans', bg_type: 'color', bg_value: '#111111', text_color: '#fdfdfd', button_bg: '#fdfdfd', button_text: '#111111', button_style: 'rounded-full', button_shadow: 'shadow-none', button_border: 'border border-transparent', button_animation: 'hover:scale-95 transition-transform' }
+    theme: { font_family: 'DM Sans', bg_type: 'color', bg_value: '#111111', text_color: '#fdfdfd', button_bg: '#fdfdfd', button_text: '#111111', button_style: 'rounded-full', button_shadow: 'shadow-none', button_border: 'border border-transparent', button_animation: 'hover:scale-95 transition-transform', bg_animation: 'none' }
   },
   {
     name: 'Retro Pop',
-    theme: { font_family: 'Oswald', bg_type: 'color', bg_value: '#ff90e8', text_color: '#000000', button_bg: '#fff200', button_text: '#000000', button_style: 'rounded-full', button_shadow: 'shadow-[4px_4px_0_#000000]', button_border: 'border-2 border-black', button_animation: 'hover:-translate-y-1 hover:shadow-[6px_6px_0_#000000] transition-all' }
+    theme: { font_family: 'Oswald', bg_type: 'color', bg_value: '#ff90e8', text_color: '#000000', button_bg: '#fff200', button_text: '#000000', button_style: 'rounded-full', button_shadow: 'shadow-[4px_4px_0_#000000]', button_border: 'border-2 border-black', button_animation: 'hover:-translate-y-1 hover:shadow-[6px_6px_0_#000000] transition-all', bg_animation: 'none' }
   },
   {
-    name: 'Ocean Depth',
-    theme: { font_family: 'Plus Jakarta Sans', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)', text_color: '#ffffff', button_bg: '#ffffff', button_text: '#0284c7', button_style: 'rounded-full', button_shadow: 'shadow-md', button_border: 'border border-transparent', button_animation: 'hover:shadow-xl transition-shadow' }
-  },
-  {
-    name: 'Y2K Sparkle',
-    theme: { font_family: 'Oswald', bg_type: 'color', bg_value: '#ff00ff', text_color: '#ffffff', button_bg: '#00ffff', button_text: '#000000', button_style: 'rounded-none', button_shadow: 'shadow-[6px_6px_0_#ffffff]', button_border: 'border-4 border-white', button_animation: 'hover:-translate-y-1 hover:shadow-[10px_10px_0_#ffffff] transition-all' }
-  },
-  {
-    name: 'Coffee Shop',
-    theme: { font_family: 'Playfair Display', bg_type: 'color', bg_value: '#f5ebe0', text_color: '#5e503f', button_bg: '#c6ac8f', button_text: '#ffffff', button_style: 'rounded-tl-2xl rounded-br-2xl', button_shadow: 'shadow-sm', button_border: 'border-transparent', button_animation: 'hover:scale-105 transition-transform' }
+    name: 'Deep Pulse',
+    theme: { font_family: 'Lexend', bg_type: 'color', bg_value: '#1a0b2e', text_color: '#ffffff', button_bg: '#31105e', button_text: '#ffffff', button_style: 'rounded-2xl', button_shadow: 'shadow-[0_0_20px_rgba(49,16,94,0.6)]', button_border: 'border border-[#552599]', button_animation: 'hover:scale-105 transition-transform', bg_animation: 'animate-pulse-slow' }
   },
   {
     name: 'Neon Tokyo',
-    theme: { font_family: 'Syne', bg_type: 'gradient', bg_value: 'linear-gradient(to bottom, #0f0c29, #302b63, #24243e)', text_color: '#ffffff', button_bg: 'rgba(0,0,0,0.4)', button_text: '#ff007f', button_style: 'rounded-tr-3xl rounded-bl-3xl backdrop-blur-md', button_shadow: 'shadow-[0_0_20px_rgba(255,0,127,0.4)]', button_border: 'border border-[#ff007f]', button_animation: 'hover:shadow-[0_0_30px_rgba(255,0,127,0.7)] transition-all' }
+    theme: { font_family: 'Syne', bg_type: 'gradient', bg_value: 'linear-gradient(to bottom, #0f0c29, #302b63, #24243e)', text_color: '#ffffff', button_bg: 'rgba(0,0,0,0.4)', button_text: '#ff007f', button_style: 'rounded-tr-3xl rounded-bl-3xl backdrop-blur-md', button_shadow: 'shadow-[0_0_20px_rgba(255,0,127,0.4)]', button_border: 'border border-[#ff007f]', button_animation: 'hover:shadow-[0_0_30px_rgba(255,0,127,0.7)] transition-all', bg_animation: 'none' }
   },
   {
-    name: 'Forest minimal',
-    theme: { font_family: 'DM Sans', bg_type: 'color', bg_value: '#ebf2ed', text_color: '#2d4a22', button_bg: '#ffffff', button_text: '#2d4a22', button_style: 'rounded-xl', button_shadow: 'shadow-sm', button_border: 'border-l-4 border-[#2d4a22]', button_animation: 'hover:translate-x-2 transition-transform' }
+    name: 'Floating Elements',
+    theme: { font_family: 'Comfortaa', bg_type: 'gradient', bg_value: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)', text_color: '#333333', button_bg: '#ffffff', button_text: '#333333', button_style: 'rounded-full', button_shadow: 'shadow-lg shadow-blue-200/50', button_border: 'border border-white', button_animation: 'animate-float', bg_animation: 'none' }
+  },
+  {
+    name: 'Lava Lamp',
+    theme: { font_family: 'Outfit', bg_type: 'gradient', bg_value: 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%, #ff0844)', text_color: '#ffffff', button_bg: 'rgba(255,255,255,0.2)', button_text: '#ffffff', button_style: 'rounded-3xl backdrop-blur-md', button_shadow: 'shadow-lg', button_border: 'border border-white/30', button_animation: 'hover:scale-105 transition-all', bg_animation: 'animate-gradient-x' }
+  },
+  {
+    name: 'Northern Lights',
+    theme: { font_family: 'Space Grotesk', bg_type: 'gradient', bg_value: 'linear-gradient(to right, #43e97b 0%, #38f9d7 100%)', text_color: '#000000', button_bg: 'rgba(0,0,0,0.8)', button_text: '#43e97b', button_style: 'rounded-2xl', button_shadow: 'shadow-[0_4px_20px_rgba(67,233,123,0.5)]', button_border: 'border border-[#43e97b]', button_animation: 'hover:bg-black transition-all', bg_animation: 'animate-aurora' }
+  },
+  {
+    name: 'Ocean Wave',
+    theme: { font_family: 'Plus Jakarta Sans', bg_type: 'gradient', bg_value: 'linear-gradient(90deg, #0099f7 0%, #2193b0 50%, #0099f7 100%)', text_color: '#ffffff', button_bg: '#ffffff', button_text: '#0099f7', button_style: 'rounded-xl', button_shadow: 'shadow-xl', button_border: 'border border-transparent', button_animation: 'hover:-translate-y-1 transition-transform', bg_animation: 'animate-moving-bg' }
+  },
+  {
+    name: 'Holographic',
+    theme: { font_family: 'Syne', bg_type: 'gradient', bg_value: 'linear-gradient(45deg, #85FFBD 0%, #FFFB7D 100%)', text_color: '#111111', button_bg: '#111111', button_text: '#85FFBD', button_style: 'rounded-[40px]', button_shadow: 'shadow-none', button_border: 'border-none', button_animation: 'hover:opacity-90 transition-opacity', bg_animation: 'animate-gradient-xy' }
+  },
+  {
+    name: 'Stellar Spin',
+    theme: { font_family: 'DM Sans', bg_type: 'gradient', bg_value: 'linear-gradient(135deg, #050505 0%, #1a1a1a 100%, #050505)', text_color: '#ffffff', button_bg: '#1a1a1a', button_text: '#ffffff', button_style: 'rounded-full', button_shadow: 'shadow-[0_0_15px_#ffffff]', button_border: 'border border-white', button_animation: 'hover:scale-110 transition-transform', bg_animation: 'animate-gradient-xy' }
+  },
+  {
+    name: 'Wobbly Neon',
+    theme: { font_family: 'Lexend', bg_type: 'gradient', bg_value: 'linear-gradient(45deg, #120458 0%, #000000 100%)', text_color: '#ffffff', button_bg: '#ff007f', button_text: '#ffffff', button_style: 'rounded-xl', button_shadow: 'shadow-[4px_4px_0_#00ffff]', button_border: 'border-2 border-[#00ffff]', button_animation: 'hover:scale-105 transition-transform', bg_animation: 'animate-pulse-slow' }
   }
 ]
 
@@ -284,6 +305,8 @@ export default function PageEditor() {
       setLinks([...links, { id: Date.now().toString(), type: 'header', title: 'New Section' }])
     } else if (blockId === 'link') {
       setLinks([...links, { id: Date.now().toString(), type: 'link', title: '', subtitle: '', url: '', icon: '', thumbnail_url: '' }])
+    } else if (blockId === 'page_break') {
+      setLinks([...links, { id: Date.now().toString(), type: 'page_break', title: 'Page Break' }])
     } else {
       // For now, other blocks behave exactly like links but maybe with a pre-filled title/icon
       setLinks([...links, { id: Date.now().toString(), type: blockId, title: `New ${blockId}`, subtitle: 'Coming soon feature', url: '', icon: '', thumbnail_url: '' }])
@@ -350,12 +373,17 @@ export default function PageEditor() {
       {/* Header bar */}
       <div className="bg-white rounded-t-2xl border border-slate-200 p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link to="/dashboard/pages" className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors border border-transparent hover:border-slate-200">
+          <Link to="/dashboard/pages" className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors border border-transparent hover:border-slate-200" title="Back to Pages">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="font-bold text-slate-800 text-lg">Editing Page</h1>
-            <a href={`/p/${page?.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#0b5cff] hover:underline flex items-center">
+            <div className="flex items-center gap-2">
+              <h1 className="font-bold text-slate-800 text-lg">Editing Page</h1>
+              <Link to="/dashboard/pages" className="flex items-center gap-1 text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full hover:bg-slate-200 transition-colors">
+                <LucideIcons.LayoutTemplate className="w-3 h-3" /> Switch Page
+              </Link>
+            </div>
+            <a href={`/p/${page?.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#0b5cff] hover:underline flex items-center mt-0.5">
               ryz.my.id/p/{page?.slug} <span className="ml-1 opacity-50 text-[10px]">↗</span>
             </a>
           </div>
@@ -540,7 +568,15 @@ export default function PageEditor() {
                         </button>
                       </div>
                       
-                      {link.type === 'header' ? (
+                      {link.type === 'page_break' ? (
+                        <div className="flex-1 flex flex-col justify-center text-center py-4 relative">
+                           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-amber-200"></div>
+                           <div className="relative z-10 bg-white border-2 border-dashed border-amber-300 mx-auto px-4 py-2 rounded-xl text-amber-600 font-bold flex items-center gap-2">
+                             <LucideIcons.Layers className="w-5 h-5" />
+                             Page Break (New Tab)
+                           </div>
+                        </div>
+                      ) : link.type === 'header' ? (
                         <div className="flex-1 flex flex-col justify-center">
                            <div className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Header Block</div>
                            <Input
@@ -593,6 +629,29 @@ export default function PageEditor() {
                             <p className="text-[10px] text-slate-400">Make the image clickable by adding a destination URL.</p>
                           </div>
                         </>
+                      ) : link.type === 'folder' ? (
+                        <div className="flex-1 flex flex-col justify-center space-y-3">
+                           <div className="text-xs font-bold text-[#0b5cff] uppercase tracking-wider mb-1 flex items-center gap-1"><LucideIcons.Folder className="w-4 h-4"/> Folder</div>
+                           <Input
+                            placeholder="Folder Title (e.g. My Socials)"
+                            value={link.title || ''}
+                            onChange={(e) => updateLink(index, 'title', e.target.value)}
+                            className="font-bold text-slate-800 border-none bg-blue-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 py-3"
+                          />
+                          <div className="space-y-2 mt-2 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                             {(link.items || []).map((subLink, subIndex) => (
+                               <div key={subIndex} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm relative group">
+                                 <div className="flex-1 flex flex-col gap-2">
+                                   <input type="text" placeholder="Title" value={subLink.title} onChange={(e) => { const newItems = [...(link.items||[])]; newItems[subIndex].title = e.target.value; updateLink(index, 'items', newItems); }} className="w-full text-sm font-medium outline-none px-2" />
+                                   <div className="h-px w-full bg-slate-100"></div>
+                                   <input type="text" placeholder="URL" value={subLink.url} onChange={(e) => { const newItems = [...(link.items||[])]; newItems[subIndex].url = e.target.value; updateLink(index, 'items', newItems); }} className="w-full text-xs text-slate-500 outline-none px-2" />
+                                 </div>
+                                 <button onClick={() => { const newItems = [...(link.items||[])]; newItems.splice(subIndex, 1); updateLink(index, 'items', newItems); }} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                               </div>
+                             ))}
+                             <Button type="button" onClick={() => { const newItems = [...(link.items||[])]; newItems.push({ title: 'New Link', url: '' }); updateLink(index, 'items', newItems); }} variant="secondary" className="w-full justify-center text-xs py-2 bg-white border-dashed"><Plus className="w-3 h-3 mr-1" /> Add Link</Button>
+                          </div>
+                        </div>
                       ) : (
                         <div className="flex flex-col w-full">
                           <div className="flex flex-row sm:flex-col items-center justify-center sm:border-r border-b sm:border-b-0 border-slate-100 sm:pr-4 pb-4 sm:pb-0 gap-3 w-full sm:w-auto sm:mb-0 mb-4 self-center sm:self-start sm:float-left">
@@ -1037,14 +1096,15 @@ export default function PageEditor() {
 
             {/* Actual Preview Content */}
             <div 
-              className={`absolute inset-0 z-10 overflow-y-auto no-scrollbar ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.navbar_enabled ? 'pt-14' : ''} ${theme.bg_pattern ? 'bg-pattern-' + theme.bg_pattern : ''}`}
+              className={`absolute inset-0 z-10 overflow-y-auto no-scrollbar ${theme.bg_animation && theme.bg_animation !== 'none' ? theme.bg_animation : ''} ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.navbar_enabled ? 'pt-14' : ''} ${theme.bg_pattern ? 'bg-pattern-' + theme.bg_pattern : ''}`}
               style={{ 
                 fontFamily: theme.font_family || 'Inter',
                 background: theme.bg_type === 'gradient' ? theme.bg_value : theme.bg_type === 'image' ? `url(${theme.bg_value}) center/cover` : theme.bg_value || theme.bg_color,
                 color: theme.text_color 
               }}
             >
-              <div className="px-6 py-12 flex flex-col items-center">
+              <FloatingParticles count={40} color={theme.text_color} />
+              <div className="px-6 py-12 flex flex-col items-center relative z-10">
                 {/* Profile Layout Logic */}
                 {theme.profile_layout !== 'hidden' && (
                   <div className={`w-full flex ${theme.profile_layout === 'side-by-side' ? 'flex-row items-center text-left gap-4 mb-8' : 'flex-col items-center mb-8'}`}>
@@ -1096,6 +1156,16 @@ export default function PageEditor() {
                           </div>
                         )
                       }
+                      
+                      if (link.type === 'page_break') {
+                        return (
+                          <div key={i} className={`w-full py-6 flex items-center justify-center gap-3 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ color: theme.text_color }}>
+                            <div className="h-[2px] border-b-2 border-dashed bg-current opacity-30 w-full relative">
+                              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-inherit px-2 text-[10px] opacity-70 tracking-widest uppercase">Page Break</span>
+                            </div>
+                          </div>
+                        )
+                      }
 
                       if (link.type === 'video') {
                         const embedUrl = getYouTubeEmbedUrl(link.url);
@@ -1130,6 +1200,17 @@ export default function PageEditor() {
                             ) : (
                               <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
                             )}
+                          </div>
+                        )
+                      }
+
+                      if (link.type === 'folder') {
+                        return (
+                          <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} transition-transform ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ backgroundColor: theme.button_bg, color: theme.button_text }}>
+                            <div className="w-full py-4 px-6 flex items-center justify-between">
+                              <span className="font-bold flex items-center gap-3">{link.icon && LucideIcons[link.icon] ? React.createElement(LucideIcons[link.icon], { className: "w-4 h-4" }) : <LucideIcons.Folder className="w-4 h-4"/>} {link.title || 'Folder'}</span>
+                              <LucideIcons.ChevronDown className="w-4 h-4 opacity-50" />
+                            </div>
                           </div>
                         )
                       }
