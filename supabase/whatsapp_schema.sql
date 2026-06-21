@@ -38,6 +38,44 @@ CREATE TABLE IF NOT EXISTS whatsapp_usage (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS whatsapp_webhooks (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id UUID NOT NULL REFERENCES whatsapp_sessions(id) ON DELETE CASCADE,
+    webhook_url TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(session_id)
+);
+
+CREATE TABLE IF NOT EXISTS whatsapp_autoresponders (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id UUID NOT NULL REFERENCES whatsapp_sessions(id) ON DELETE CASCADE,
+    keyword VARCHAR(255) NOT NULL,
+    match_type VARCHAR(50) DEFAULT 'exact', -- exact, contains, starts_with
+    reply_message TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS whatsapp_broadcasts (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id UUID NOT NULL REFERENCES whatsapp_sessions(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    message_content TEXT NOT NULL,
+    media_url TEXT,
+    status VARCHAR(50) DEFAULT 'pending', -- pending, processing, completed, cancelled
+    total_recipients INTEGER DEFAULT 0,
+    sent_count INTEGER DEFAULT 0,
+    failed_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_user ON whatsapp_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_session ON whatsapp_messages(session_id);
@@ -66,3 +104,16 @@ CREATE POLICY "Users can insert own messages" ON whatsapp_messages
 
 CREATE POLICY "Users can see own usage" ON whatsapp_usage
     FOR SELECT USING (auth.uid() = user_id);
+
+ALTER TABLE whatsapp_webhooks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_autoresponders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_broadcasts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own webhooks" ON whatsapp_webhooks
+    FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own autoresponders" ON whatsapp_autoresponders
+    FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own broadcasts" ON whatsapp_broadcasts
+    FOR ALL USING (auth.uid() = user_id);

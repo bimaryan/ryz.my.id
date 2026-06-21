@@ -6,6 +6,10 @@ import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../lib/supabase";
 import SEO from "../components/SEO";
 import DashboardLayout from "../components/layout/DashboardLayout";
+import toast from "react-hot-toast";
+import ConfirmModal from "../components/ui/ConfirmModal";
+import AutoResponderTab from "../components/whatsapp/AutoResponderTab";
+import WebhookTab from "../components/whatsapp/WebhookTab";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://api.ryz.my.id/api";
 
@@ -24,6 +28,9 @@ export default function WhatsAppPage() {
   const [pollingQR, setPollingQR] = useState(false);
   const [qrStatus, setQrStatus] = useState(""); // ✅ NEW: Debug status
   const pollingIntervalRef = useRef(null); // ✅ NEW: Track interval
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState(null);
+  const [activeTab, setActiveTab] = useState("send");
 
   useEffect(() => {
     if (user) {
@@ -216,17 +223,22 @@ export default function WhatsAppPage() {
     }
   };
 
-  const deleteSession = async (sessionId) => {
-    if (!confirm("Hapus session ini?")) return;
+  const handleDeleteClick = (sessionId) => {
+    setSessionToDelete(sessionId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
 
     try {
-      const res = await fetch(`${API_URL}/whatsapp/session/${sessionId}`, {
+      const res = await fetch(`${API_URL}/whatsapp/session/${sessionToDelete}`, {
         method: "DELETE",
       });
 
       const data = await res.json();
       if (data.success) {
-        alert("Session dihapus");
+        toast.success("Session dihapus");
         setSelectedSession(null);
         setPollingQR(false);
         setQrStatus("");
@@ -234,6 +246,10 @@ export default function WhatsAppPage() {
       }
     } catch (err) {
       console.error("[DELETE_SESSION] Error:", err);
+      toast.error("Gagal menghapus session");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setSessionToDelete(null);
     }
   };
 
@@ -258,7 +274,7 @@ export default function WhatsAppPage() {
 
       const data = await res.json();
       if (data.success) {
-        alert("Pesan berhasil dikirim!");
+        toast.success("Pesan berhasil dikirim!");
         setRecipient("");
         setMessageContent("");
         setMediaUrl("");
@@ -266,7 +282,7 @@ export default function WhatsAppPage() {
       }
     } catch (err) {
       console.error("[SEND_MESSAGE] Error:", err);
-      alert("Gagal mengirim pesan: " + err.message);
+      toast.error("Gagal mengirim pesan: " + err.message);
     } finally {
       setSending(false);
     }
@@ -365,7 +381,7 @@ export default function WhatsAppPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteSession(session.id);
+                            handleDeleteClick(session.id);
                           }}
                           className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
                         >
@@ -441,8 +457,18 @@ export default function WhatsAppPage() {
                 </div>
               )}
 
-              {/* Kirim Pesan */}
+              {/* Tabs UI */}
               {selectedSession && selectedSession.status === "connected" && (
+                <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1 mb-6 overflow-x-auto">
+                  <button onClick={() => setActiveTab("send")} className={`whitespace-nowrap flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "send" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>Kirim Pesan</button>
+                  <button onClick={() => setActiveTab("history")} className={`whitespace-nowrap flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "history" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>Riwayat</button>
+                  <button onClick={() => setActiveTab("autoresponder")} className={`whitespace-nowrap flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "autoresponder" ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"}`}>Auto Responder</button>
+                  <button onClick={() => setActiveTab("webhook")} className={`whitespace-nowrap flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "webhook" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>Webhook</button>
+                </div>
+              )}
+
+              {/* Kirim Pesan */}
+              {selectedSession && selectedSession.status === "connected" && activeTab === "send" && (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                   <h2 className="text-lg font-bold text-slate-900 mb-4">
                     Kirim Pesan Baru
@@ -474,6 +500,9 @@ export default function WhatsAppPage() {
                       >
                         <option value="text">Teks</option>
                         <option value="image">Gambar</option>
+                        <option value="document">Dokumen (PDF)</option>
+                        <option value="video">Video</option>
+                        <option value="audio">Audio / Voice Note</option>
                       </select>
                     </div>
 
@@ -528,7 +557,8 @@ export default function WhatsAppPage() {
               )}
 
               {/* Riwayat Pesan */}
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              {selectedSession && selectedSession.status === "connected" && activeTab === "history" && (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">
                   Riwayat Pesan
                 </h2>
@@ -574,10 +604,28 @@ export default function WhatsAppPage() {
                   </div>
                 )}
               </div>
+              )}
+
+              {selectedSession && selectedSession.status === "connected" && activeTab === "autoresponder" && (
+                <AutoResponderTab sessionId={selectedSession.id} userId={user?.id} apiUrl={API_URL} />
+              )}
+
+              {selectedSession && selectedSession.status === "connected" && activeTab === "webhook" && (
+                <WebhookTab sessionId={selectedSession.id} userId={user?.id} apiUrl={API_URL} />
+              )}
             </div>
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteSession}
+        title="Hapus Session"
+        message="Apakah Anda yakin ingin menghapus session ini? Tindakan ini tidak dapat dibatalkan."
+        confirmText="Hapus"
+        cancelText="Batal"
+      />
     </DashboardLayout>
   );
 }

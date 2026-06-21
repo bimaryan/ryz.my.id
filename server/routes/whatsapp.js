@@ -206,9 +206,70 @@ router.post("/create-session", async (req, res) => {
             .eq("id", newSession.id);
         }
       });
+      sock.ev.on("messages.upsert", async (m) => {
+        try {
+          const msg = m.messages[0];
+          if (!msg.message || msg.key.fromMe) return;
+
+          const remoteJid = msg.key.remoteJid;
+          let textMsg = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
+          if (!textMsg) return;
+
+          // 1. Auto Responder
+          const { data: autoResponders } = await supabaseAdmin
+            .from("whatsapp_autoresponders")
+            .select("*")
+            .eq("session_id", newSession.id)
+            .eq("is_active", true);
+
+          if (autoResponders && autoResponders.length > 0) {
+            for (const rule of autoResponders) {
+              let isMatch = false;
+              const keyword = rule.keyword.toLowerCase();
+              const lowerText = textMsg.toLowerCase();
+
+              if (rule.match_type === "exact" && lowerText === keyword) isMatch = true;
+              else if (rule.match_type === "contains" && lowerText.includes(keyword)) isMatch = true;
+              else if (rule.match_type === "starts_with" && lowerText.startsWith(keyword)) isMatch = true;
+
+              if (isMatch) {
+                await sock.sendMessage(remoteJid, { text: rule.reply_message });
+                break; 
+              }
+            }
+          }
+
+          // 2. Webhook
+          const { data: webhook } = await supabaseAdmin
+            .from("whatsapp_webhooks")
+            .select("webhook_url")
+            .eq("session_id", newSession.id)
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (webhook && webhook.webhook_url) {
+            try {
+              await fetch(webhook.webhook_url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  session_id: newSession.id,
+                  message: msg,
+                  text: textMsg,
+                  from: remoteJid
+                })
+              });
+            } catch (e) {
+              console.error("[WEBHOOK] Error forwarding:", e);
+            }
+          }
+
+        } catch (err) {
+          console.error("[MESSAGES_UPSERT] Error:", err);
+        }
+      });
 
       sock.ev.on("creds.update", saveCreds);
-
       sock.ev.on("error", (err) => {
         console.error(`[SOCKET_ERROR]`, err);
       });
@@ -365,6 +426,23 @@ router.post("/send-message", async (req, res) => {
       await sessionData.socket.sendMessage(formattedNumber, {
         image: { url: media_url },
         caption: message_content,
+      });
+    } else if (message_type === "document" && media_url) {
+      await sessionData.socket.sendMessage(formattedNumber, {
+        document: { url: media_url },
+        mimetype: "application/pdf",
+        fileName: "document.pdf",
+        caption: message_content,
+      });
+    } else if (message_type === "video" && media_url) {
+      await sessionData.socket.sendMessage(formattedNumber, {
+        video: { url: media_url },
+        caption: message_content,
+      });
+    } else if (message_type === "audio" && media_url) {
+      await sessionData.socket.sendMessage(formattedNumber, {
+        audio: { url: media_url },
+        mimetype: 'audio/mp4'
       });
     }
 
@@ -527,6 +605,74 @@ router.delete("/session/:sessionId", async (req, res) => {
     res.json({ success: true, message: "Session berhasil dihapus" });
   } catch (err) {
     console.error("[DELETE_SESSION] ❌ ERROR:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * 7. WEBHOOKS CRUD
+ */
+router.get("/webhooks/:sessionId", async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from("whatsapp_webhooks").select("*").eq("session_id", req.params.sessionId).maybeSingle();
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/webhooks", async (req, res) => {
+  try {
+    const { user_id, session_id, webhook_url, is_active } = req.body;
+    
+    // Upsert logic
+    const { data: existing } = await supabaseAdmin.from("whatsapp_webhooks").select("id").eq("session_id", session_id).maybeSingle();
+    
+    let result;
+    if (existing) {
+      result = await supabaseAdmin.from("whatsapp_webhooks").update({ webhook_url, is_active, updated_at: new Date() }).eq("id", existing.id).select().single();
+    } else {
+      result = await supabaseAdmin.from("whatsapp_webhooks").insert({ user_id, session_id, webhook_url, is_active }).select().single();
+    }
+    
+    if (result.error) throw result.error;
+    res.json({ success: true, data: result.data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * 8. AUTO-RESPONDERS CRUD
+ */
+router.get("/autoresponders/:sessionId", async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from("whatsapp_autoresponders").select("*").eq("session_id", req.params.sessionId).order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/autoresponders", async (req, res) => {
+  try {
+    const { user_id, session_id, keyword, match_type, reply_message } = req.body;
+    const { data, error } = await supabaseAdmin.from("whatsapp_autoresponders").insert({ user_id, session_id, keyword, match_type, reply_message }).select().single();
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete("/autoresponders/:id", async (req, res) => {
+  try {
+    const { error } = await supabaseAdmin.from("whatsapp_autoresponders").delete().eq("id", req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
