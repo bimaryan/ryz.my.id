@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Image as ImageIcon, Video, Loader2, Link as LinkIcon, Save, UploadCloud, Plus, Trash2, Info } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
+import { usePages } from '@/hooks/usePages';
 import { useBiteship } from '@/hooks/useBiteship';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
@@ -28,7 +29,8 @@ const PHYSICAL_PRODUCT_CATEGORIES = {
 };
 
 export default function ProductEditorModal({ isOpen, onClose, initialData, onSave }) {
-  const { uploadImage } = useAuth();
+  const { user } = useAuth();
+  const { uploadImage } = usePages();
   const { areas, searchArea, isSearchingArea, couriers, fetchCouriers, isLoadingCouriers } = useBiteship();
   const [formData, setFormData] = useState(initialData || {});
   const [isUploading, setIsUploading] = useState(false);

@@ -495,8 +495,12 @@ export default function PublicPage() {
             links.map((link, i) => {
               if (link.type === 'header') {
                 return (
-                  <div key={i} className={`w-full pt-8 pb-2 text-center ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
-                    <h2 className="text-xl font-black tracking-tight" style={{ color: theme.text_color }}>{link.title}</h2>
+                  <div key={i} className={`w-full pt-10 pb-4 flex items-center justify-center gap-4 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ color: theme.text_color }}>
+                    <div className="h-[2px] bg-current opacity-20 flex-1 max-w-[40px] rounded-full"></div>
+                    <h2 className="text-sm md:text-base font-black tracking-[0.2em] uppercase text-center">
+                      {link.title}
+                    </h2>
+                    <div className="h-[2px] bg-current opacity-20 flex-1 max-w-[40px] rounded-full"></div>
                   </div>
                 )
               }
@@ -547,13 +551,13 @@ export default function PublicPage() {
                     theme={theme} 
                     onClick={(product) => {
                       if (product.type === 'blog') {
-                        navigate(`/${slug}/blog/${product.id}`);
-                      } else {
-                        setSelectedProduct(product);
-                        setSelectedVariantIndex(0);
-                        setIsCheckoutOpen(true);
-                        setCheckoutForm({ name: '', phone: '', address: '', email: '', customAnswers: {} });
-                      }
+                        navigate(`/p/${slug}/blog/${product.id}`);
+                        return;
+                      } 
+                      setSelectedProduct(product);
+                      setSelectedVariantIndex(0);
+                      setIsCheckoutOpen(true);
+                      setCheckoutForm({ name: '', phone: '', address: '', email: '', customAnswers: {} });
                     }} 
                   />
                 )

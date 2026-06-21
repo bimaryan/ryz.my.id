@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Image as ImageIcon, CheckCircle, ChevronLeft, ChevronRight, PenTool, Layout as LayoutIcon, Settings as SettingsIcon } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
+import { usePages } from '@/hooks/usePages';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -14,7 +15,8 @@ const STEPS = [
 ];
 
 export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }) {
-  const { uploadImage, user } = useAuth();
+  const { user } = useAuth();
+  const { uploadImage } = usePages();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState(initialData || {});
   const [isUploading, setIsUploading] = useState(false);

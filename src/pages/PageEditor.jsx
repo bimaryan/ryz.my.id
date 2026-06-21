@@ -1087,8 +1087,12 @@ export default function PageEditor() {
                     links.map((link, i) => {
                       if (link.type === 'header') {
                         return (
-                          <div key={i} className={`w-full pt-8 pb-2 text-center ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
-                            <h2 className="text-xl font-black tracking-tight" style={{ color: theme.text_color }}>{link.title}</h2>
+                          <div key={i} className={`w-full pt-8 pb-4 flex items-center justify-center gap-3 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ color: theme.text_color }}>
+                            <div className="h-[2px] bg-current opacity-20 flex-1 max-w-[30px] rounded-full"></div>
+                            <h2 className="text-xs md:text-sm font-black tracking-[0.2em] uppercase text-center">
+                              {link.title}
+                            </h2>
+                            <div className="h-[2px] bg-current opacity-20 flex-1 max-w-[30px] rounded-full"></div>
                           </div>
                         )
                       }
