@@ -12,20 +12,58 @@ const supabase = createClient(
   }
 );
 
-router.post('/create-invoice', (req, res) => {
+router.post('/create-invoice', async (req, res) => {
   try {
-    const { order_id, gross_amount, redirect_url } = req.body;
+    const { order_id, redirect_url } = req.body;
 
-    console.log('[PAKASIR] Create Invoice:', { order_id, gross_amount });
+    if (!order_id) {
+      return res.status(400).json({ success: false, message: 'Missing order_id' });
+    }
+
+    console.log('[PAKASIR] Create Invoice Request for Order:', order_id);
+
+    let realAmount = null;
+
+    // Try finding the order in 'orders' table
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('amount')
+      .eq('id', order_id)
+      .single();
+
+    if (!orderError && orderData) {
+      realAmount = orderData.amount;
+      // Hardcode/Force status to pending in DB just in case it was tampered from frontend
+      await supabase.from('orders').update({ status: 'pending' }).eq('id', order_id);
+    } else {
+      // If not in 'orders', try 'billing_history'
+      const { data: billingData, error: billingError } = await supabase
+        .from('billing_history')
+        .select('amount')
+        .eq('midtrans_order_id', order_id)
+        .single();
+
+      if (!billingError && billingData) {
+        realAmount = billingData.amount;
+        // Hardcode/Force status to pending in DB
+        await supabase.from('billing_history').update({ status: 'pending' }).eq('midtrans_order_id', order_id);
+      }
+    }
+
+    if (realAmount === null || realAmount === undefined) {
+      console.error('[PAKASIR] Order not found for ID:', order_id);
+      return res.status(404).json({ success: false, message: 'Order not found in database' });
+    }
 
     const slug = process.env.PAKASIR_SLUG || 'ryzlink';
-    let paymentUrl = `https://app.pakasir.com/pay/${slug}/${gross_amount}?order_id=${order_id}`;
+    // Use realAmount from DB, completely ignoring any amount sent by client
+    let paymentUrl = `https://app.pakasir.com/pay/${slug}/${realAmount}?order_id=${order_id}`;
     
     if (redirect_url) {
       paymentUrl += `&redirect=${encodeURIComponent(redirect_url)}`;
     }
 
-    console.log('[PAKASIR] Payment URL:', paymentUrl);
+    console.log('[PAKASIR] Payment URL Generated (Amount Protected):', paymentUrl);
     res.json({ success: true, payment_url: paymentUrl });
   } catch (error) {
     console.error('[PAKASIR] Error:', error);
