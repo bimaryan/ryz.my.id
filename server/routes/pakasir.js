@@ -132,6 +132,46 @@ router.post('/webhook', async (req, res) => {
     }
 
     console.log(`[PAKASIR WEBHOOK] Updated ${tableUsed} successfully:`, updateResult);
+
+    // --- LOGIKA UPGRADE PLAN SECARA RESMI DARI BACKEND ---
+    if (tableUsed === 'billing_history' && dbStatus === 'paid' && updateResult.length > 0) {
+      const history = updateResult[0];
+      console.log(`[PAKASIR WEBHOOK] Memproses upgrade plan untuk user ${history.user_id} ke paket ${history.plan_name}`);
+      
+      try {
+        let maxLinks = 100; // Default Free
+        
+        // Cari jatah max_links resmi dari tabel plan_limits
+        const { data: planLimits } = await supabase
+          .from('plan_limits')
+          .select('max_links')
+          .eq('plan_type', history.plan_name)
+          .single();
+          
+        if (planLimits && planLimits.max_links !== undefined) {
+          maxLinks = planLimits.max_links;
+        } else {
+           // Fallback darurat
+           if (history.plan_name === 'pro' || history.plan_name === 'enterprise') maxLinks = -1;
+        }
+
+        // 1. Update tabel public.users (Sumber kebenaran)
+        await supabase.from('users').update({
+          plan_type: history.plan_name,
+          max_links: maxLinks
+        }).eq('id', history.user_id);
+
+        // 2. Update auth.users user_metadata via Admin API (Supaya frontend mendeteksi perubahan session)
+        await supabase.auth.admin.updateUserById(history.user_id, {
+          user_metadata: { plan_type: history.plan_name, max_links: maxLinks }
+        });
+        
+        console.log(`[PAKASIR WEBHOOK] Sukses menyinkronkan plan user ${history.user_id} ke ${history.plan_name}`);
+      } catch (err) {
+        console.error('[PAKASIR WEBHOOK] Gagal menyinkronkan plan:', err);
+      }
+    }
+
     res.json({ success: true, message: 'Webhook received', data: updateResult, table: tableUsed });
   } catch (error) {
     console.error('[PAKASIR WEBHOOK] Error:', error);
