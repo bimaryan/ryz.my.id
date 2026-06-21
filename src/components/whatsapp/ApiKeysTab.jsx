@@ -91,12 +91,15 @@ export default function ApiKeysTab({ user, API_URL }) {
         </p>
         <div className="bg-slate-950 p-4 rounded-lg font-mono text-sm overflow-x-auto text-green-400">
           <p className="text-slate-500 mb-1"># Send a WhatsApp Message</p>
-          <p>POST https://api.ryz.my.id/api/whatsapp/v1/send-message</p>
+          <p>POST https://ryz.my.id/api/whatsapp/send-message</p>
           <p>Authorization: Bearer <span className="text-yellow-400">&lt;YOUR_API_KEY&gt;</span></p>
           <p>Content-Type: application/json</p>
           <p className="mt-2 text-slate-300">{`{`}</p>
-          <p className="text-slate-300 ml-4">"to": <span className="text-yellow-400">"08123456789"</span>,</p>
-          <p className="text-slate-300 ml-4">"message": <span className="text-yellow-400">"Hello from external app!"</span></p>
+          <p className="text-slate-300 ml-4">"session_id": <span className="text-yellow-400">"ID_SESI_WA_ANDA"</span>,</p>
+          <p className="text-slate-300 ml-4">"user_id": <span className="text-yellow-400">"ID_USER_ANDA"</span>,</p>
+          <p className="text-slate-300 ml-4">"recipient": <span className="text-yellow-400">"08123456789"</span>,</p>
+          <p className="text-slate-300 ml-4">"message_type": <span className="text-yellow-400">"text"</span>,</p>
+          <p className="text-slate-300 ml-4">"message_content": <span className="text-yellow-400">"Hello from external app!"</span></p>
           <p className="text-slate-300">{`}`}</p>
         </div>
       </div>

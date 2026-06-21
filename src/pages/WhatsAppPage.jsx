@@ -486,6 +486,23 @@ export default function WhatsAppPage() {
                     Session Details
                   </h2>
 
+                  <div className="flex flex-col gap-3 mb-6">
+                    <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                       <div>
+                         <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Session ID (Untuk API)</p>
+                         <p className="text-sm font-mono text-slate-800">{selectedSession.id}</p>
+                       </div>
+                       <button onClick={() => { navigator.clipboard.writeText(selectedSession.id); toast.success('Session ID disalin!'); }} className="text-[#0b5cff] hover:text-blue-800 text-sm font-bold bg-blue-50 px-3 py-1.5 rounded-md border border-blue-100 transition-colors">Salin</button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                       <div>
+                         <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">User ID / Account ID</p>
+                         <p className="text-sm font-mono text-slate-800">{user?.id}</p>
+                       </div>
+                       <button onClick={() => { navigator.clipboard.writeText(user?.id); toast.success('User ID disalin!'); }} className="text-[#0b5cff] hover:text-blue-800 text-sm font-bold bg-blue-50 px-3 py-1.5 rounded-md border border-blue-100 transition-colors">Salin</button>
+                    </div>
+                  </div>
+
                   {/* ✅ Debug Status */}
                   {qrStatus && (
                     <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
