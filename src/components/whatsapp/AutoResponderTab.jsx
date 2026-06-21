@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Plus, Trash2, Bot } from "lucide-react";
+import ConfirmModal from '../ui/ConfirmModal';
 
 export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
   const [rules, setRules] = useState([]);
@@ -9,6 +10,7 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
   const [keyword, setKeyword] = useState("");
   const [matchType, setMatchType] = useState("exact");
   const [replyMessage, setReplyMessage] = useState("");
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
 
   const loadRules = async () => {
     try {
@@ -59,10 +61,10 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Hapus rule ini?")) return;
+  const handleDelete = async () => {
+    if (!deleteModal.id) return;
     try {
-      const res = await fetch(`${apiUrl}/whatsapp/autoresponders/${id}`, { method: "DELETE" });
+      const res = await fetch(`${apiUrl}/whatsapp/autoresponders/${deleteModal.id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         toast.success("Rule dihapus");
@@ -70,6 +72,8 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
       }
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -119,13 +123,22 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
                 </div>
                 <p className="text-sm text-slate-600 line-clamp-2">{rule.reply_message}</p>
               </div>
-              <button onClick={() => handleDelete(rule.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors">
+              <button onClick={() => setDeleteModal({ isOpen: true, id: rule.id })} className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ))
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={deleteModal.isOpen} 
+        onClose={() => setDeleteModal({ isOpen: false, id: null })} 
+        onConfirm={handleDelete} 
+        title="Hapus Rule Auto Responder" 
+        message="Apakah Anda yakin ingin menghapus rule ini? Bot tidak akan membalas secara otomatis lagi untuk kata kunci ini."
+        confirmText="Hapus Rule" 
+      />
     </div>
   );
 }

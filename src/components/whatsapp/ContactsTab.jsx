@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Trash2, Search, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../ui/ConfirmModal';
 
 export default function ContactsTab({ user, API_URL }) {
   const [contacts, setContacts] = useState([]);
@@ -8,6 +9,7 @@ export default function ContactsTab({ user, API_URL }) {
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
 
   useEffect(() => {
     if (user) loadContacts();
@@ -51,10 +53,10 @@ export default function ContactsTab({ user, API_URL }) {
     setIsLoading(false);
   };
 
-  const handleDeleteContact = async (id) => {
-    if (!window.confirm("Hapus kontak ini?")) return;
+  const handleDeleteContact = async () => {
+    if (!deleteModal.id) return;
     try {
-      const res = await fetch(`${API_URL}/whatsapp/contacts/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/whatsapp/contacts/${deleteModal.id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         toast.success("Kontak dihapus");
@@ -62,6 +64,8 @@ export default function ContactsTab({ user, API_URL }) {
       }
     } catch (err) {
       toast.error("Gagal menghapus kontak");
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -141,7 +145,7 @@ export default function ContactsTab({ user, API_URL }) {
                 </div>
               </div>
               <button
-                onClick={() => handleDeleteContact(contact.id)}
+                onClick={() => setDeleteModal({ isOpen: true, id: contact.id })}
                 className="text-slate-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-all"
               >
                 <Trash2 className="w-4 h-4" />
@@ -150,6 +154,15 @@ export default function ContactsTab({ user, API_URL }) {
           ))
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={deleteModal.isOpen} 
+        onClose={() => setDeleteModal({ isOpen: false, id: null })} 
+        onConfirm={handleDeleteContact} 
+        title="Hapus Kontak" 
+        message="Apakah Anda yakin ingin menghapus kontak ini dari Buku Telepon Anda?"
+        confirmText="Hapus Kontak" 
+      />
     </div>
   );
 }

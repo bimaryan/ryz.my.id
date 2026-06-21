@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Copy, Plus, Trash2, Code, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../ui/ConfirmModal';
 
 export default function ApiKeysTab({ user, API_URL }) {
   const [apiKeys, setApiKeys] = useState([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
 
   useEffect(() => {
     if (user) {
@@ -57,10 +59,10 @@ export default function ApiKeysTab({ user, API_URL }) {
     setIsLoading(false);
   };
 
-  const handleDeleteKey = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this API Key? Any application using it will lose access.")) return;
+  const handleDeleteKey = async () => {
+    if (!deleteModal.id) return;
     try {
-      const res = await fetch(`${API_URL}/whatsapp/api-keys/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/whatsapp/api-keys/${deleteModal.id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         toast.success("API Key deleted");
@@ -68,6 +70,8 @@ export default function ApiKeysTab({ user, API_URL }) {
       }
     } catch (err) {
       toast.error("Failed to delete API key");
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -140,7 +144,7 @@ export default function ApiKeysTab({ user, API_URL }) {
                   </p>
                 </div>
                 <button
-                  onClick={() => handleDeleteKey(key.id)}
+                  onClick={() => setDeleteModal({ isOpen: true, id: key.id })}
                   className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors shrink-0"
                   title="Revoke Key"
                 >
@@ -151,6 +155,15 @@ export default function ApiKeysTab({ user, API_URL }) {
           )}
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={deleteModal.isOpen} 
+        onClose={() => setDeleteModal({ isOpen: false, id: null })} 
+        onConfirm={handleDeleteKey} 
+        title="Revoke API Key" 
+        message="Are you sure you want to delete this API Key? Any application using it will immediately lose access."
+        confirmText="Revoke Key" 
+      />
     </div>
   );
 }
