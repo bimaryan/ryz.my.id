@@ -116,6 +116,12 @@ export default function WhatsAppPage() {
     e.preventDefault();
     if (!sessionName.trim() || !user) return;
 
+    const isPro = ["pro", "enterprise"].includes(user?.user_metadata?.plan_type);
+    if (!isPro && sessions.length >= 1) {
+      toast.error("Fitur Multi-Session khusus pengguna PRO & Enterprise. Anda sudah mencapai batas maksimal 1 sesi. Silakan upgrade!", { duration: 5000 });
+      return;
+    }
+
     try {
       console.log(`[CREATE_SESSION] Creating session: ${sessionName}`);
       setQrStatus("Creating session...");
