@@ -149,7 +149,7 @@ export default function LoginPage() {
 
             <div className="flex flex-col items-center mt-2">
               <Turnstile 
-                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"} 
+                siteKey="0x4AAAAAADodRb51u3jJ_MQ" 
                 onSuccess={(token) => {
                   setCaptchaToken(token)
                   setCaptchaError('')
