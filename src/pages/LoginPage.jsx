@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Eye, EyeOff } from 'lucide-react'
 import { FcGoogle } from 'react-icons/fc'
 import { useAuth } from '@/hooks/useAuth'
+import { Turnstile } from '@marsidev/react-turnstile'
 import SEO from '@/components/SEO'
 
 const loginSchema = z.object({
@@ -18,6 +19,8 @@ export default function LoginPage() {
   const { signIn, signInWithGoogle, isLoading, error: authError } = useAuth()
   const [serverError, setServerError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState(null)
+  const [captchaError, setCaptchaError] = useState('')
 
   const {
     register,
@@ -28,8 +31,14 @@ export default function LoginPage() {
   })
 
   const onSubmit = async (data) => {
+    if (!captchaToken) {
+      setCaptchaError('Mohon selesaikan verifikasi keamanan (CAPTCHA).')
+      return
+    }
+    setCaptchaError('')
+    
     setServerError(null)
-    const result = await signIn(data)
+    const result = await signIn({ ...data, captchaToken })
     
     if (result.success) {
       navigate('/dashboard')
@@ -137,6 +146,18 @@ export default function LoginPage() {
                 </div>
               </div>
             )}
+
+            <div className="flex flex-col items-center mt-2">
+              <Turnstile 
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"} 
+                onSuccess={(token) => {
+                  setCaptchaToken(token)
+                  setCaptchaError('')
+                }} 
+                options={{ theme: 'light' }}
+              />
+              {captchaError && <p className="text-sm font-medium text-red-500 mt-2">{captchaError}</p>}
+            </div>
 
             <button
               type="submit"

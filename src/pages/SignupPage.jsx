@@ -7,6 +7,7 @@ import { Eye, EyeOff, Check } from 'lucide-react'
 import { FcGoogle } from 'react-icons/fc'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { Turnstile } from '@marsidev/react-turnstile'
 import SEO from '@/components/SEO'
 
 const DISPOSABLE_DOMAINS = [
@@ -36,10 +37,8 @@ export default function SignupPage() {
   const [successMessage, setSuccessMessage] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   
-  // Math CAPTCHA state
-  const [num1] = useState(Math.floor(Math.random() * 10) + 1)
-  const [num2] = useState(Math.floor(Math.random() * 10) + 1)
-  const [captchaAnswer, setCaptchaAnswer] = useState('')
+  // Cloudflare Turnstile state
+  const [captchaToken, setCaptchaToken] = useState(null)
   const [captchaError, setCaptchaError] = useState('')
 
   const {
@@ -51,9 +50,8 @@ export default function SignupPage() {
   })
 
   const onSubmit = async (data) => {
-    // Math CAPTCHA verification
-    if (parseInt(captchaAnswer) !== num1 + num2) {
-      setCaptchaError('Jawaban matematika salah. Silakan coba lagi.')
+    if (!captchaToken) {
+      setCaptchaError('Mohon selesaikan verifikasi keamanan (CAPTCHA).')
       return
     }
     setCaptchaError('')
@@ -67,7 +65,7 @@ export default function SignupPage() {
     }
 
     setServerError(null)
-    const result = await signUp(data)
+    const result = await signUp({ ...data, captchaToken })
     
     if (result.success) {
       // Forcefully sign out in case Supabase auto-creates a session
@@ -206,20 +204,16 @@ export default function SignupPage() {
                   <input type="text" tabIndex="-1" autoComplete="off" {...register('_bot_catcher')} />
                 </div>
 
-                <div className="space-y-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm">
-                  <label className="block text-[14px] font-bold text-slate-700">Pertanyaan Keamanan: Berapa {num1} + {num2}?</label>
-                  <input
-                    type="number"
-                    placeholder="Masukkan hasilnya"
-                    value={captchaAnswer}
-                    onChange={(e) => {
-                      setCaptchaAnswer(e.target.value)
+                <div className="flex flex-col items-center mt-2">
+                  <Turnstile 
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"} 
+                    onSuccess={(token) => {
+                      setCaptchaToken(token)
                       setCaptchaError('')
-                    }}
-                    className="w-full bg-white border border-slate-200 focus:border-[#0b5cff] focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-800 transition-all outline-none"
-                    required
+                    }} 
+                    options={{ theme: 'light' }}
                   />
-                  {captchaError && <p className="text-sm font-medium text-red-500 mt-1">{captchaError}</p>}
+                  {captchaError && <p className="text-sm font-medium text-red-500 mt-2">{captchaError}</p>}
                 </div>
 
                 {(authError || serverError) && (

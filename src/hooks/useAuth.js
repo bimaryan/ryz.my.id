@@ -8,7 +8,7 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const signUp = useCallback(async ({ email, password, full_name, username }) => {
+  const signUp = useCallback(async ({ email, password, full_name, username, captchaToken }) => {
     setIsLoading(true)
     setError(null)
 
@@ -17,6 +17,7 @@ export function useAuth() {
         email,
         password,
         options: {
+          captchaToken,
           data: { 
             full_name,
             username 
@@ -34,7 +35,7 @@ export function useAuth() {
     }
   }, [])
 
-  const signIn = useCallback(async ({ email, password }) => {
+  const signIn = useCallback(async ({ email, password, captchaToken }) => {
     setIsLoading(true)
     setError(null)
 
@@ -42,6 +43,9 @@ export function useAuth() {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          captchaToken
+        }
       })
 
       if (authError) throw authError
