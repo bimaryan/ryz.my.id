@@ -677,23 +677,13 @@ export default function SettingsPage() {
                                           if (statusData.status === 'completed' || statusData.status === 'paid' || statusData.status === 'success') {
                                             clearInterval(checkInterval);
                                             
-                                            toast.loading("Memperbarui akun...", { id: "update_toast" });
-                                            const res = await updateProfile({ 
-                                              plan_type: planName,
-                                              max_links: plan.max_links !== undefined ? plan.max_links : (planName === 'free' ? 100 : -1),
-                                              custom_domains: plan.custom_domains !== undefined ? plan.custom_domains : (planName !== 'free'),
-                                              max_custom_domains: plan.max_custom_domains !== undefined ? plan.max_custom_domains : (planName !== 'free' ? -1 : 1),
-                                              max_team_members: plan.max_team_members !== undefined ? plan.max_team_members : (planName === 'free' ? 0 : 10),
-                                              plan_expires_at: planName === 'free' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                                            });
-                                            if (res.success) {
-                                              fetchBillingHistory();
-                                              setSuccessMsg(`Berhasil berlangganan ${planName}! Anda sekarang bisa menggunakan fitur PRO.`);
-                                              toast.success("Akun berhasil di-upgrade!", { id: "update_toast" });
-                                            } else {
-                                              setErrorMsg('Gagal memperbarui akun setelah pembayaran.');
-                                              toast.error("Gagal memperbarui akun.", { id: "update_toast" });
-                                            }
+                                            toast.loading("Memperbarui sesi akun...", { id: "update_toast" });
+                                            // Jangan update profil secara paksa, minta Supabase refresh session dari server (karena webhook yg ngubah plan-nya)
+                                            await supabase.auth.refreshSession();
+                                            
+                                            fetchBillingHistory();
+                                            setSuccessMsg(`Berhasil berlangganan ${planName}! Anda sekarang bisa menggunakan fitur PRO.`);
+                                            toast.success("Akun berhasil di-upgrade!", { id: "update_toast" });
                                           } else if (statusData.status === 'failed' || statusData.status === 'expired' || statusData.status === 'cancelled') {
                                             clearInterval(checkInterval);
                                             toast.error("Pembayaran gagal atau kadaluarsa!", { id: "payment_failed" });
