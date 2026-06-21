@@ -100,15 +100,13 @@ export default function ApiKeysTab({ user, API_URL }) {
           </p>
           <div className="bg-[#0b1121] border border-slate-800/60 p-5 rounded-2xl font-mono text-sm overflow-x-auto shadow-inner group">
             <p className="text-slate-500 mb-2 font-bold tracking-wider text-xs"># Contoh Request Kirim Pesan</p>
-            <p className="text-green-400">POST <span className="text-slate-300">https://ryz.my.id/api/whatsapp/send-message</span></p>
+            <p className="text-green-400">POST <span className="text-slate-300">https://ryz.my.id/api/whatsapp/v1/send-message</span></p>
             <p className="text-purple-400">Authorization: <span className="text-slate-300">Bearer </span><span className="text-yellow-400">&lt;YOUR_API_KEY&gt;</span></p>
             <p className="text-purple-400">Content-Type: <span className="text-slate-300">application/json</span></p>
             <p className="mt-3 text-slate-400">{`{`}</p>
-            <p className="text-blue-300 ml-4">"session_id"<span className="text-slate-400">: </span><span className="text-amber-300">"ID_SESI_WA_ANDA"</span><span className="text-slate-400">,</span></p>
-            <p className="text-blue-300 ml-4">"user_id"<span className="text-slate-400">: </span><span className="text-amber-300">"ID_USER_ANDA"</span><span className="text-slate-400">,</span></p>
-            <p className="text-blue-300 ml-4">"recipient"<span className="text-slate-400">: </span><span className="text-amber-300">"08123456789"</span><span className="text-slate-400">,</span></p>
-            <p className="text-blue-300 ml-4">"message_type"<span className="text-slate-400">: </span><span className="text-amber-300">"text"</span><span className="text-slate-400">,</span></p>
-            <p className="text-blue-300 ml-4">"message_content"<span className="text-slate-400">: </span><span className="text-amber-300">"Hello from external app!"</span></p>
+            <p className="text-blue-300 ml-4">"session_id"<span className="text-slate-400">: </span><span className="text-amber-300">"ID_SESI_WA_ANDA"</span><span className="text-slate-400">, // Opsional jika hanya punya 1 session</span></p>
+            <p className="text-blue-300 ml-4">"to"<span className="text-slate-400">: </span><span className="text-amber-300">"08123456789"</span><span className="text-slate-400">,</span></p>
+            <p className="text-blue-300 ml-4">"message"<span className="text-slate-400">: </span><span className="text-amber-300">"Hello from external app!"</span></p>
             <p className="text-slate-400">{`}`}</p>
           </div>
         </div>
@@ -164,7 +162,7 @@ export default function ApiKeysTab({ user, API_URL }) {
                   <div className="w-full mt-2">
                     <div className="bg-slate-50 border border-slate-200 text-slate-600 px-3 sm:px-4 py-2 rounded-xl font-mono text-xs sm:text-sm tracking-wide shadow-inner flex items-center justify-between gap-2 overflow-hidden w-full max-w-full">
                       <div className="flex items-center truncate">
-                        <span className="text-slate-400 shrink-0">sk_live_</span>
+                        <span className="text-slate-400 shrink-0">ryz_</span>
                         <span className="font-bold text-slate-700 truncate">••••••••••••••••{key.api_key.substring(key.api_key.length - 4)}</span>
                       </div>
                       <button 
