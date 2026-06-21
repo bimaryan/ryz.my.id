@@ -1,6 +1,6 @@
 import React from 'react'
 import SEO from '@/components/SEO'
-import { Book, Code, Webhook, Globe, ArrowRight, Server, Shield, Link as LinkIcon, BarChart3, Users, Zap } from 'lucide-react'
+import { Book, Code, Webhook, Globe, ArrowRight, Server, Shield, Link as LinkIcon, BarChart3, Users, Zap, Bot, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function DocsPage() {
@@ -42,7 +42,7 @@ export default function DocsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col relative overflow-hidden selection:bg-[#0b5cff]/20">
-      <SEO title="Dokumentasi API | RYZ Shortlink" />
+      <SEO title="Dokumentasi API | RYZLink" />
       
       {/* Decorative bg */}
       <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-400/20 mix-blend-multiply filter blur-[100px] animate-blob pointer-events-none"></div>
@@ -66,66 +66,89 @@ export default function DocsPage() {
         </div>
       </header>
 
-      {/* Coming Soon Content */}
-      <main className="flex-1 flex items-center justify-center p-6 sm:p-12 relative z-10 animate-fade-in-up">
-        <div className="max-w-2xl w-full text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/80 backdrop-blur-xl shadow-xl border border-slate-200/60 mb-8 relative">
-            <Code className="h-10 w-10 text-[#0b5cff]" />
-            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full shadow-md animate-pulse">
-              SEGERA
-            </div>
-          </div>
-          
+      <main className="flex-1 p-6 sm:p-12 relative z-10 animate-fade-in-up pb-32">
+        <div className="max-w-4xl mx-auto w-full">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight mb-6">
-            API Developer <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0b5cff] to-indigo-500">Segera Hadir</span>
+            Developer <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0b5cff] to-indigo-500">API</span>
           </h1>
-          
-          <p className="text-lg text-slate-500 font-medium mb-10 leading-relaxed max-w-xl mx-auto">
-            Kami sedang bekerja keras membangun REST API yang tangguh, aman, dan super cepat untuk RYZLink. Anda akan segera dapat mengintegrasikan manajemen tautan dan analitik kami langsung ke aplikasi Anda.
+          <p className="text-lg text-slate-500 font-medium mb-10 leading-relaxed">
+            Dokumentasi lengkap untuk mengintegrasikan layanan RYZLink (Tautan pendek, Analitik, & WhatsApp Gateway) ke dalam sistem dan aplikasi Anda.
           </p>
           
-          <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 rounded-[32px] shadow-xl border border-slate-200/60 max-w-lg mx-auto text-left transition-transform hover:scale-[1.02] duration-300">
-            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 text-lg">
-              <Zap className="h-5 w-5 text-amber-500" />
-              Yang akan datang:
-            </h3>
-            <ul className="space-y-5">
-              <li className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100">
-                  <LinkIcon className="h-5 w-5 text-[#0b5cff]" />
-                </div>
-                <div>
-                  <p className="text-[15px] font-bold text-slate-800">Endpoint Manajemen Tautan</p>
-                  <p className="text-sm font-medium text-slate-500 mt-1">Buat, perbarui, dan hapus tautan pendek secara terprogram.</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 border border-indigo-100">
-                  <BarChart3 className="h-5 w-5 text-indigo-500" />
-                </div>
-                <div>
-                  <p className="text-[15px] font-bold text-slate-800">Analitik Lanjutan</p>
-                  <p className="text-sm font-medium text-slate-500 mt-1">Ambil statistik mendetail, perujuk, dan data perangkat.</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0 border border-purple-100">
-                  <Webhook className="h-5 w-5 text-purple-500" />
-                </div>
-                <div>
-                  <p className="text-[15px] font-bold text-slate-800">Webhook Real-time</p>
-                  <p className="text-sm font-medium text-slate-500 mt-1">Dapatkan notifikasi instan saat tautan Anda diklik.</p>
-                </div>
-              </li>
-            </ul>
+          {/* Section 1: Auth */}
+          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm mb-10 transition-transform hover:scale-[1.01] duration-300">
+             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><Shield className="text-[#0b5cff] w-8 h-8"/> Autentikasi</h2>
+             <p className="text-slate-600 mb-6 leading-relaxed">Setiap request ke REST API RYZLink wajib menyertakan API Key yang valid. Anda dapat membuat API Key di halaman Pengaturan Dashboard.</p>
+             <div className="bg-slate-900 p-5 rounded-2xl shadow-inner overflow-x-auto">
+               <code className="text-green-400 font-mono text-sm">Authorization: Bearer sk_live_xxxxxxxxxxx</code>
+             </div>
           </div>
-          
-          <div className="mt-12">
-            <Link to="/" className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:-translate-y-1 gap-2 group">
-              <ArrowRight className="h-5 w-5 group-hover:-translate-x-1 transition-transform rotate-180" />
-              Kembali ke Beranda
-            </Link>
+
+          {/* Section 2: WhatsApp API */}
+          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm mb-10 transition-transform hover:scale-[1.01] duration-300">
+             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><Bot className="text-green-500 w-8 h-8"/> WhatsApp Gateway API</h2>
+             <p className="text-slate-600 mb-8 leading-relaxed">Kirim pesan WhatsApp otomatis (Notifikasi, OTP, Broadcast) dari sistem eksternal Anda menggunakan REST API kami.</p>
+             
+             <EndpointBlock 
+               method="POST" 
+               path="/api/v1/whatsapp/send" 
+               description="Mengirim pesan teks langsung ke nomor tujuan yang diinginkan." 
+               requestBody={`{\n  "session_id": "ID_SESI_WA_ANDA",\n  "recipient": "6281234567890",\n  "message_type": "text",\n  "message_content": "Halo! Pesanan Anda dengan nomor #ORD-001 telah dikirim. Terima kasih!"\n}`}
+               responseBody={`{\n  "success": true,\n  "data": {\n    "message_id": "msg_xyz123",\n    "status": "queued",\n    "recipient": "6281234567890"\n  }\n}`}
+             />
+             
+             <div className="bg-slate-50 p-6 sm:p-8 rounded-2xl border border-slate-100">
+               <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2"><LinkIcon className="w-5 h-5 text-slate-500"/> Pengiriman Media (Gambar, Video, Audio, Dokumen)</h3>
+               <p className="text-sm text-slate-600 mb-5">Untuk mengirim file media, gunakan format <code className="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-xs text-pink-600">multipart/form-data</code> dan lampirkan file Anda pada parameter <code className="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-xs text-pink-600">media_file</code>.</p>
+               <div className="bg-slate-900 rounded-xl p-5 overflow-x-auto shadow-inner">
+                  <pre className="text-sm text-slate-300 font-mono leading-relaxed">{`curl -X POST https://ryz.my.id/api/v1/whatsapp/send \\
+  -H "Authorization: Bearer sk_live_your_api_key" \\
+  -F "session_id=ID_SESI_WA_ANDA" \\
+  -F "recipient=6281234567890" \\
+  -F "message_type=image" \\
+  -F "message_content=Ini adalah bukti pembayaran Anda" \\
+  -F "media_file=@/path/to/image.jpg"`}</pre>
+               </div>
+             </div>
           </div>
+
+          {/* Section 3: Webhooks & Chatbot */}
+          <div className="bg-white rounded-[32px] p-8 sm:p-10 border border-slate-200 shadow-sm transition-transform hover:scale-[1.01] duration-300">
+             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><Webhook className="text-purple-500 w-8 h-8"/> Webhook & Integrasi Chatbot</h2>
+             <p className="text-slate-600 mb-8 leading-relaxed">Webhook digunakan agar server Anda menerima notifikasi secara <strong>real-time</strong> setiap kali ada pesan masuk ke nomor WhatsApp Anda. Ini adalah fondasi utama untuk membangun Chatbot AI atau Customer Service Otomatis.</p>
+             
+             <div className="mb-8">
+                <p className="font-bold text-xs text-slate-500 uppercase tracking-widest mb-3">Payload Pesan Masuk (Dikirim RYZLink ke URL Webhook Anda)</p>
+                <div className="bg-slate-900 p-5 rounded-2xl shadow-inner overflow-x-auto">
+<pre className="text-sm text-slate-300 font-mono leading-relaxed">{`{
+  "event": "message.received",
+  "session_id": "ID_SESI_WA_ANDA",
+  "timestamp": "2026-06-21T10:00:00Z",
+  "data": {
+    "message_id": "wamsg_12345",
+    "sender_number": "6281234567890",
+    "sender_name": "Budi Santoso",
+    "message_type": "text",
+    "text": "Halo min, mau tanya info promo dong?",
+    "is_group": false
+  }
+}`}</pre>
+                </div>
+             </div>
+
+             <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 p-6 sm:p-8 rounded-2xl relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10"><Bot className="w-24 h-24 text-indigo-500"/></div>
+               <h3 className="font-black text-indigo-900 mb-4 flex items-center gap-2 text-lg relative z-10"><Code className="w-5 h-5 text-indigo-600"/> Contoh Alur Pembuatan Chatbot AI</h3>
+               <ol className="list-decimal list-inside text-sm text-indigo-800 space-y-3 font-medium relative z-10">
+                 <li>Pelanggan mengirim pesan WA ke nomor bisnis Anda.</li>
+                 <li>RYZLink langsung meneruskan pesan tersebut (via metode POST) ke <strong>URL Webhook</strong> Server Anda.</li>
+                 <li>Server Anda membaca isi pesan, memproses *logic* internal, atau meneruskannya ke API ChatGPT/Gemini untuk mendapatkan respon yang relevan.</li>
+                 <li>Setelah meracik balasan, Server Anda menembak balik <strong>POST /api/v1/whatsapp/send</strong> RYZLink menggunakan respon teks dari AI tersebut.</li>
+                 <li>Pesan sukses dibalas secara otomatis dalam hitungan detik!</li>
+               </ol>
+             </div>
+          </div>
+
         </div>
       </main>
     </div>
