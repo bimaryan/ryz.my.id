@@ -606,6 +606,7 @@ export default function SettingsPage() {
                                   <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {plan.custom_domains || plan.max_custom_domains === -1 ? 'Unlimited' : (plan.max_custom_domains || 'None')} Custom Domains</li>
                                   <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {plan.max_team_members === 0 ? 'No Team Members' : `${plan.max_team_members} Team Members`}</li>
                                   {(planName === 'pro' || planName === 'enterprise') && <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> E-Commerce (Physical Products)</li>}
+                                  {(planName === 'pro' || planName === 'enterprise') && <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Unlimited WhatsApp API Sessions</li>}
                                 </ul>
                                 <Button 
                                   onClick={async () => {
