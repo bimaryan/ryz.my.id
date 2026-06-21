@@ -39,24 +39,19 @@ export default function RedirectPage() {
         const currentDomain = window.location.hostname
         const isMainDomain = currentDomain === 'ryz.my.id' || currentDomain === 'localhost' || currentDomain === '127.0.0.1'
 
-        let query = supabase
-          .from('links')
-          .select('*')
-          .or(`short_code.eq.${slug},custom_slug.eq.${slug}`)
+        const domain_val = isMainDomain ? null : currentDomain
 
-        if (!isMainDomain) {
-          query = query.eq('custom_domain', currentDomain)
-        } else {
-          // Links created before this feature will have null, which is correct for main domain
-          query = query.is('custom_domain', null)
-        }
+        const { data: linksData, error: fetchError } = await supabase.rpc('get_public_link', {
+          p_slug: slug,
+          p_domain: domain_val
+        })
 
-        const { data: link, error: fetchError } = await query.single()
-
-        if (fetchError || !link) {
+        if (fetchError || !linksData || linksData.length === 0) {
           setError('Link not found')
           return
         }
+
+        const link = linksData[0]
 
         if (!link.is_active) {
           setError('This link is no longer active')
