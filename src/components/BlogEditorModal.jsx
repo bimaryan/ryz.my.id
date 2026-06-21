@@ -231,7 +231,7 @@ export default function BlogEditorModal({ isOpen, onClose, initialData, onSave }
                   ) : (
                     <div className="w-full flex-1 overflow-y-auto flex flex-col gap-3 mb-6 items-start text-left">
                       {chapters.map((chap, idx) => (
-                        <div key={idx} className="w-full p-4 border border-slate-200 rounded-xl flex items-center justify-between hover:border-[#0b5cff] transition-colors cursor-pointer" onClick={() => setEditingChapterIndex(idx)}>
+                        <div key={idx} className="w-full p-4 border border-slate-200 rounded-xl flex items-center justify-between hover:border-[#0b5cff] transition-colors cursor-pointer" onClick={() => { setEditingChapterIndex(idx); setIsChapterModalOpen(true); }}>
                           <div>
                             <p className="text-xs font-bold text-slate-400">{chap.part_name || `Chapter ${idx+1}`}</p>
                             <p className="font-bold text-slate-800">{chap.title || 'Untitled'}</p>

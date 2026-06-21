@@ -86,7 +86,7 @@ export default function BlogPublicPage() {
           </div>
           
           <div 
-            className="prose prose-slate prose-lg max-w-none text-slate-700 prose-p:leading-loose prose-headings:font-bold prose-a:text-[#0b5cff]"
+            className="prose prose-slate prose-lg max-w-none text-slate-700 prose-p:leading-loose prose-headings:font-bold prose-a:text-[#0b5cff] break-words whitespace-pre-wrap overflow-hidden"
             dangerouslySetInnerHTML={{ __html: selectedChapter.content || '<em>No content available.</em>' }}
           />
         </div>
@@ -111,7 +111,7 @@ export default function BlogPublicPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-6 pt-6">
+      <div className="flex-1 w-full max-w-3xl mx-auto px-6 pt-6">
         <div className="mb-8">
           <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{blog.title || 'Untitled Blog'}</h1>
         </div>
@@ -122,7 +122,7 @@ export default function BlogPublicPage() {
               <span className="w-4 h-px bg-slate-300"></span> DESCRIPTION
             </div>
             <div 
-              className="prose prose-slate max-w-none text-slate-600 prose-p:leading-relaxed prose-headings:font-bold"
+              className="prose prose-slate max-w-none text-slate-600 prose-p:leading-relaxed prose-headings:font-bold break-words whitespace-pre-wrap overflow-hidden"
               dangerouslySetInnerHTML={{ __html: blog.description }}
             />
           </>
@@ -143,7 +143,7 @@ export default function BlogPublicPage() {
                 >
                   <div className="pr-4">
                     <div className="text-[10px] text-[#0b5cff] font-bold mb-1 uppercase tracking-widest">{chap.part_name}</div>
-                    <div className="font-bold text-slate-800 text-lg group-hover:text-[#0b5cff] transition-colors">{chap.title}</div>
+                    <div className="font-bold text-slate-800 text-lg group-hover:text-[#0b5cff] transition-colors line-clamp-2">{chap.title}</div>
                   </div>
                   {chap.is_free ? (
                     <span className="text-xs font-bold px-3 py-1.5 bg-blue-50 text-[#0b5cff] rounded-lg shrink-0">Read</span>

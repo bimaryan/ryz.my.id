@@ -72,7 +72,7 @@ export const routes = [
     public: true,
   },
   {
-    path: '/:slug/blog/:blogId',
+    path: '/p/:slug/blog/:blogId',
     element: BlogPublicPage,
     public: true,
   },
