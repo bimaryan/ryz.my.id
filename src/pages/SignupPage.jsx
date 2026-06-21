@@ -206,7 +206,7 @@ export default function SignupPage() {
 
                 <div className="flex flex-col items-center mt-2">
                   <Turnstile 
-                    siteKey="0x4AAAAAADodRb51u3jJ_MQ" 
+                    siteKey="0x4AAAAAADodRb51u3jJ_MQg" 
                     onSuccess={(token) => {
                       setCaptchaToken(token)
                       setCaptchaError('')
