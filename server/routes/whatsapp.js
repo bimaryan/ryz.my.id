@@ -677,4 +677,72 @@ router.delete("/autoresponders/:id", async (req, res) => {
   }
 });
 
+/**
+ * 9. CHECKOUT NOTIFICATION (Public Endpoint for Monetization Blocks)
+ */
+router.post("/checkout-notify", async (req, res) => {
+  try {
+    const { page_owner_id, customer_phone, customer_name, product_name, total_price, custom_message_template } = req.body;
+
+    if (!page_owner_id || !customer_phone) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
+    }
+
+    // Find active session for this owner
+    const { data: session, error: sessionErr } = await supabaseAdmin
+      .from("whatsapp_sessions")
+      .select("*")
+      .eq("user_id", page_owner_id)
+      .eq("status", "connected")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (sessionErr || !session) {
+      return res.status(404).json({ success: false, error: "No connected WhatsApp session found for this creator." });
+    }
+
+    // Format message
+    let finalMessage = custom_message_template || "Halo {nama_pembeli}, terima kasih atas pesanan {nama_produk} Anda.";
+    finalMessage = finalMessage
+      .replace(/{nama_pembeli}/g, customer_name || "Kakak")
+      .replace(/{nama_produk}/g, product_name || "Produk")
+      .replace(/{total_harga}/g, total_price || "");
+
+    // Restore session if not in memory
+    let sessionData = activeSessions.get(session.id);
+    if (!sessionData) {
+      const fs = (await import("fs")).default;
+      const sessionPath = `./sessions/${session.user_id}-${session.session_id}`;
+      if (!fs.existsSync(sessionPath)) {
+        return res.status(500).json({ success: false, error: "Session local files missing." });
+      }
+      const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+      const { version } = await fetchLatestBaileysVersion();
+      const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: 'silent' }),
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
+        syncFullHistory: false,
+        generateHighQualityLinkPreview: false
+      });
+      sock.ev.on("creds.update", saveCreds);
+      sessionData = { socket: sock, state, saveCreds };
+      activeSessions.set(session.id, sessionData);
+    }
+
+    const formattedNumber = formatPhoneNumber(customer_phone);
+    await sessionData.socket.sendMessage(formattedNumber, { text: finalMessage });
+
+    console.log(`[CHECKOUT_NOTIFY] Sent to ${formattedNumber} for product ${product_name}`);
+    res.json({ success: true, message: "Notification sent." });
+
+  } catch (err) {
+    console.error("[CHECKOUT_NOTIFY] Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

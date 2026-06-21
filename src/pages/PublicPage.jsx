@@ -285,6 +285,26 @@ export default function PublicPage() {
             }
           }
 
+          // Kirim WhatsApp Notifikasi
+          if (selectedProduct.enable_whatsapp_notification && checkoutForm.phone) {
+            try {
+              fetch(`${apiUrl}/api/whatsapp/checkout-notify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  page_owner_id: page.user_id,
+                  customer_phone: checkoutForm.phone,
+                  customer_name: checkoutForm.name,
+                  product_name: selectedProduct.title,
+                  total_price: `Rp ${parseInt(grandTotal).toLocaleString('id-ID')}`,
+                  custom_message_template: selectedProduct.custom_message_text
+                })
+              }).catch(err => console.error("WA notify error:", err));
+            } catch (err) {
+              console.error("Gagal kirim WA:", err);
+            }
+          }
+
           // Redirect to track page
           setTimeout(() => {
             window.location.href = `/track/${orderData.id}`;

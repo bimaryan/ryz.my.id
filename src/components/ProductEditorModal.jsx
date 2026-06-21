@@ -663,21 +663,25 @@ export default function ProductEditorModal({ isOpen, onClose, initialData, onSav
                     Custom Message <Info className="w-4 h-4 text-slate-400" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-slate-600">Custom message on customer email</div>
+                    <div className="text-sm text-slate-600">Custom message on email & WhatsApp</div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={formData.custom_message_email || false} onChange={(e) => handleUpdate('custom_message_email', e.target.checked)} />
                       <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
                     </label>
                   </div>
                   {formData.custom_message_email && (
-                    <div className="mt-2">
+                    <div className="mt-2 space-y-2">
                       <textarea 
                         className="w-full text-sm border border-slate-300 rounded-md focus:ring-green-500 py-2 px-3 outline-none focus:border-green-500"
                         rows="3"
-                        placeholder="Terima kasih atas pesanan Anda..."
+                        placeholder="Halo {nama_pembeli}, terima kasih atas pesanan {nama_produk} Anda!"
                         value={formData.custom_message_text || ''}
                         onChange={(e) => handleUpdate('custom_message_text', e.target.value)}
                       />
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Teks ini juga akan dikirimkan lewat WhatsApp pembeli.<br/>
+                        Variabel: <code className="bg-slate-100 px-1 rounded text-[#0b5cff]">{`{nama_pembeli}`}</code> <code className="bg-slate-100 px-1 rounded text-[#0b5cff]">{`{nama_produk}`}</code> <code className="bg-slate-100 px-1 rounded text-[#0b5cff]">{`{total_harga}`}</code>
+                      </p>
                     </div>
                   )}
                 </div>
