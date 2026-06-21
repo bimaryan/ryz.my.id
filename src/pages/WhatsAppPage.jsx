@@ -10,6 +10,8 @@ import toast from "react-hot-toast";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import AutoResponderTab from "../components/whatsapp/AutoResponderTab";
 import WebhookTab from "../components/whatsapp/WebhookTab";
+import ApiKeysTab from "../components/whatsapp/ApiKeysTab";
+import ContactsTab from "../components/whatsapp/ContactsTab";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://api.ryz.my.id/api";
 
@@ -465,11 +467,13 @@ export default function WhatsAppPage() {
 
               {/* Tabs UI */}
               {selectedSession && selectedSession.status === "connected" && (
-                <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1 mb-6 overflow-x-auto">
-                  <button onClick={() => setActiveTab("send")} className={`whitespace-nowrap flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "send" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>Kirim Pesan</button>
-                  <button onClick={() => setActiveTab("history")} className={`whitespace-nowrap flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "history" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>Riwayat</button>
-                  <button onClick={() => setActiveTab("autoresponder")} className={`whitespace-nowrap flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "autoresponder" ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"}`}>Auto Responder</button>
-                  <button onClick={() => setActiveTab("webhook")} className={`whitespace-nowrap flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "webhook" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>Webhook</button>
+                <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1 mb-6 overflow-x-auto scrollbar-hide">
+                  <button onClick={() => setActiveTab("send")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "send" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>Kirim Pesan</button>
+                  <button onClick={() => setActiveTab("history")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "history" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>Riwayat</button>
+                  <button onClick={() => setActiveTab("autoresponder")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "autoresponder" ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"}`}>Auto Responder</button>
+                  <button onClick={() => setActiveTab("webhook")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "webhook" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>Webhook</button>
+                  <button onClick={() => setActiveTab("contacts")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "contacts" ? "bg-orange-50 text-orange-700" : "text-slate-600 hover:bg-slate-50"}`}>Kontak</button>
+                  <button onClick={() => setActiveTab("apikeys")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "apikeys" ? "bg-green-50 text-green-700" : "text-slate-600 hover:bg-slate-50"}`}>Developer API</button>
                 </div>
               )}
 
@@ -616,8 +620,16 @@ export default function WhatsAppPage() {
                 <AutoResponderTab sessionId={selectedSession.id} userId={user?.id} apiUrl={API_URL} />
               )}
 
-              {selectedSession && selectedSession.status === "connected" && activeTab === "webhook" && (
+              {activeTab === "webhook" && selectedSession?.status === "connected" && (
                 <WebhookTab sessionId={selectedSession.id} userId={user?.id} apiUrl={API_URL} />
+              )}
+
+              {activeTab === "apikeys" && selectedSession?.status === "connected" && (
+                <ApiKeysTab user={user} API_URL={API_URL} />
+              )}
+
+              {activeTab === "contacts" && selectedSession?.status === "connected" && (
+                <ContactsTab user={user} API_URL={API_URL} />
               )}
             </div>
           </div>

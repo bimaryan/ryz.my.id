@@ -11,6 +11,7 @@ import fs from "fs";
 import path from "path";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -741,6 +742,170 @@ router.post("/checkout-notify", async (req, res) => {
 
   } catch (err) {
     console.error("[CHECKOUT_NOTIFY] Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// 🚀 DEVELOPER API (SAAS) & API KEYS
+// ==========================================
+
+router.get("/api-keys/:user_id", async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from("whatsapp_api_keys").select("*").eq("user_id", req.params.user_id).order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/api-keys", async (req, res) => {
+  try {
+    const { user_id, name } = req.body;
+    if (!user_id || !name) return res.status(400).json({ success: false, error: "user_id and name required" });
+    
+    const apiKey = "ryz_" + crypto.randomBytes(24).toString("hex");
+    
+    const { data, error } = await supabaseAdmin.from("whatsapp_api_keys").insert({ user_id, name, api_key: apiKey }).select().single();
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete("/api-keys/:id", async (req, res) => {
+  try {
+    const { error } = await supabaseAdmin.from("whatsapp_api_keys").delete().eq("id", req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * 📡 PUBLIC DEVELOPER API ENDPOINT
+ * Endpoint: POST /api/whatsapp/v1/send-message
+ * Headers: { Authorization: "Bearer ryz_..." }
+ * Body: { "to": "0812...", "message": "Hello from API!", "session_id": "optional" }
+ */
+router.post("/v1/send-message", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, error: "Unauthorized. Missing or invalid Bearer Token." });
+    }
+    const apiKey = authHeader.split(" ")[1];
+
+    // Verify API Key
+    const { data: keyData, error: keyError } = await supabaseAdmin.from("whatsapp_api_keys").select("user_id, id").eq("api_key", apiKey).single();
+    if (keyError || !keyData) {
+      return res.status(401).json({ success: false, error: "Invalid API Key." });
+    }
+
+    // Update last_used_at async (don't await)
+    supabaseAdmin.from("whatsapp_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", keyData.id).then();
+
+    const { to, message, media_url, session_id } = req.body;
+    if (!to || (!message && !media_url)) {
+      return res.status(400).json({ success: false, error: "'to' and ('message' or 'media_url') are required." });
+    }
+
+    // Find a connected session
+    let query = supabaseAdmin.from("whatsapp_sessions").select("*").eq("user_id", keyData.user_id).eq("status", "connected");
+    if (session_id) query = query.eq("session_id", session_id);
+    
+    const { data: sessions, error: sessionErr } = await query;
+    if (sessionErr || !sessions || sessions.length === 0) {
+       return res.status(400).json({ success: false, error: "No connected WhatsApp session found." });
+    }
+    
+    const session = sessions[0];
+    
+    // Restore session if not in memory
+    let sessionData = activeSessions.get(session.id);
+    if (!sessionData) {
+      const fs = (await import("fs")).default;
+      const sessionPath = `./sessions/${session.user_id}-${session.session_id}`;
+      if (!fs.existsSync(sessionPath)) {
+        return res.status(500).json({ success: false, error: "Session local files missing. Please scan QR again." });
+      }
+      const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+      const { version } = await fetchLatestBaileysVersion();
+      const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: 'silent' }),
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
+        syncFullHistory: false,
+        generateHighQualityLinkPreview: false
+      });
+      sock.ev.on("creds.update", saveCreds);
+      sessionData = { socket: sock, state, saveCreds };
+      activeSessions.set(session.id, sessionData);
+    }
+
+    const sock = sessionData.socket;
+    const recipientJid = formatPhoneNumber(to);
+    
+    let msgOptions = {};
+    if (media_url) {
+       msgOptions = { image: { url: media_url }, caption: message || "" };
+    } else {
+       msgOptions = { text: message };
+    }
+
+    const sendRes = await sock.sendMessage(recipientJid, msgOptions);
+    return res.json({ success: true, message: "Message sent successfully.", data: { to: recipientJid, message_id: sendRes?.key?.id } });
+  } catch (err) {
+    console.error("[DEV_API_SEND] Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// 📇 CONTACT MANAGEMENT
+// ==========================================
+
+router.get("/contacts/:user_id", async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from("whatsapp_contacts").select("*").eq("user_id", req.params.user_id).order("name", { ascending: true });
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/contacts", async (req, res) => {
+  try {
+    const { user_id, name, phone } = req.body;
+    if (!user_id || !name || !phone) return res.status(400).json({ success: false, error: "user_id, name, and phone required" });
+    
+    // basic cleanup
+    let cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
+    
+    const { data, error } = await supabaseAdmin.from("whatsapp_contacts").insert({ user_id, name, phone: cleanPhone }).select().single();
+    if (error) {
+       if (error.code === '23505') return res.status(400).json({ success: false, error: "Contact with this phone number already exists." });
+       throw error;
+    }
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete("/contacts/:id", async (req, res) => {
+  try {
+    const { error } = await supabaseAdmin.from("whatsapp_contacts").delete().eq("id", req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
