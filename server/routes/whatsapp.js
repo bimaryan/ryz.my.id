@@ -220,6 +220,8 @@ router.post("/create-session", async (req, res) => {
           let textMsg = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
           if (!textMsg) return;
 
+          console.log(`\n[WHATSAPP_MSG] 📩 Pesan masuk dari ${remoteJid}: "${textMsg}"`);
+
           // 1. Auto Responder
           const { data: autoResponders } = await supabaseAdmin
             .from("whatsapp_autoresponders")
@@ -291,9 +293,11 @@ Jangan tambahkan kalimat pengantar seperti "Tentu" atau "Ini jawabannya", langsu
             if (!isHandled) {
               const aiBotRule = autoResponders.find(r => r.keyword === '*');
               if (aiBotRule) {
+                console.log(`[FULL_AI_BOT] 🤖 Memproses pesan dengan AI Bot (Catch-all)...`);
                 try {
                   const groqApiKey = process.env.GROQ_API_KEY;
                   if (groqApiKey) {
+                    console.log(`[FULL_AI_BOT] Memanggil API Groq...`);
                     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                       method: 'POST',
                       headers: {
@@ -314,11 +318,19 @@ Jangan tambahkan kalimat pengantar seperti "Tentu" atau "Ini jawabannya", langsu
                       })
                     });
                     const groqData = await groqRes.json();
-                    if (groqData.choices && groqData.choices.length > 0) {
+                    
+                    if (groqData.error) {
+                      console.error(`[FULL_AI_BOT] Groq API Error:`, groqData.error);
+                    } else if (groqData.choices && groqData.choices.length > 0) {
                       const finalMessage = groqData.choices[0].message.content.trim();
+                      console.log(`[FULL_AI_BOT] ✅ Mengirim balasan: "${finalMessage}"`);
                       await sock.sendMessage(remoteJid, { text: finalMessage });
                       isHandled = true;
+                    } else {
+                      console.log(`[FULL_AI_BOT] ⚠️ Respon API Groq kosong atau tidak terduga:`, groqData);
                     }
+                  } else {
+                    console.log(`[FULL_AI_BOT] ⚠️ GROQ_API_KEY tidak ditemukan di environment!`);
                   }
                 } catch (aiErr) {
                   console.error("[FULL_AI_BOT] AI Error:", aiErr);
