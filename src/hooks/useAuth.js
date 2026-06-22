@@ -164,12 +164,13 @@ export function useAuth() {
     }
   }, [])
 
-  const resetPassword = useCallback(async (email) => {
+  const resetPassword = useCallback(async (email, captchaToken) => {
     setIsLoading(true)
     setError(null)
     try {
       const { data, error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
+        captchaToken,
       })
       if (resetError) throw resetError
       return { success: true, data }

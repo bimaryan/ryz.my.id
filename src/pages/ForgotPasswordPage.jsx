@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/hooks/useAuth'
+import { Turnstile } from '@marsidev/react-turnstile'
 import SEO from '@/components/SEO'
 
 const forgotPasswordSchema = z.object({
@@ -14,6 +15,8 @@ export default function ForgotPasswordPage() {
   const { resetPassword, isLoading, error: authError } = useAuth()
   const [serverError, setServerError] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
+  const [captchaToken, setCaptchaToken] = useState(null)
+  const [captchaError, setCaptchaError] = useState('')
 
   const {
     register,
@@ -24,9 +27,15 @@ export default function ForgotPasswordPage() {
   })
 
   const onSubmit = async (data) => {
+    if (!captchaToken) {
+      setCaptchaError('Mohon selesaikan verifikasi keamanan (CAPTCHA).')
+      return
+    }
     setServerError(null)
     setSuccessMessage(null)
-    const result = await resetPassword(data.email)
+    setCaptchaError('')
+
+    const result = await resetPassword(data.email, captchaToken)
     
     if (result.success) {
       setSuccessMessage('Instruksi untuk mengatur ulang kata sandi telah dikirim ke email Anda.')
@@ -75,6 +84,18 @@ export default function ForgotPasswordPage() {
                   className="w-full bg-slate-50 border border-slate-200 focus:border-[#0b5cff] focus:bg-white focus:ring-4 focus:ring-[#0b5cff]/10 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 transition-all outline-none"
                 />
                 {errors.email && <p className="text-sm font-medium text-red-500 mt-1">{errors.email.message}</p>}
+              </div>
+
+              <div className="flex flex-col items-center mt-4">
+                <Turnstile 
+                  siteKey="0x4AAAAAADodRb51u3jJ_MQg" 
+                  onSuccess={(token) => {
+                    setCaptchaToken(token)
+                    setCaptchaError('')
+                  }} 
+                  options={{ theme: 'light' }}
+                />
+                {captchaError && <p className="text-sm font-medium text-red-500 mt-2">{captchaError}</p>}
               </div>
 
               {(authError || serverError) && (
