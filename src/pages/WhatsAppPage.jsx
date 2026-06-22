@@ -46,12 +46,27 @@ export default function WhatsAppPage() {
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [activeTab, setActiveTab] = useState("send");
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [usageStats, setUsageStats] = useState(null);
 
   useEffect(() => {
     if (user) {
       loadSessions();
+      loadUsage();
     }
   }, [user]);
+
+  const loadUsage = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${API_URL}/whatsapp/usage/${user.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setUsageStats(data.data);
+      }
+    } catch (err) {
+      console.error("[LOAD_USAGE] Error:", err);
+    }
+  };
 
   // ✅ IMPROVED: More aggressive QR polling (every 1 second)
   useEffect(() => {
@@ -373,6 +388,7 @@ export default function WhatsAppPage() {
         setAudioBlob(null);
         setRecordingTime(0);
         await loadMessages(selectedSession.id);
+        await loadUsage(); // Refresh usage
       } else {
         toast.error(data.error || "Gagal mengirim pesan");
       }
@@ -487,6 +503,34 @@ export default function WhatsAppPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Sidebar: Kuota Pesan */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mt-6">
+                <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <LucideIcons.BarChart2 className="w-5 h-5" /> Kuota Pesan
+                </h2>
+                {usageStats ? (
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium text-slate-700">Terpakai</span>
+                      <span className="font-bold text-slate-900">{usageStats.messages_sent} / {usageStats.messages_limit}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2.5">
+                      <div 
+                        className={`h-2.5 rounded-full ${usageStats.messages_sent >= usageStats.messages_limit ? 'bg-red-500' : 'bg-blue-600'}`} 
+                        style={{ width: `${Math.min((usageStats.messages_sent / usageStats.messages_limit) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      Reset kuota pada: {new Date(usageStats.end_date).toLocaleDateString('id-ID')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-500 text-center py-2">
+                    Memuat kuota...
+                  </div>
+                )}
               </div>
             </div>
 
@@ -661,7 +705,7 @@ export default function WhatsAppPage() {
 
                     <button
                       type="submit"
-                      disabled={sending}
+                      disabled={sending || (usageStats && usageStats.messages_sent >= usageStats.messages_limit)}
                       className="w-full bg-green-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-green-700"
                     >
                       {sending ? (

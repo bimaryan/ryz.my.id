@@ -13,6 +13,7 @@ import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import multer from "multer";
+import { checkUsage, incrementUsage, getUsageStats } from "../services/whatsappUsage.js";
 
 dotenv.config();
 
@@ -28,6 +29,19 @@ const router = express.Router();
 
 // Map untuk menyimpan active sessions (di memori)
 const activeSessions = new Map();
+
+/**
+ * 0. Dapatkan Usage Stats
+ * GET /api/whatsapp/usage/:userId
+ */
+router.get("/usage/:userId", async (req, res) => {
+  try {
+    const stats = await getUsageStats(req.params.userId);
+    res.json({ success: true, data: stats });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 /**
  * Helper: Format nomor WhatsApp
@@ -284,7 +298,11 @@ Jangan tambahkan kalimat pengantar seperti "Tentu" atau "Ini jawabannya", langsu
                   console.error("[AUTO_RESPONDER] AI Error:", aiErr);
                 }
 
-                await sock.sendMessage(remoteJid, { text: finalMessage });
+                const usageCheck = await checkUsage(user_id, 1);
+                if (usageCheck.allowed) {
+                  await sock.sendMessage(remoteJid, { text: finalMessage });
+                  await incrementUsage(user_id, 1);
+                }
                 break; 
               }
             }
@@ -324,7 +342,11 @@ Jangan tambahkan kalimat pengantar seperti "Tentu" atau "Ini jawabannya", langsu
                     } else if (groqData.choices && groqData.choices.length > 0) {
                       const finalMessage = groqData.choices[0].message.content.trim();
                       console.log(`[FULL_AI_BOT] ✅ Mengirim balasan: "${finalMessage}"`);
-                      await sock.sendMessage(remoteJid, { text: finalMessage });
+                      const usageCheck = await checkUsage(user_id, 1);
+                      if (usageCheck.allowed) {
+                        await sock.sendMessage(remoteJid, { text: finalMessage });
+                        await incrementUsage(user_id, 1);
+                      }
                       isHandled = true;
                     } else {
                       console.log(`[FULL_AI_BOT] ⚠️ Respon API Groq kosong atau tidak terduga:`, groqData);
@@ -446,6 +468,11 @@ router.post("/send-message", upload.single('media_file'), async (req, res) => {
       });
     }
 
+    const usageCheck = await checkUsage(user_id, 1);
+    if (!usageCheck.allowed) {
+      return res.status(403).json({ success: false, error: usageCheck.error });
+    }
+
     const { data: session, error: sessionError } = await supabaseAdmin
       .from("whatsapp_sessions")
       .select("*")
@@ -561,6 +588,8 @@ router.post("/send-message", upload.single('media_file'), async (req, res) => {
         sent_at: new Date(),
       })
       .eq("id", dbMessage.id);
+
+    await incrementUsage(user_id, 1);
 
     res.json({
       success: true,
@@ -838,8 +867,14 @@ router.post("/checkout-notify", async (req, res) => {
       activeSessions.set(session.id, sessionData);
     }
 
+    const usageCheck = await checkUsage(page_owner_id, 1);
+    if (!usageCheck.allowed) {
+      return res.status(403).json({ success: false, error: usageCheck.error });
+    }
+
     const formattedNumber = formatPhoneNumber(customer_phone);
     await sessionData.socket.sendMessage(formattedNumber, { text: finalMessage });
+    await incrementUsage(page_owner_id, 1);
 
     console.log(`[CHECKOUT_NOTIFY] Sent to ${formattedNumber} for product ${product_name}`);
     res.json({ success: true, message: "Notification sent." });
@@ -962,7 +997,14 @@ router.post("/v1/send-message", async (req, res) => {
        msgOptions = { text: message };
     }
 
+    const usageCheck = await checkUsage(keyData.user_id, 1);
+    if (!usageCheck.allowed) {
+      return res.status(403).json({ success: false, error: usageCheck.error });
+    }
+
     const sendRes = await sock.sendMessage(recipientJid, msgOptions);
+    await incrementUsage(keyData.user_id, 1);
+    
     return res.json({ success: true, message: "Message sent successfully.", data: { to: recipientJid, message_id: sendRes?.key?.id } });
   } catch (err) {
     console.error("[DEV_API_SEND] Error:", err);
@@ -1125,6 +1167,11 @@ router.post("/broadcasts", async (req, res) => {
       return res.status(400).json({ success: false, error: "Tidak ada kontak yang ditemukan untuk target ini." });
     }
 
+    const usageCheck = await checkUsage(user_id, contacts.length);
+    if (!usageCheck.allowed) {
+      return res.status(403).json({ success: false, error: usageCheck.error });
+    }
+
     // Insert broadcast record
     const { data: broadcast, error: insertErr } = await supabaseAdmin.from("whatsapp_broadcasts").insert({
       user_id,
@@ -1154,6 +1201,10 @@ router.post("/broadcasts", async (req, res) => {
         } catch (e) {
           failedCount++;
         }
+      }
+
+      if (sentCount > 0) {
+        await incrementUsage(user_id, sentCount);
       }
 
       // Update broadcast record when done
