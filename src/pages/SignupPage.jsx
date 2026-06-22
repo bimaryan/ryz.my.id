@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -40,6 +40,7 @@ export default function SignupPage() {
   // Cloudflare Turnstile state
   const [captchaToken, setCaptchaToken] = useState(null)
   const [captchaError, setCaptchaError] = useState('')
+  const turnstileRef = useRef(null)
 
   const {
     register,
@@ -72,6 +73,10 @@ export default function SignupPage() {
       await supabase.auth.signOut()
       setSuccessMessage('Pendaftaran berhasil! Silakan cek email Anda untuk memverifikasi akun.')
     } else {
+      // Reset captcha when there is an error
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
+
       if (result.error?.includes('rate limit')) {
         setServerError('Terlalu banyak percobaan. Silakan coba lagi nanti.')
       } else {
@@ -206,6 +211,7 @@ export default function SignupPage() {
 
                 <div className="flex flex-col items-center mt-2">
                   <Turnstile 
+                    ref={turnstileRef}
                     siteKey="0x4AAAAAADodRb51u3jJ_MQg" 
                     onSuccess={(token) => {
                       setCaptchaToken(token)

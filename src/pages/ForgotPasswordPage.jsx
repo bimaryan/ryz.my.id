@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,6 +17,7 @@ export default function ForgotPasswordPage() {
   const [successMessage, setSuccessMessage] = useState(null)
   const [captchaToken, setCaptchaToken] = useState(null)
   const [captchaError, setCaptchaError] = useState('')
+  const turnstileRef = useRef(null)
 
   const {
     register,
@@ -40,6 +41,10 @@ export default function ForgotPasswordPage() {
     if (result.success) {
       setSuccessMessage('Instruksi untuk mengatur ulang kata sandi telah dikirim ke email Anda.')
     } else {
+      // Reset captcha when there is an error
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
+      
       setServerError(result.error)
     }
   }
@@ -88,6 +93,7 @@ export default function ForgotPasswordPage() {
 
               <div className="flex flex-col items-center mt-4">
                 <Turnstile 
+                  ref={turnstileRef}
                   siteKey="0x4AAAAAADodRb51u3jJ_MQg" 
                   onSuccess={(token) => {
                     setCaptchaToken(token)
