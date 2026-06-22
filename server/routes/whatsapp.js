@@ -1067,10 +1067,40 @@ router.post("/broadcasts", async (req, res) => {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
 
-    const sock = getSession(session_id);
-    if (!sock) {
-      return res.status(400).json({ success: false, error: "WhatsApp Session is not active" });
+    const { data: session, error: sessionErr } = await supabaseAdmin
+      .from("whatsapp_sessions")
+      .select("*")
+      .eq("id", session_id)
+      .single();
+
+    if (sessionErr || !session || session.status !== "connected") {
+      return res.status(400).json({ success: false, error: "WhatsApp Session is not active or connected" });
     }
+
+    let sessionData = activeSessions.get(session.id);
+    if (!sessionData) {
+      const fs = (await import("fs")).default;
+      const sessionPath = `./sessions/${session.user_id}-${session.session_id}`;
+      if (!fs.existsSync(sessionPath)) {
+        return res.status(500).json({ success: false, error: "Session local files missing. Please scan QR again." });
+      }
+      const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+      const { version } = await fetchLatestBaileysVersion();
+      const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: 'silent' }),
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
+        syncFullHistory: false,
+        generateHighQualityLinkPreview: false
+      });
+      sock.ev.on("creds.update", saveCreds);
+      sessionData = { socket: sock, state, saveCreds };
+      activeSessions.set(session.id, sessionData);
+    }
+
+    const sock = sessionData.socket;
 
     // Fetch targets
     let query = supabaseAdmin.from("whatsapp_contacts").select("phone").eq("user_id", user_id);
