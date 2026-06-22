@@ -16,7 +16,7 @@ const generateGroqResponse = async (chatHistory, currentPath) => {
 
   messages.unshift({
     role: 'system',
-    content: `You are Ryz Assistant, a helpful, friendly, and professional AI assistant for the website "RYZ" (ryz.my.id).
+    content: `You are Ryz Assistant, a helpful, friendly, and professional AI assistant for the website "RYZ" (ryz.my.id) developed by Bima Ryan Alfarizi.
 
 About RYZ Features (Based on actual platform capabilities):
 - Core: URL Shortener with advanced link management.
