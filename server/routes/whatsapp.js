@@ -238,7 +238,46 @@ router.post("/create-session", async (req, res) => {
               else if (rule.match_type === "starts_with" && lowerText.startsWith(keyword)) isMatch = true;
 
               if (isMatch) {
-                await sock.sendMessage(remoteJid, { text: rule.reply_message });
+                let finalMessage = rule.reply_message;
+                
+                // AI Rephrasing to make response sound natural
+                try {
+                  const groqApiKey = process.env.GROQ_API_KEY;
+                  if (groqApiKey) {
+                    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${groqApiKey}`
+                      },
+                      body: JSON.stringify({
+                        model: 'llama-3.1-8b-instant',
+                        messages: [
+                          { 
+                            role: 'system', 
+                            content: `Anda adalah AI Customer Service WhatsApp. Anda harus merespon pesan secara natural, ramah, dan profesional seperti manusia asli (bukan bot kaku).
+Berdasarkan aturan sistem, informasi/inti jawaban yang harus Anda sampaikan adalah: "${rule.reply_message}"
+
+Tugas Anda: 
+Jawab pesan pelanggan berikut dengan gaya bahasa yang luwes dan nyambung, namun pastikan pesan inti di atas tetap tersampaikan. 
+Jangan tambahkan kalimat pengantar seperti "Tentu" atau "Ini jawabannya", langsung berikan balasan akhirnya saja.`
+                          },
+                          { role: 'user', content: `Pesan pelanggan: "${textMsg}"` }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 500,
+                      })
+                    });
+                    const groqData = await groqRes.json();
+                    if (groqData.choices && groqData.choices.length > 0) {
+                      finalMessage = groqData.choices[0].message.content.trim();
+                    }
+                  }
+                } catch (aiErr) {
+                  console.error("[AUTO_RESPONDER] AI Error:", aiErr);
+                }
+
+                await sock.sendMessage(remoteJid, { text: finalMessage });
                 break; 
               }
             }

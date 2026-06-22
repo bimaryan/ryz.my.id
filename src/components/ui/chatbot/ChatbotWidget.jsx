@@ -2,9 +2,15 @@ import React, { useState } from 'react';
 import { MessageSquare, X } from 'lucide-react';
 import { ChatWindow } from './ChatWindow';
 import { clsx } from 'clsx';
+import { useLocation } from 'react-router-dom';
 
 export const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+
+  const isHidden = /^\/f\/|^\/dashboard\/forms\/[^/]+\/edit/.test(location.pathname);
+
+  if (isHidden) return null;
 
   return (
     <>

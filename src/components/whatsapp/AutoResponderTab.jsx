@@ -12,6 +12,19 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
   const [replyMessage, setReplyMessage] = useState("");
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
 
+  const templates = [
+    { label: "Sapaan", keyword: "halo", matchType: "exact", replyMessage: "Halo! Ada yang bisa kami bantu? Silakan balas pesan ini untuk informasi lebih lanjut." },
+    { label: "Harga", keyword: "harga", matchType: "contains", replyMessage: "Berikut adalah informasi harga layanan kami:\n1. Paket Basic\n2. Paket Pro\n\nUntuk detail lebih lanjut, silakan kunjungi website kami." },
+    { label: "Lokasi", keyword: "lokasi", matchType: "contains", replyMessage: "Kantor kami berlokasi di pusat kota. Jam operasional: Senin - Jumat (09:00 - 17:00)." },
+    { label: "Terima Kasih", keyword: "terima kasih", matchType: "contains", replyMessage: "Sama-sama! Senang bisa membantu Anda. Jangan ragu menghubungi kami lagi." }
+  ];
+
+  const applyTemplate = (t) => {
+    setKeyword(t.keyword);
+    setMatchType(t.matchType);
+    setReplyMessage(t.replyMessage);
+  };
+
   const loadRules = async () => {
     try {
       setLoading(true);
@@ -85,6 +98,23 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
       
       <form onSubmit={handleSubmit} className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
         <h3 className="text-sm font-semibold text-slate-700 mb-3">Tambah Rule Baru</h3>
+
+        <div className="mb-4">
+          <p className="text-xs font-medium text-slate-600 mb-2">Gunakan Template Cepat:</p>
+          <div className="flex flex-wrap gap-2">
+            {templates.map((t, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => applyTemplate(t)}
+                className="px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md text-slate-700 hover:border-purple-400 hover:text-purple-700 hover:bg-purple-50 transition-colors shadow-sm"
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">Kata Kunci (Keyword)</label>

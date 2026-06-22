@@ -12,6 +12,8 @@ import AutoResponderTab from "../components/whatsapp/AutoResponderTab";
 import WebhookTab from "../components/whatsapp/WebhookTab";
 import ApiKeysTab from "../components/whatsapp/ApiKeysTab";
 import ContactsTab from "../components/whatsapp/ContactsTab";
+import BroadcastTab from "../components/whatsapp/BroadcastTab";
+import AiWriterModal from "../components/whatsapp/AiWriterModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://api.ryz.my.id/api";
 
@@ -20,6 +22,8 @@ export default function WhatsAppPage() {
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotalPages, setHistoryTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [sessionName, setSessionName] = useState("");
   const [recipient, setRecipient] = useState("");
@@ -41,6 +45,7 @@ export default function WhatsAppPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [activeTab, setActiveTab] = useState("send");
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -108,14 +113,22 @@ export default function WhatsAppPage() {
     }
   };
 
-  const loadMessages = async (sessionId) => {
+  const loadMessages = async (sessionId, page = 1) => {
     try {
       const res = await fetch(
-        `${API_URL}/whatsapp/messages/${user.id}?page=1&limit=20`
+        `${API_URL}/whatsapp/messages/${user.id}?page=${page}&limit=10`
       );
       const data = await res.json();
       if (data.success) {
         setMessages(data.data);
+        if (data.pagination) {
+          setHistoryPage(data.pagination.page || page);
+          setHistoryTotalPages(data.pagination.total_pages || 1);
+        } else {
+          // Fallback if backend doesn't return pagination metadata
+          setHistoryPage(page);
+          setHistoryTotalPages(data.data.length === 10 ? page + 1 : page);
+        }
       }
     } catch (err) {
       console.error("[LOAD_MESSAGES] Error:", err);
@@ -562,6 +575,7 @@ export default function WhatsAppPage() {
                 <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1 mb-6 overflow-x-auto scrollbar-hide">
                   <button onClick={() => setActiveTab("send")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "send" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>Kirim Pesan</button>
                   <button onClick={() => setActiveTab("history")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "history" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>Riwayat</button>
+                  <button onClick={() => setActiveTab("broadcast")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "broadcast" ? "bg-red-50 text-red-700" : "text-slate-600 hover:bg-slate-50"}`}>Broadcast</button>
                   <button onClick={() => setActiveTab("autoresponder")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "autoresponder" ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"}`}>Auto Responder</button>
                   <button onClick={() => setActiveTab("webhook")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "webhook" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>Webhook</button>
                   <button onClick={() => setActiveTab("contacts")} className={`whitespace-nowrap py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "contacts" ? "bg-orange-50 text-orange-700" : "text-slate-600 hover:bg-slate-50"}`}>Kontak</button>
@@ -604,50 +618,10 @@ export default function WhatsAppPage() {
                         <option value="image">Gambar</option>
                         <option value="document">Dokumen (PDF)</option>
                         <option value="video">Video</option>
-                        <option value="audio">Audio / Voice Note</option>
                       </select>
                     </div>
 
-                    {messageType === "audio" ? (
-                      <div className="border border-slate-300 rounded-lg p-4 bg-slate-50">
-                        <label className="block text-sm font-medium text-slate-700 mb-3">
-                          Voice Note / Rekaman Suara
-                        </label>
-                        {!isRecording && !audioBlob && (
-                          <div className="flex gap-3 items-center">
-                            <button type="button" onClick={startRecording} className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg font-medium transition-colors">
-                              <LucideIcons.Mic className="w-5 h-5" /> Mulai Merekam
-                            </button>
-                            <span className="text-sm text-slate-400">atau</span>
-                            <input
-                              type="file"
-                              accept="audio/*"
-                              className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                              onChange={(e) => setMediaFile(e.target.files[0])}
-                            />
-                          </div>
-                        )}
-                        {isRecording && (
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2 text-red-600 animate-pulse">
-                              <span className="w-3 h-3 bg-red-600 rounded-full"></span>
-                              <span className="font-mono font-medium">{formatTime(recordingTime)}</span>
-                            </div>
-                            <button type="button" onClick={stopRecording} className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-sm">
-                              Berhenti Merekam
-                            </button>
-                          </div>
-                        )}
-                        {audioBlob && !isRecording && (
-                          <div className="flex items-center gap-4 bg-white p-2 border border-slate-200 rounded-lg">
-                            <audio src={URL.createObjectURL(audioBlob)} controls className="h-10 w-full max-w-xs" />
-                            <button type="button" onClick={discardRecording} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Hapus rekaman">
-                              <LucideIcons.Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ) : messageType !== "text" ? (
+                    {messageType !== "text" ? (
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">
                           Unggah File Media ({messageType})
@@ -663,9 +637,18 @@ export default function WhatsAppPage() {
                     ) : null}
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">
-                        Isi Pesan {messageType !== 'text' && '(Opsional / Caption)'}
-                      </label>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-sm font-medium text-slate-700">
+                          Isi Pesan {messageType !== 'text' && '(Opsional / Caption)'}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsAiModalOpen(true)}
+                          className="text-xs flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-md hover:bg-purple-200 font-medium transition-colors"
+                        >
+                          <LucideIcons.Sparkles className="w-3 h-3" /> AI Writer
+                        </button>
+                      </div>
                       <textarea
                         placeholder="Tulis pesan Anda disini..."
                         rows={4}
@@ -700,49 +683,99 @@ export default function WhatsAppPage() {
               {/* Riwayat Pesan */}
               {selectedSession && selectedSession.status === "connected" && activeTab === "history" && (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h2 className="text-lg font-bold text-slate-900 mb-4">
-                  Riwayat Pesan
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    Riwayat Pesan
+                  </h2>
+                  <button onClick={() => loadMessages(selectedSession.id, 1)} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                    <LucideIcons.RefreshCw className="w-4 h-4" /> Refresh
+                  </button>
+                </div>
 
                 {messages.length === 0 ? (
                   <p className="text-slate-500 text-center py-8">
                     Belum ada pesan
                   </p>
                 ) : (
-                  <div className="space-y-3">
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className="flex gap-3 p-3 rounded-lg bg-slate-50"
-                      >
-                        <LucideIcons.MessageCircle className="w-5 h-5 text-slate-400 mt-1 flex-shrink-0" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-slate-900">
-                              {msg.recipient}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded text-xs ${
-                                msg.status === "sent"
-                                  ? "bg-green-100 text-green-700"
-                                  : msg.status === "failed"
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-yellow-100 text-yellow-700"
-                              }`}
-                            >
-                              {msg.status}
-                            </span>
+                  <>
+                    <div className="space-y-3 mb-4">
+                      {messages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className="flex gap-3 p-4 rounded-lg bg-slate-50 border border-slate-100"
+                        >
+                          {msg.message_type === 'image' ? <LucideIcons.Image className="w-5 h-5 text-blue-400 mt-1 flex-shrink-0" /> :
+                           msg.message_type === 'video' ? <LucideIcons.Video className="w-5 h-5 text-purple-400 mt-1 flex-shrink-0" /> :
+                           msg.message_type === 'audio' ? <LucideIcons.Mic className="w-5 h-5 text-orange-400 mt-1 flex-shrink-0" /> :
+                           msg.message_type === 'document' ? <LucideIcons.FileText className="w-5 h-5 text-emerald-400 mt-1 flex-shrink-0" /> :
+                           <LucideIcons.MessageCircle className="w-5 h-5 text-slate-400 mt-1 flex-shrink-0" />}
+                          
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-slate-900">
+                                {msg.recipient}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                                  msg.status === "sent"
+                                    ? "bg-green-100 text-green-700 border border-green-200"
+                                    : msg.status === "failed"
+                                      ? "bg-red-100 text-red-700 border border-red-200"
+                                      : "bg-yellow-100 text-yellow-700 border border-yellow-200"
+                                }`}
+                              >
+                                {msg.status}
+                              </span>
+                              <span className="text-xs text-slate-400 px-1 bg-white border border-slate-200 rounded uppercase">{msg.message_type || 'text'}</span>
+                            </div>
+                            
+                            <p className="text-sm text-slate-700 whitespace-pre-wrap mt-1">
+                              {msg.message_content || (msg.media_url ? "Media Message" : "-")}
+                            </p>
+                            
+                            {msg.media_url && (
+                              <a href={msg.media_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline mt-2 inline-block font-medium">
+                                📎 Lihat Lampiran
+                              </a>
+                            )}
+
+                            {msg.error_message && (
+                              <div className="mt-2 p-2 bg-red-50 text-red-600 text-xs rounded border border-red-100 flex items-start gap-1">
+                                <LucideIcons.AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                <span>{msg.error_message}</span>
+                              </div>
+                            )}
+
+                            <div className="flex justify-between items-center mt-2">
+                              <p className="text-xs text-slate-500 font-medium">
+                                {new Date(msg.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-sm text-slate-700 line-clamp-2">
-                            {msg.message_content}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            {new Date(msg.created_at).toLocaleString("id-ID")}
-                          </p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                      <button
+                        onClick={() => loadMessages(selectedSession.id, historyPage - 1)}
+                        disabled={historyPage <= 1}
+                        className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-slate-50"
+                      >
+                        Sebelumnya
+                      </button>
+                      <span className="text-sm font-medium text-slate-600">
+                        Halaman {historyPage} dari {historyTotalPages}
+                      </span>
+                      <button
+                        onClick={() => loadMessages(selectedSession.id, historyPage + 1)}
+                        disabled={historyPage >= historyTotalPages}
+                        className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-slate-50"
+                      >
+                        Selanjutnya
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
               )}
@@ -762,6 +795,10 @@ export default function WhatsAppPage() {
               {activeTab === "contacts" && selectedSession?.status === "connected" && (
                 <ContactsTab user={user} API_URL={API_URL} />
               )}
+
+              {activeTab === "broadcast" && selectedSession?.status === "connected" && (
+                <BroadcastTab sessionId={selectedSession.id} userId={user?.id} API_URL={API_URL} />
+              )}
             </div>
           </div>
         </div>
@@ -774,6 +811,12 @@ export default function WhatsAppPage() {
         message="Apakah Anda yakin ingin menghapus session ini? Tindakan ini tidak dapat dibatalkan."
         confirmText="Hapus"
         cancelText="Batal"
+      />
+
+      <AiWriterModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        onApply={(text) => setMessageContent(text)}
       />
     </DashboardLayout>
   );
