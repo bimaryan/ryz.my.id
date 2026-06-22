@@ -8,12 +8,68 @@ export default function ContactsTab({ user, API_URL }) {
   const [search, setSearch] = useState("");
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [groups, setGroups] = useState([]);
+  const [newGroupName, setNewGroupName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
+  const [deleteGroupModal, setDeleteGroupModal] = useState({ isOpen: false, id: null });
 
   useEffect(() => {
-    if (user) loadContacts();
+    if (user) {
+      loadContacts();
+      loadGroups();
+    }
   }, [user]);
+
+  const loadGroups = async () => {
+    try {
+      const res = await fetch(`${API_URL}/whatsapp/contact-groups/${user.id}`);
+      const data = await res.json();
+      if (data.success) setGroups(data.data);
+    } catch (err) {
+      console.error("Error loading groups:", err);
+    }
+  };
+
+  const handleAddGroup = async (e) => {
+    e.preventDefault();
+    if (!newGroupName.trim()) return;
+    try {
+      const res = await fetch(`${API_URL}/whatsapp/contact-groups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id, name: newGroupName.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Grup berhasil dibuat!");
+        setNewGroupName("");
+        loadGroups();
+      } else {
+        toast.error("Gagal membuat grup");
+      }
+    } catch (err) {
+      toast.error("Terjadi kesalahan");
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!deleteGroupModal.id) return;
+    try {
+      const res = await fetch(`${API_URL}/whatsapp/contact-groups/${deleteGroupModal.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Grup dihapus");
+        loadGroups();
+        loadContacts(); // Refresh contacts as they might lose group_id constraint (or cascade delete)
+      }
+    } catch (err) {
+      toast.error("Gagal menghapus grup");
+    } finally {
+      setDeleteGroupModal({ isOpen: false, id: null });
+    }
+  };
 
   const loadContacts = async () => {
     try {
@@ -33,10 +89,13 @@ export default function ContactsTab({ user, API_URL }) {
 
     setIsLoading(true);
     try {
+      const payload = { user_id: user.id, name: newName.trim(), phone: newPhone.trim() };
+      if (selectedGroupId) payload.group_id = selectedGroupId;
+
       const res = await fetch(`${API_URL}/whatsapp/contacts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.id, name: newName.trim(), phone: newPhone.trim() }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
@@ -105,6 +164,19 @@ export default function ContactsTab({ user, API_URL }) {
             required
           />
         </div>
+        <div className="flex-1">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Grup (Opsional)</label>
+          <select
+            value={selectedGroupId}
+            onChange={(e) => setSelectedGroupId(e.target.value)}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+          >
+            <option value="">-- Tanpa Grup --</option>
+            {groups.map(g => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+        </div>
         <div className="flex items-end">
           <button
             type="submit"
@@ -115,6 +187,44 @@ export default function ContactsTab({ user, API_URL }) {
           </button>
         </div>
       </form>
+
+      <div className="mb-8 p-4 bg-purple-50 rounded-xl border border-purple-100">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-800">Kelola Grup Kontak</h3>
+            <p className="text-xs text-slate-600">Buat grup untuk memudahkan pengiriman pesan broadcast.</p>
+          </div>
+          <form onSubmit={handleAddGroup} className="flex gap-2 w-full sm:w-auto">
+            <input 
+              type="text" 
+              placeholder="Nama Grup Baru" 
+              value={newGroupName}
+              onChange={e => setNewGroupName(e.target.value)}
+              className="w-full sm:w-48 px-3 py-1.5 border border-purple-200 rounded-lg text-sm"
+            />
+            <button type="submit" className="bg-purple-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-purple-700 whitespace-nowrap">
+              Tambah
+            </button>
+          </form>
+        </div>
+        
+        {groups.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-purple-100">
+            {groups.map(g => (
+              <div key={g.id} className="flex items-center gap-1 bg-white border border-purple-200 px-2 py-1 rounded-md text-xs font-medium text-purple-800 shadow-sm">
+                <span>{g.name}</span>
+                <button 
+                  onClick={() => setDeleteGroupModal({ isOpen: true, id: g.id })}
+                  className="ml-1 text-purple-400 hover:text-red-500 transition-colors"
+                  title="Hapus Grup"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="relative mb-4">
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -141,6 +251,11 @@ export default function ContactsTab({ user, API_URL }) {
                   <h4 className="font-bold text-slate-800 text-sm">{contact.name}</h4>
                   <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                     <Phone className="w-3 h-3" /> {contact.phone}
+                    {contact.whatsapp_contact_groups?.name && (
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800">
+                        {contact.whatsapp_contact_groups.name}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -162,6 +277,14 @@ export default function ContactsTab({ user, API_URL }) {
         title="Hapus Kontak" 
         message="Apakah Anda yakin ingin menghapus kontak ini dari Buku Telepon Anda?"
         confirmText="Hapus Kontak" 
+      />
+      <ConfirmModal 
+        isOpen={deleteGroupModal.isOpen} 
+        onClose={() => setDeleteGroupModal({ isOpen: false, id: null })} 
+        onConfirm={handleDeleteGroup} 
+        title="Hapus Grup" 
+        message="Menghapus grup tidak akan menghapus kontak di dalamnya, hanya label grupnya saja. Lanjutkan?"
+        confirmText="Hapus Grup" 
       />
     </div>
   );

@@ -962,9 +962,46 @@ router.post("/v1/send-message", async (req, res) => {
 // 📇 CONTACT MANAGEMENT
 // ==========================================
 
+router.get("/contact-groups/:user_id", async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from("whatsapp_contact_groups").select("*").eq("user_id", req.params.user_id).order("name", { ascending: true });
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/contact-groups", async (req, res) => {
+  try {
+    const { user_id, name } = req.body;
+    if (!user_id || !name) return res.status(400).json({ success: false, error: "user_id and name required" });
+    const { data, error } = await supabaseAdmin.from("whatsapp_contact_groups").insert({ user_id, name }).select().single();
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete("/contact-groups/:id", async (req, res) => {
+  try {
+    const { error } = await supabaseAdmin.from("whatsapp_contact_groups").delete().eq("id", req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get("/contacts/:user_id", async (req, res) => {
   try {
-    const { data, error } = await supabaseAdmin.from("whatsapp_contacts").select("*").eq("user_id", req.params.user_id).order("name", { ascending: true });
+    // using eq user_id and selecting group_id
+    const { data, error } = await supabaseAdmin
+      .from("whatsapp_contacts")
+      .select("*, whatsapp_contact_groups(name)")
+      .eq("user_id", req.params.user_id)
+      .order("name", { ascending: true });
     if (error) throw error;
     res.json({ success: true, data });
   } catch (err) {
@@ -974,14 +1011,17 @@ router.get("/contacts/:user_id", async (req, res) => {
 
 router.post("/contacts", async (req, res) => {
   try {
-    const { user_id, name, phone } = req.body;
+    const { user_id, name, phone, group_id } = req.body;
     if (!user_id || !name || !phone) return res.status(400).json({ success: false, error: "user_id, name, and phone required" });
     
     // basic cleanup
     let cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
     
-    const { data, error } = await supabaseAdmin.from("whatsapp_contacts").insert({ user_id, name, phone: cleanPhone }).select().single();
+    const insertData = { user_id, name, phone: cleanPhone };
+    if (group_id) insertData.group_id = group_id;
+
+    const { data, error } = await supabaseAdmin.from("whatsapp_contacts").insert(insertData).select().single();
     if (error) {
        if (error.code === '23505') return res.status(400).json({ success: false, error: "Contact with this phone number already exists." });
        throw error;
