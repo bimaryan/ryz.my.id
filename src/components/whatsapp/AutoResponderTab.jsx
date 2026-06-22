@@ -11,6 +11,14 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
   const [matchType, setMatchType] = useState("exact");
   const [replyMessage, setReplyMessage] = useState("");
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
+  const [aiPrompt, setAiPrompt] = useState("");
+
+  const fullAiRule = rules.find(r => r.keyword === '*');
+  const normalRules = rules.filter(r => r.keyword !== '*');
+
+  useEffect(() => {
+    if (fullAiRule) setAiPrompt(fullAiRule.reply_message);
+  }, [fullAiRule]);
 
   const templates = [
     { label: "Sapaan", keyword: "halo", matchType: "exact", replyMessage: "Halo! Ada yang bisa kami bantu? Silakan balas pesan ini untuk informasi lebih lanjut." },
@@ -90,12 +98,122 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
     }
   };
 
+  const toggleFullAi = async (enable) => {
+    try {
+      if (enable) {
+        const res = await fetch(`${apiUrl}/whatsapp/autoresponders`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            session_id: sessionId,
+            keyword: "*",
+            match_type: "exact",
+            reply_message: "Kamu adalah AI asisten pintar. Jawab semua pertanyaan dengan ramah, informatif, dan profesional."
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success("Full AI Chatbot diaktifkan!");
+          loadRules();
+        }
+      } else if (fullAiRule) {
+        const res = await fetch(`${apiUrl}/whatsapp/autoresponders/${fullAiRule.id}`, { method: "DELETE" });
+        const data = await res.json();
+        if (data.success) {
+          toast.success("Full AI Chatbot dinonaktifkan!");
+          loadRules();
+        }
+      }
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const saveAiPrompt = async () => {
+    if (!aiPrompt.trim()) return toast.error("Prompt tidak boleh kosong");
+    try {
+      if (fullAiRule) {
+        await fetch(`${apiUrl}/whatsapp/autoresponders/${fullAiRule.id}`, { method: "DELETE" });
+      }
+      const res = await fetch(`${apiUrl}/whatsapp/autoresponders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          session_id: sessionId,
+          keyword: "*",
+          match_type: "exact",
+          reply_message: aiPrompt
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Prompt AI berhasil disimpan!");
+        loadRules();
+      }
+    } catch (err) {
+      toast.error("Gagal menyimpan prompt AI");
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-      <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-        <Bot className="w-5 h-5 text-purple-500" /> Auto Responder
+      <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+        <Bot className="w-5 h-5 text-purple-500" /> Auto Responder & AI Bot
       </h2>
       
+      {/* FULL AI BOT SECTION */}
+      <div className="mb-8 p-5 bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-xl shadow-sm">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              🤖 Full AI Chatbot Mode (Tanpa Kata Kunci)
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Jika diaktifkan, AI akan membalas semua pesan pelanggan yang tidak cocok dengan kata kunci manual.
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              className="sr-only peer" 
+              checked={!!fullAiRule} 
+              onChange={(e) => toggleFullAi(e.target.checked)} 
+            />
+            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+          </label>
+        </div>
+
+        {fullAiRule && (
+          <div className="mt-4 animate-fade-in border-t border-purple-100 pt-4">
+            <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">Instruksi AI (System Prompt)</label>
+            <textarea 
+              value={aiPrompt} 
+              onChange={e => setAiPrompt(e.target.value)} 
+              rows={4} 
+              className="w-full px-4 py-3 border border-purple-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all shadow-sm bg-white" 
+              placeholder="Contoh: Kamu adalah admin toko sepatu bernama Budi. Jawab semua pertanyaan pelanggan dengan ramah..."
+            ></textarea>
+            <div className="flex justify-end mt-3">
+              <button 
+                onClick={saveAiPrompt}
+                disabled={aiPrompt === fullAiRule.reply_message}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                Simpan Prompt AI
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <hr className="border-slate-100 my-8" />
+
+      <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+        ⚡ Auto Responder Berbasis Kata Kunci
+      </h3>
+
       <form onSubmit={handleSubmit} className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
         <h3 className="text-sm font-semibold text-slate-700 mb-3">Tambah Rule Baru</h3>
 
@@ -141,10 +259,10 @@ export default function AutoResponderTab({ sessionId, userId, apiUrl }) {
       <div className="space-y-3">
         {loading ? (
           <p className="text-sm text-slate-500 text-center py-4">Memuat data...</p>
-        ) : rules.length === 0 ? (
+        ) : normalRules.length === 0 ? (
           <p className="text-sm text-slate-500 text-center py-4">Belum ada rule auto-responder</p>
         ) : (
-          rules.map(rule => (
+          normalRules.map(rule => (
             <div key={rule.id} className="flex justify-between items-start p-3 bg-white border border-slate-200 rounded-lg">
               <div>
                 <div className="flex items-center gap-2 mb-1">

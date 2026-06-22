@@ -227,8 +227,12 @@ router.post("/create-session", async (req, res) => {
             .eq("session_id", newSession.id)
             .eq("is_active", true);
 
+          let isHandled = false;
+
           if (autoResponders && autoResponders.length > 0) {
             for (const rule of autoResponders) {
+              if (rule.keyword === '*') continue; // Skip catch-all in normal matching
+              
               let isMatch = false;
               const keyword = rule.keyword.toLowerCase();
               const lowerText = textMsg.toLowerCase();
@@ -238,6 +242,7 @@ router.post("/create-session", async (req, res) => {
               else if (rule.match_type === "starts_with" && lowerText.startsWith(keyword)) isMatch = true;
 
               if (isMatch) {
+                isHandled = true;
                 let finalMessage = rule.reply_message;
                 
                 // AI Rephrasing to make response sound natural
@@ -279,6 +284,45 @@ Jangan tambahkan kalimat pengantar seperti "Tentu" atau "Ini jawabannya", langsu
 
                 await sock.sendMessage(remoteJid, { text: finalMessage });
                 break; 
+              }
+            }
+
+            // 1.5 Full AI Bot (Catch-all)
+            if (!isHandled) {
+              const aiBotRule = autoResponders.find(r => r.keyword === '*');
+              if (aiBotRule) {
+                try {
+                  const groqApiKey = process.env.GROQ_API_KEY;
+                  if (groqApiKey) {
+                    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${groqApiKey}`
+                      },
+                      body: JSON.stringify({
+                        model: 'llama-3.1-8b-instant',
+                        messages: [
+                          { 
+                            role: 'system', 
+                            content: aiBotRule.reply_message // The user's custom system prompt
+                          },
+                          { role: 'user', content: textMsg }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1024,
+                      })
+                    });
+                    const groqData = await groqRes.json();
+                    if (groqData.choices && groqData.choices.length > 0) {
+                      const finalMessage = groqData.choices[0].message.content.trim();
+                      await sock.sendMessage(remoteJid, { text: finalMessage });
+                      isHandled = true;
+                    }
+                  }
+                } catch (aiErr) {
+                  console.error("[FULL_AI_BOT] AI Error:", aiErr);
+                }
               }
             }
           }
