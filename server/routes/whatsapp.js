@@ -489,7 +489,7 @@ router.post("/send-message", upload.single('media_file'), async (req, res) => {
         version,
         auth: state,
         printQRInTerminal: false,
-        logger: pino({ level: 'silent' }), // Silent mode saat kirim pesan agar terminal rapi
+        logger: pino({ level: 'error' }), // Silent mode saat kirim pesan agar terminal rapi
         browser: ['Ubuntu', 'Chrome', '20.0.04'],
         syncFullHistory: false,
         generateHighQualityLinkPreview: false
