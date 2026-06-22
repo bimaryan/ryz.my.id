@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { requireApiKey } from './middleware/auth.js';
-import { securityHeaders, apiLimiter, checkBans, maliciousScanner, autoBanIp, autoBanDevice } from './middleware/security.js';
+import { securityHeaders, apiLimiter, standardLimiter, checkBans, maliciousScanner, autoBanIp, autoBanDevice } from './middleware/security.js';
 
 // Import Routes
 import linksRouter from './routes/links.js';
@@ -66,8 +66,8 @@ app.use('/api/v1', requireApiKey);
 
 // Mount Routes
 app.use('/api/v1/links', linksRouter);
-app.use('/api/pakasir', pakasirRouter);
-app.use('/api/whatsapp', whatsappRouter);
+app.use('/api/pakasir', standardLimiter, pakasirRouter);
+app.use('/api/whatsapp', standardLimiter, whatsappRouter);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

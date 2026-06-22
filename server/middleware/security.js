@@ -65,6 +65,20 @@ export const apiLimiter = rateLimit({
   }
 });
 
+// Standard Rate Limiting Middleware (Tanpa auto-ban, untuk API umum seperti WhatsApp)
+export const standardLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300, // 300 requests per 15 minutes
+  standardHeaders: true, 
+  legacyHeaders: false, 
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json({
+      success: false,
+      error: 'Terlalu banyak permintaan, silakan coba lagi nanti.'
+    });
+  }
+});
+
 // Middleware pendeteksi Serangan Hacker (Mencari file .env, phpmyadmin, wp-admin)
 export const maliciousScanner = (req, res, next) => {
   const maliciousPatterns = ['.env', 'wp-admin', 'wp-login', 'phpmyadmin', 'config.php', '.git'];
