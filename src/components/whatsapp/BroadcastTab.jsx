@@ -8,13 +8,26 @@ export default function BroadcastTab({ sessionId, userId, API_URL }) {
   const [broadcasts, setBroadcasts] = useState([]);
   const [name, setName] = useState("");
   const [messageContent, setMessageContent] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   useEffect(() => {
     if (sessionId) loadBroadcasts();
-  }, [sessionId]);
+    if (userId) loadGroups();
+  }, [sessionId, userId]);
+
+  const loadGroups = async () => {
+    try {
+      const res = await fetch(`${API_URL}/whatsapp/contact-groups/${userId}`);
+      const data = await res.json();
+      if (data.success) setGroups(data.data || []);
+    } catch (err) {
+      console.error("Error loading groups:", err);
+    }
+  };
 
   const loadBroadcasts = async () => {
     try {
@@ -41,7 +54,8 @@ export default function BroadcastTab({ sessionId, userId, API_URL }) {
           user_id: userId, 
           session_id: sessionId, 
           name: name.trim(), 
-          message_content: messageContent.trim() 
+          message_content: messageContent.trim(),
+          group_id: selectedGroupId || null
         }),
       });
       const data = await res.json();
@@ -85,16 +99,31 @@ export default function BroadcastTab({ sessionId, userId, API_URL }) {
       </p>
 
       <form onSubmit={handleCreateBroadcast} className="mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
-        <div className="mb-4">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Nama Kampanye Broadcast</label>
-          <input
-            type="text"
-            placeholder="Promo Akhir Tahun..."
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Nama Kampanye Broadcast</label>
+            <input
+              type="text"
+              placeholder="Promo Akhir Tahun..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Target Penerima</label>
+            <select
+              value={selectedGroupId}
+              onChange={(e) => setSelectedGroupId(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+            >
+              <option value="">Semua Kontak (Buku Telepon)</option>
+              {groups.map(g => (
+                <option key={g.id} value={g.id}>Grup: {g.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="mb-4">
           <div className="flex justify-between items-center mb-1">

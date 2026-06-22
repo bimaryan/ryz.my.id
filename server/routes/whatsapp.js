@@ -1042,4 +1042,103 @@ router.delete("/contacts/:id", async (req, res) => {
   }
 });
 
+// ==========================================
+// 📢 BROADCAST MANAGEMENT
+// ==========================================
+
+router.get("/broadcasts/:session_id", async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("whatsapp_broadcasts")
+      .select("*")
+      .eq("session_id", req.params.session_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/broadcasts", async (req, res) => {
+  try {
+    const { user_id, session_id, name, message_content, group_id } = req.body;
+    if (!user_id || !session_id || !name || !message_content) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
+    }
+
+    const sock = getSession(session_id);
+    if (!sock) {
+      return res.status(400).json({ success: false, error: "WhatsApp Session is not active" });
+    }
+
+    // Fetch targets
+    let query = supabaseAdmin.from("whatsapp_contacts").select("phone").eq("user_id", user_id);
+    if (group_id) {
+      query = query.eq("group_id", group_id);
+    }
+    const { data: contacts, error: contactErr } = await query;
+    if (contactErr) throw contactErr;
+    if (!contacts || contacts.length === 0) {
+      return res.status(400).json({ success: false, error: "Tidak ada kontak yang ditemukan untuk target ini." });
+    }
+
+    // Insert broadcast record
+    const { data: broadcast, error: insertErr } = await supabaseAdmin.from("whatsapp_broadcasts").insert({
+      user_id,
+      session_id,
+      name,
+      message_content,
+      total_recipients: contacts.length,
+      status: 'processing'
+    }).select().single();
+    if (insertErr) throw insertErr;
+
+    // Send response back to user immediately so UI doesn't hang
+    res.json({ success: true, data: broadcast });
+
+    // Process broadcast asynchronously
+    const processBroadcast = async () => {
+      let sentCount = 0;
+      let failedCount = 0;
+
+      for (const contact of contacts) {
+        try {
+          const jid = contact.phone + "@s.whatsapp.net";
+          await sock.sendMessage(jid, { text: message_content });
+          sentCount++;
+          // Random delay between 1-3 seconds to prevent ban
+          await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
+        } catch (e) {
+          failedCount++;
+        }
+      }
+
+      // Update broadcast record when done
+      await supabaseAdmin.from("whatsapp_broadcasts").update({
+        sent_count: sentCount,
+        failed_count: failedCount,
+        status: failedCount === contacts.length ? 'failed' : 'completed',
+        updated_at: new Date().toISOString()
+      }).eq("id", broadcast.id);
+    };
+
+    // Run async without awaiting
+    processBroadcast().catch(e => console.error("Broadcast Process Error:", e));
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete("/broadcasts/:id", async (req, res) => {
+  try {
+    const { error } = await supabaseAdmin.from("whatsapp_broadcasts").delete().eq("id", req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
