@@ -3,6 +3,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'react-hot-toast'
 import { routes } from '@/config/routes'
+import { ChatbotWidget } from '@/components/ui/chatbot/ChatbotWidget'
 
 import { useState, useEffect } from 'react'
 
@@ -78,6 +79,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Toaster position="top-right" />
+          <ChatbotWidget />
           <Routes>
             {routes.map((route) => (
               <Route
