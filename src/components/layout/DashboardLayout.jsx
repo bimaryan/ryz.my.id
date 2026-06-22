@@ -245,7 +245,7 @@ export default function DashboardLayout({ children }) {
                 {user?.user_metadata?.avatar_url ? (
                   <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  user?.user_metadata?.full_name?.[0] || user?.email?.[0] || "U"
+                  user?.user_metadata?.full_name?.[0] || user?.user_metadata?.name?.[0] || user?.email?.[0] || "U"
                 )}
               </button>
 
@@ -253,7 +253,7 @@ export default function DashboardLayout({ children }) {
                 <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100/80 py-2 z-50 animate-fade-in-up origin-top-right">
                   <div className="px-4 py-3 border-b border-slate-100">
                     <p className="text-sm font-bold text-slate-900 truncate">
-                      {user?.user_metadata?.full_name || "User"}
+                      {user?.user_metadata?.full_name || user?.user_metadata?.name || "User"}
                     </p>
                     <p className="text-xs font-medium text-slate-500 truncate mt-0.5">
                       {user?.email}

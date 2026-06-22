@@ -122,10 +122,9 @@ export default function DashboardPage() {
             </h1>
             <p className="text-slate-600 font-medium">
               Selamat datang kembali,{" "}
-              <span className="text-slate-700 font-bold">
-                {user?.user_metadata?.full_name || "User"}
-              </span>
-              !
+              <span className="font-bold text-slate-800">
+                {user?.user_metadata?.full_name || user?.user_metadata?.name || "User"}
+              </span>!
             </p>
           </div>
         </div>
