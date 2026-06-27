@@ -63,6 +63,17 @@
   .bitly-input {
     @apply w-full bg-white border border-[#d6dbe5] rounded px-4 py-2.5 text-[#273144] placeholder:text-[#8290a3] focus:outline-none focus:border-[#0b5cff] focus:ring-1 focus:ring-[#0b5cff] transition-all;
   }
+
+  /* View Only Mode Overrides */
+  .view-only-mode button,
+  .view-only-mode svg,
+  .view-only-mode input,
+  .view-only-mode textarea,
+  .view-only-mode [role="button"],
+  .view-only-mode [role="menuitem"] {
+    pointer-events: none !important;
+    opacity: 0.8;
+  }
 }
 
 @layer utilities {

@@ -41,6 +41,58 @@ export default function WordPublicPage() {
   const [fileUrl, setFileUrl] = useState(null);
   const [docMeta, setDocMeta] = useState(null);
   const [allowEdit, setAllowEdit] = useState(false);
+  const [activeViewers, setActiveViewers] = useState([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!hasUnsavedChanges || isSaving || !id || !allowEdit) return;
+
+    const timer = setTimeout(() => {
+      handleSaveToCloud(true);
+    }, 3000); // 3 seconds debounce
+
+    return () => clearTimeout(timer);
+  }, [hasUnsavedChanges, isSaving, id, allowEdit]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const viewerId = Math.random().toString(36).substring(7);
+    const viewerName = 'Guest ' + Math.floor(Math.random() * 1000);
+    const color = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e'][Math.floor(Math.random() * 9)];
+
+    const room = supabase.channel(`doc_${id}`, {
+      config: {
+        presence: {
+          key: viewerId,
+        },
+      },
+    });
+
+    room
+      .on('presence', { event: 'sync' }, () => {
+        const state = room.presenceState();
+        const viewers = [];
+        for (const key in state) {
+           viewers.push(state[key][0]); 
+        }
+        setActiveViewers(viewers);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await room.track({
+            id: viewerId,
+            name: viewerName,
+            color: color
+          });
+        }
+      });
+
+    return () => {
+      room.unsubscribe();
+    };
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -105,7 +157,7 @@ export default function WordPublicPage() {
     }
   };
 
-  const handleSaveToCloud = async () => {
+  const handleSaveToCloud = async (isAutoSave = false) => {
     if (!buffer || !docMeta) return;
     
     setIsSaving(true);
@@ -116,28 +168,24 @@ export default function WordPublicPage() {
         currentBuffer = await editorRef.current.save();
       }
       
-      // 2. Convert Buffer to Base64 to bypass Storage Error
+      // 2. We use base64 fallback for public saves as it avoids messy storage overwrites if guest doesn't have RLS
       const base64Content = arrayBufferToBase64(currentBuffer);
       
-      // 3. Update the updated_at and file_url column directly in Database
-      try {
-        const { error: dbError } = await supabase
-          .from('word_documents')
-          .update({
-            file_url: base64Content, // Use file_url as Base64 storage
-            updated_at: new Date()
-          })
-          .eq('id', id);
-          
-        if (dbError) throw dbError;
-      } catch (err) {
-        throw new Error("Database Error: " + (err.message || JSON.stringify(err)));
-      }
-      
-      toast.success('Perubahan Anda berhasil disimpan!');
+      // 3. Save to Database
+      const { error: dbError } = await supabase
+        .from('word_documents')
+        .update({
+          file_url: base64Content,
+          updated_at: new Date()
+        })
+        .eq('id', docMeta.id);
+        
+      if (dbError) throw dbError;
+      if (!isAutoSave) toast.success('Editan berhasil disimpan ke Cloud!');
+      setHasUnsavedChanges(false);
     } catch (error) {
       console.error('Error saving public document:', error);
-      toast.error('Gagal menyimpan: ' + (error.message || 'Server error'));
+      if (!isAutoSave) toast.error('Gagal menyimpan: ' + (error.message || 'Server error'));
     } finally {
       setIsSaving(false);
     }
@@ -155,7 +203,7 @@ export default function WordPublicPage() {
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-2">Akses Ditolak</h1>
           <p className="text-gray-600 mb-6">{error}</p>
-          <Link to="/" className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+          <Link to="/dashboard/word-editor" className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
             Kembali ke Beranda
           </Link>
         </div>
@@ -182,9 +230,30 @@ export default function WordPublicPage() {
         </div>
         
         <div className="flex items-center gap-2 shrink-0">
+          {activeViewers.length > 0 && (
+            <div className="flex items-center -space-x-2 mr-1 sm:mr-2">
+              {activeViewers.map((v) => (
+                <div 
+                  key={v.id} 
+                  title={v.name}
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white text-[9px] sm:text-[11px] font-bold border-2 border-white shadow-sm ring-1 ring-black/5"
+                  style={{ backgroundColor: v.color }}
+                >
+                  {v.name.substring(0, 2).toUpperCase()}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!allowEdit && (
+             <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-50 text-gray-700 rounded-md text-xs sm:text-sm font-medium border border-gray-200 flex items-center gap-1.5 whitespace-nowrap hidden sm:flex">
+               Mode Lihat Saja
+             </div>
+          )}
+
           {allowEdit && (
             <button 
-              onClick={handleSaveToCloud}
+              onClick={() => handleSaveToCloud(false)}
               disabled={isSaving}
               className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-md shadow-sm transition-colors shrink-0 whitespace-nowrap"
             >
@@ -208,7 +277,7 @@ export default function WordPublicPage() {
       </header>
 
       {/* Editor Container / Loading View */}
-      <div className="flex-1 w-full relative overflow-hidden bg-gray-100">
+      <div className={`flex-1 w-full relative overflow-hidden bg-gray-100 ${!allowEdit ? 'view-only-mode' : ''}`}>
         {isLoading || !buffer ? (
            <LoadingSpinner text="Membuka dokumen..." />
         ) : (
@@ -217,6 +286,7 @@ export default function WordPublicPage() {
             documentBuffer={buffer} 
             mode={allowEdit ? "editing" : "viewing"} 
             author="Guest" 
+            onChange={() => setHasUnsavedChanges(true)}
           />
         )}
       </div>

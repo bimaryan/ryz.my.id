@@ -8,7 +8,7 @@ export const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
-  const isHidden = /^\/f\/|^\/dashboard\/forms\/[^/]+\/edit/.test(location.pathname);
+  const isHidden = /^\/f\/|^\/dashboard/.test(location.pathname);
 
   if (isHidden) return null;
 

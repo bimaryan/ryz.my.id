@@ -12,1019 +12,1019 @@ import FloatingParticles from '../components/FloatingParticles'
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 const BRAND_COLORS = {
-  instagram: '#E1306C',
-  twitter: '#1DA1F2',
-  github: '#333333',
-  linkedin: '#0077b5',
-  youtube: '#FF0000',
-  tiktok: '#000000'
+ instagram: '#E1306C',
+ twitter: '#1DA1F2',
+ github: '#333333',
+ linkedin: '#0077b5',
+ youtube: '#FF0000',
+ tiktok: '#000000'
 }
 
 export default function PublicPage() {
-  const { slug } = useParams()
-  const navigate = useNavigate()
-  const [page, setPage] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', address: '', email: '', customAnswers: {} })
-  const [creatorWA, setCreatorWA] = useState('')
-  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
+ const { slug } = useParams()
+ const navigate = useNavigate()
+ const [page, setPage] = useState(null)
+ const [isLoading, setIsLoading] = useState(true)
+ const [error, setError] = useState(null)
+ const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+ const [selectedProduct, setSelectedProduct] = useState(null)
+ const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', address: '', email: '', customAnswers: {} })
+ const [creatorWA, setCreatorWA] = useState('')
+ const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
 
-  // Biteship States
-  const { areas, searchArea, isSearchingArea, calculateRates, isLoadingRates, createOrder } = useBiteship()
-  const [biteshipOrigin, setBiteshipOrigin] = useState(null)
-  const [areaSearchInput, setAreaSearchInput] = useState('')
-  const [showAreaResults, setShowAreaResults] = useState(false)
-  const [selectedDestinationArea, setSelectedDestinationArea] = useState(null)
-  const [shippingRates, setShippingRates] = useState([])
-  const [selectedRate, setSelectedRate] = useState(null)
-  
-  // Page Break & Folder States
-  const [activePageIndex, setActivePageIndex] = useState(0)
-  const [expandedFolders, setExpandedFolders] = useState({})
+ // Biteship States
+ const { areas, searchArea, isSearchingArea, calculateRates, isLoadingRates, createOrder } = useBiteship()
+ const [biteshipOrigin, setBiteshipOrigin] = useState(null)
+ const [areaSearchInput, setAreaSearchInput] = useState('')
+ const [showAreaResults, setShowAreaResults] = useState(false)
+ const [selectedDestinationArea, setSelectedDestinationArea] = useState(null)
+ const [shippingRates, setShippingRates] = useState([])
+ const [selectedRate, setSelectedRate] = useState(null)
+ 
+ // Page Break & Folder States
+ const [activePageIndex, setActivePageIndex] = useState(0)
+ const [expandedFolders, setExpandedFolders] = useState({})
 
-  const toggleFolder = (index) => {
-    setExpandedFolders(prev => ({ ...prev, [index]: !prev[index] }))
-  }
+ const toggleFolder = (index) => {
+ setExpandedFolders(prev => ({ ...prev, [index]: !prev[index] }))
+ }
 
-  const handleCalculateRates = async (destId) => {
-    if (!biteshipOrigin?.origin_area_id || !destId || !selectedProduct) return;
-    
-    let weightGrams = 1000;
-    if (selectedProduct.weight) {
-      weightGrams = parseFloat(selectedProduct.weight) * 1000;
-    }
-    
-    const items = [{
-      name: selectedProduct.title,
-      description: selectedProduct.description || "Barang",
-      value: parseInt(selectedProduct.price || 0),
-      length: parseInt(selectedProduct.length || 10),
-      width: parseInt(selectedProduct.width || 10),
-      height: parseInt(selectedProduct.height || 10),
-      weight: weightGrams,
-      quantity: 1
-    }];
+ const handleCalculateRates = async (destId) => {
+ if (!biteshipOrigin?.origin_area_id || !destId || !selectedProduct) return;
+ 
+ let weightGrams = 1000;
+ if (selectedProduct.weight) {
+ weightGrams = parseFloat(selectedProduct.weight) * 1000;
+ }
+ 
+ const items = [{
+ name: selectedProduct.title,
+ description: selectedProduct.description ||"Barang",
+ value: parseInt(selectedProduct.price || 0),
+ length: parseInt(selectedProduct.length || 10),
+ width: parseInt(selectedProduct.width || 10),
+ height: parseInt(selectedProduct.height || 10),
+ weight: weightGrams,
+ quantity: 1
+ }];
 
-    const res = await calculateRates(biteshipOrigin.origin_area_id, destId, items);
-    if (res.success) {
-      setShippingRates(res.rates);
-      if (res.rates.length > 0) {
-        setSelectedRate(res.rates[0]);
-      } else {
-        setSelectedRate(null);
-      }
-    } else {
-      toast.error(res.error || "Gagal menghitung ongkos kirim.");
-      setShippingRates([]);
-      setSelectedRate(null);
-    }
-  }
+ const res = await calculateRates(biteshipOrigin.origin_area_id, destId, items);
+ if (res.success) {
+ setShippingRates(res.rates);
+ if (res.rates.length > 0) {
+ setSelectedRate(res.rates[0]);
+ } else {
+ setSelectedRate(null);
+ }
+ } else {
+ toast.error(res.error ||"Gagal menghitung ongkos kirim.");
+ setShippingRates([]);
+ setSelectedRate(null);
+ }
+ }
 
-  const handleCheckout = async (e) => {
-    e.preventDefault();
-    if (!selectedProduct) return;
-    if (selectedProduct.require_name && !checkoutForm.name) {
-      toast.error("Please fill in your Name.");
-      return;
-    }
-    if (selectedProduct.ask_phone !== false && selectedProduct.require_phone !== false && !checkoutForm.phone) {
-      toast.error("Please fill in your Phone Number.");
-      return;
-    }
-    if (selectedProduct.require_address && !checkoutForm.address) {
-      toast.error("Please fill in your Shipping Address.");
-      return;
-    }
-    if (selectedProduct.custom_message_email && !checkoutForm.email) {
-      toast.error("Please fill in your Email.");
-      return;
-    }
-    if (selectedProduct.custom_questions) {
-      for (const q of selectedProduct.custom_questions) {
-        if (q.required && !checkoutForm.customAnswers[q.id]) {
-          toast.error(`Please fill in: ${q.label}`);
-          return;
-        }
-      }
-    }
+ const handleCheckout = async (e) => {
+ e.preventDefault();
+ if (!selectedProduct) return;
+ if (selectedProduct.require_name && !checkoutForm.name) {
+ toast.error("Please fill in your Name.");
+ return;
+ }
+ if (selectedProduct.ask_phone !== false && selectedProduct.require_phone !== false && !checkoutForm.phone) {
+ toast.error("Please fill in your Phone Number.");
+ return;
+ }
+ if (selectedProduct.require_address && !checkoutForm.address) {
+ toast.error("Please fill in your Shipping Address.");
+ return;
+ }
+ if (selectedProduct.custom_message_email && !checkoutForm.email) {
+ toast.error("Please fill in your Email.");
+ return;
+ }
+ if (selectedProduct.custom_questions) {
+ for (const q of selectedProduct.custom_questions) {
+ if (q.required && !checkoutForm.customAnswers[q.id]) {
+ toast.error(`Please fill in: ${q.label}`);
+ return;
+ }
+ }
+ }
 
-    let variantName = '';
-    let finalPrice = selectedProduct.price || 0;
-    if (selectedProduct.variants && selectedProduct.variants.length > 0) {
-      const variant = selectedProduct.variants[selectedVariantIndex];
-      if (variant) {
-        variantName = variant.name;
-        if (variant.price) finalPrice = variant.price;
-      }
-    }
+ let variantName = '';
+ let finalPrice = selectedProduct.price || 0;
+ if (selectedProduct.variants && selectedProduct.variants.length > 0) {
+ const variant = selectedProduct.variants[selectedVariantIndex];
+ if (variant) {
+ variantName = variant.name;
+ if (variant.price) finalPrice = variant.price;
+ }
+ }
 
-    if (selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id) {
-      if (!selectedDestinationArea) {
-        toast.error("Silakan pilih Kecamatan Tujuan pengiriman.");
-        return;
-      }
-      if (!selectedRate) {
-        toast.error("Silakan pilih Kurir Pengiriman.");
-        return;
-      }
-    }
+ if (selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id) {
+ if (!selectedDestinationArea) {
+ toast.error("Silakan pilih Kecamatan Tujuan pengiriman.");
+ return;
+ }
+ if (!selectedRate) {
+ toast.error("Silakan pilih Kurir Pengiriman.");
+ return;
+ }
+ }
 
-    let shippingCost = 0;
-    if (selectedRate) {
-      shippingCost = selectedRate.price;
-    }
+ let shippingCost = 0;
+ if (selectedRate) {
+ shippingCost = selectedRate.price;
+ }
 
-    const grandTotal = parseInt(finalPrice) + parseInt(shippingCost);
+ const grandTotal = parseInt(finalPrice) + parseInt(shippingCost);
 
-    try {
-      // 1. Simpan order ke database
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          page_slug: slug,
-          product_id: selectedProduct.id,
-          product_name: selectedProduct.title,
-          variant_name: variantName || null,
-          amount: finalPrice,
-          customer_name: checkoutForm.name,
-          customer_phone: checkoutForm.phone || null,
-          customer_email: checkoutForm.email || null,
-          customer_address: checkoutForm.address || null,
-          custom_answers: checkoutForm.customAnswers || null,
-          status: 'pending'
-        })
-        .select()
-        .single();
+ try {
+ // 1. Simpan order ke database
+ const { data: orderData, error: orderError } = await supabase
+ .from('orders')
+ .insert({
+ page_slug: slug,
+ product_id: selectedProduct.id,
+ product_name: selectedProduct.title,
+ variant_name: variantName || null,
+ amount: finalPrice,
+ customer_name: checkoutForm.name,
+ customer_phone: checkoutForm.phone || null,
+ customer_email: checkoutForm.email || null,
+ customer_address: checkoutForm.address || null,
+ custom_answers: checkoutForm.customAnswers || null,
+ status: 'pending'
+ })
+ .select()
+ .single();
 
-      if (orderError) throw orderError;
+ if (orderError) throw orderError;
 
-      // 2. Minta Token Snap dari Midtrans (Lewat Backend Express kita yang AMAN)
-      const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id';
-      
-      const invoiceResponse = await fetch(`${apiUrl}/api/pakasir/create-invoice`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          order_id: orderData.id,
-          gross_amount: parseInt(grandTotal),
-          customer_name: checkoutForm.name,
-          customer_phone: checkoutForm.phone || '08123456789',
-          customer_email: checkoutForm.email || 'customer@example.com',
-          description: selectedProduct.title.substring(0, 50),
-          item_details: [{
-            name: selectedProduct.title.substring(0, 50),
-            price: parseInt(finalPrice),
-            quantity: 1
-          }]
-        })
-      });
+ // 2. Minta Token Snap dari Midtrans (Lewat Backend Express kita yang AMAN)
+ const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id';
+ 
+ const invoiceResponse = await fetch(`${apiUrl}/api/pakasir/create-invoice`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json'
+ },
+ body: JSON.stringify({
+ order_id: orderData.id,
+ gross_amount: parseInt(grandTotal),
+ customer_name: checkoutForm.name,
+ customer_phone: checkoutForm.phone || '08123456789',
+ customer_email: checkoutForm.email || 'customer@example.com',
+ description: selectedProduct.title.substring(0, 50),
+ item_details: [{
+ name: selectedProduct.title.substring(0, 50),
+ price: parseInt(finalPrice),
+ quantity: 1
+ }]
+ })
+ });
 
-      const result = await invoiceResponse.json();
+ const result = await invoiceResponse.json();
 
-      if (!invoiceResponse.ok) {
-        console.error("Backend API Error:", result);
-        toast.error("Gagal terhubung ke server pembayaran.");
-        return;
-      }
+ if (!invoiceResponse.ok) {
+ console.error("Backend API Error:", result);
+ toast.error("Gagal terhubung ke server pembayaran.");
+ return;
+ }
 
-      if (result && result.error) {
-        console.error("Pakasir Error:", result);
-        const errorMsgs = result.message?.error_messages;
-        toast.error("Gagal memulai pembayaran: " + (errorMsgs ? errorMsgs[0] : "Kesalahan Konfigurasi"));
-        return;
-      }
+ if (result && result.error) {
+ console.error("Pakasir Error:", result);
+ const errorMsgs = result.message?.error_messages;
+ toast.error("Gagal memulai pembayaran:" + (errorMsgs ? errorMsgs[0] :"Kesalahan Konfigurasi"));
+ return;
+ }
 
-      if (!result || !(result.payment_url || result.invoice?.payment_url)) {
-        toast.error("Gagal mendapatkan link pembayaran.");
-        return;
-      }
+ if (!result || !(result.payment_url || result.invoice?.payment_url)) {
+ toast.error("Gagal mendapatkan link pembayaran.");
+ return;
+ }
 
-      // 3. Buka Payment URL Pakasir
-      const paymentUrl = result.payment_url || result.invoice?.payment_url;
-      window.open(paymentUrl, '_blank');
-      
-      toast.success("Menunggu pembayaran... Selesaikan pembayaran di jendela baru.", { id: "waiting_payment", duration: 5000 });
-      setIsCheckoutOpen(false);
-      
-      // Polling untuk cek status pembayaran
-      const checkInterval = setInterval(async () => {
-        const statusResponse = await fetch(`${apiUrl}/api/pakasir/check-status/${orderData.id}`);
-        const statusData = await statusResponse.json();
-        
-        if (statusData.status === 'completed' || statusData.status === 'paid' || statusData.status === 'success') {
-          clearInterval(checkInterval);
-          
-          if (selectedProduct.item_quantity_enabled && selectedProduct.id) {
-            await supabase.rpc('decrement_product_stock', {
-              p_page_id: page.id,
-              p_product_id: selectedProduct.id
-            });
-          }
-          
-          if (selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id && selectedDestinationArea && selectedRate) {
-            toast.loading("Menerbitkan Resi otomatis...", { id: "resi_toast" });
-            
-            let weightGrams = 1000;
-            if (selectedProduct.weight) weightGrams = parseFloat(selectedProduct.weight) * 1000;
+ // 3. Buka Payment URL Pakasir
+ const paymentUrl = result.payment_url || result.invoice?.payment_url;
+ window.open(paymentUrl, '_blank');
+ 
+ toast.success("Menunggu pembayaran... Selesaikan pembayaran di jendela baru.", { id:"waiting_payment", duration: 5000 });
+ setIsCheckoutOpen(false);
+ 
+ // Polling untuk cek status pembayaran
+ const checkInterval = setInterval(async () => {
+ const statusResponse = await fetch(`${apiUrl}/api/pakasir/check-status/${orderData.id}`);
+ const statusData = await statusResponse.json();
+ 
+ if (statusData.status === 'completed' || statusData.status === 'paid' || statusData.status === 'success') {
+ clearInterval(checkInterval);
+ 
+ if (selectedProduct.item_quantity_enabled && selectedProduct.id) {
+ await supabase.rpc('decrement_product_stock', {
+ p_page_id: page.id,
+ p_product_id: selectedProduct.id
+ });
+ }
+ 
+ if (selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id && selectedDestinationArea && selectedRate) {
+ toast.loading("Menerbitkan Resi otomatis...", { id:"resi_toast" });
+ 
+ let weightGrams = 1000;
+ if (selectedProduct.weight) weightGrams = parseFloat(selectedProduct.weight) * 1000;
 
-            const payload = {
-              shipper_contact_name: biteshipOrigin.full_name || "Seller",
-              shipper_contact_phone: biteshipOrigin.whatsapp_number || "081234567890",
-              origin_contact_name: biteshipOrigin.full_name || "Seller",
-              origin_contact_phone: biteshipOrigin.whatsapp_number || "081234567890",
-              origin_address: biteshipOrigin.origin_address || "Toko",
-              origin_area_id: biteshipOrigin.origin_area_id,
-              destination_area_id: selectedDestinationArea.id,
-              destination_contact_name: checkoutForm.name,
-              destination_contact_phone: checkoutForm.phone || "081234567890",
-              destination_contact_email: checkoutForm.email || "",
-              destination_address: checkoutForm.address,
-              courier_company: selectedRate.company,
-              courier_type: selectedRate.type,
-              delivery_type: "now",
-              reference_id: orderData.id,
-              items: [{
-                name: selectedProduct.title,
-                description: selectedProduct.description || "Barang",
-                value: parseInt(finalPrice),
-                length: parseInt(selectedProduct.length || 10),
-                width: parseInt(selectedProduct.width || 10),
-                height: parseInt(selectedProduct.height || 10),
-                weight: weightGrams,
-                quantity: 1
-              }]
-            };
+ const payload = {
+ shipper_contact_name: biteshipOrigin.full_name ||"Seller",
+ shipper_contact_phone: biteshipOrigin.whatsapp_number ||"081234567890",
+ origin_contact_name: biteshipOrigin.full_name ||"Seller",
+ origin_contact_phone: biteshipOrigin.whatsapp_number ||"081234567890",
+ origin_address: biteshipOrigin.origin_address ||"Toko",
+ origin_area_id: biteshipOrigin.origin_area_id,
+ destination_area_id: selectedDestinationArea.id,
+ destination_contact_name: checkoutForm.name,
+ destination_contact_phone: checkoutForm.phone ||"081234567890",
+ destination_contact_email: checkoutForm.email ||"",
+ destination_address: checkoutForm.address,
+ courier_company: selectedRate.company,
+ courier_type: selectedRate.type,
+ delivery_type:"now",
+ reference_id: orderData.id,
+ items: [{
+ name: selectedProduct.title,
+ description: selectedProduct.description ||"Barang",
+ value: parseInt(finalPrice),
+ length: parseInt(selectedProduct.length || 10),
+ width: parseInt(selectedProduct.width || 10),
+ height: parseInt(selectedProduct.height || 10),
+ weight: weightGrams,
+ quantity: 1
+ }]
+ };
 
-            const biteshipRes = await createOrder(payload);
-            if (biteshipRes.success) {
-              await supabase.from('orders').update({ 
-                tracking_number: biteshipRes.order.waybill_id,
-                shipping_courier: selectedRate.courier_name
-              }).eq('id', orderData.id);
-              toast.success(`Berhasil! Resi: ${biteshipRes.order.waybill_id}`, { id: "resi_toast" });
-            } else {
-              toast.error("Resi otomatis gagal, harap buat manual di dashboard Biteship.", { id: "resi_toast" });
-            }
-          } else {
-            toast.success("Pembayaran Berhasil!");
-          }
+ const biteshipRes = await createOrder(payload);
+ if (biteshipRes.success) {
+ await supabase.from('orders').update({ 
+ tracking_number: biteshipRes.order.waybill_id,
+ shipping_courier: selectedRate.courier_name
+ }).eq('id', orderData.id);
+ toast.success(`Berhasil! Resi: ${biteshipRes.order.waybill_id}`, { id:"resi_toast" });
+ } else {
+ toast.error("Resi otomatis gagal, harap buat manual di dashboard Biteship.", { id:"resi_toast" });
+ }
+ } else {
+ toast.success("Pembayaran Berhasil!");
+ }
 
-          // Kirim Email Notifikasi
-          if (checkoutForm.email && import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-            try {
-              await emailjs.send(
-                import.meta.env.VITE_EMAILJS_SERVICE_ID,
-                import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_default',
-                {
-                  order_id: orderData.id,
-                  customer_name: checkoutForm.name,
-                  customer_email: checkoutForm.email,
-                  product_name: selectedProduct.title,
-                  amount: `Rp ${parseInt(finalPrice).toLocaleString('id-ID')}`,
-                  status: 'PAID'
-                },
-                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-              );
-            } catch (err) {
-              console.error("Gagal kirim email:", err);
-            }
-          }
+ // Kirim Email Notifikasi
+ if (checkoutForm.email && import.meta.env.VITE_EMAILJS_SERVICE_ID) {
+ try {
+ await emailjs.send(
+ import.meta.env.VITE_EMAILJS_SERVICE_ID,
+ import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_default',
+ {
+ order_id: orderData.id,
+ customer_name: checkoutForm.name,
+ customer_email: checkoutForm.email,
+ product_name: selectedProduct.title,
+ amount: `Rp ${parseInt(finalPrice).toLocaleString('id-ID')}`,
+ status: 'PAID'
+ },
+ import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+ );
+ } catch (err) {
+ console.error("Gagal kirim email:", err);
+ }
+ }
 
-          // Kirim WhatsApp Notifikasi
-          if (selectedProduct.enable_whatsapp_notification && checkoutForm.phone) {
-            try {
-              fetch(`${apiUrl}/api/whatsapp/checkout-notify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  page_owner_id: page.user_id,
-                  customer_phone: checkoutForm.phone,
-                  customer_name: checkoutForm.name,
-                  product_name: selectedProduct.title,
-                  total_price: `Rp ${parseInt(grandTotal).toLocaleString('id-ID')}`,
-                  custom_message_template: selectedProduct.custom_message_text
-                })
-              }).catch(err => console.error("WA notify error:", err));
-            } catch (err) {
-              console.error("Gagal kirim WA:", err);
-            }
-          }
+ // Kirim WhatsApp Notifikasi
+ if (selectedProduct.enable_whatsapp_notification && checkoutForm.phone) {
+ try {
+ fetch(`${apiUrl}/api/whatsapp/checkout-notify`, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ page_owner_id: page.user_id,
+ customer_phone: checkoutForm.phone,
+ customer_name: checkoutForm.name,
+ product_name: selectedProduct.title,
+ total_price: `Rp ${parseInt(grandTotal).toLocaleString('id-ID')}`,
+ custom_message_template: selectedProduct.custom_message_text
+ })
+ }).catch(err => console.error("WA notify error:", err));
+ } catch (err) {
+ console.error("Gagal kirim WA:", err);
+ }
+ }
 
-          // Redirect to track page
-          setTimeout(() => {
-            window.location.href = `/track/${orderData.id}`;
-          }, 1500);
-        } else if (statusData.status === 'failed' || statusData.status === 'expired' || statusData.status === 'cancelled') {
-          clearInterval(checkInterval);
-          toast.error("Pembayaran gagal atau kadaluarsa!", { id: "payment_failed" });
-        }
-      }, 3000); // Cek setiap 3 detik
+ // Redirect to track page
+ setTimeout(() => {
+ window.location.href = `/track/${orderData.id}`;
+ }, 1500);
+ } else if (statusData.status === 'failed' || statusData.status === 'expired' || statusData.status === 'cancelled') {
+ clearInterval(checkInterval);
+ toast.error("Pembayaran gagal atau kadaluarsa!", { id:"payment_failed" });
+ }
+ }, 3000); // Cek setiap 3 detik
 
-    } catch (err) {
-      console.error("Checkout Error:", err);
-      toast.error("Terjadi kesalahan sistem saat memproses pesanan.");
-    }
-  };
+ } catch (err) {
+ console.error("Checkout Error:", err);
+ toast.error("Terjadi kesalahan sistem saat memproses pesanan.");
+ }
+ };
 
-  // No need for Snap script - using Pakasir payment links
-  useEffect(() => {}, []);
+ // No need for Snap script - using Pakasir payment links
+ useEffect(() => {}, []);
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: page?.title || `@${slug}`,
-          text: page?.description || `Check out ${page?.title || slug}`,
-          url: url,
-        });
-      } catch (err) {
-        console.error('Share failed:', err);
-      }
-    } else {
-      navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
-    }
-  };
+ const handleShare = async () => {
+ const url = window.location.href;
+ if (navigator.share) {
+ try {
+ await navigator.share({
+ title: page?.title || `@${slug}`,
+ text: page?.description || `Check out ${page?.title || slug}`,
+ url: url,
+ });
+ } catch (err) {
+ console.error('Share failed:', err);
+ }
+ } else {
+ navigator.clipboard.writeText(url);
+ alert('Link copied to clipboard!');
+ }
+ };
 
-  const getYouTubeEmbedUrl = (url) => {
-    if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11)
-      ? `https://www.youtube.com/embed/${match[2]}`
-      : null;
-  };
+ const getYouTubeEmbedUrl = (url) => {
+ if (!url) return null;
+ const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+ const match = url.match(regExp);
+ return (match && match[2].length === 11)
+ ? `https://www.youtube.com/embed/${match[2]}`
+ : null;
+ };
 
-  useEffect(() => {
-    const fetchPage = async () => {
-      try {
-        const { data, error: err } = await supabase
-          .from('pages')
-          .select('*')
-          .eq('slug', slug)
-          .single()
-          
-        if (err || !data) {
-          setError('Page not found')
-        } else {
-          setPage(data)
-          
-          try {
-            const { data: waData } = await supabase.rpc('get_page_whatsapp_number', { page_slug: slug })
-            if (waData) {
-              setCreatorWA(waData.replace(/[^0-9]/g, ''));
-            }
-          } catch (e) {
-            console.error('Failed to fetch WA:', e)
-          }
+ useEffect(() => {
+ const fetchPage = async () => {
+ try {
+ const { data, error: err } = await supabase
+ .from('pages')
+ .select('*')
+ .eq('slug', slug)
+ .single()
+ 
+ if (err || !data) {
+ setError('Page not found')
+ } else {
+ setPage(data)
+ 
+ try {
+ const { data: waData } = await supabase.rpc('get_page_whatsapp_number', { page_slug: slug })
+ if (waData) {
+ setCreatorWA(waData.replace(/[^0-9]/g, ''));
+ }
+ } catch (e) {
+ console.error('Failed to fetch WA:', e)
+ }
 
-          try {
-            const { data: originData } = await supabase.rpc('get_page_shipping_origin', { page_slug: slug })
-            if (originData) {
-              setBiteshipOrigin(originData);
-            }
-          } catch (e) {
-            console.error('Failed to fetch shipping origin:', e)
-          }
-        }
-      } catch (err) {
-        setError('Page not found')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchPage()
-  }, [slug])
+ try {
+ const { data: originData } = await supabase.rpc('get_page_shipping_origin', { page_slug: slug })
+ if (originData) {
+ setBiteshipOrigin(originData);
+ }
+ } catch (e) {
+ console.error('Failed to fetch shipping origin:', e)
+ }
+ }
+ } catch (err) {
+ setError('Page not found')
+ } finally {
+ setIsLoading(false)
+ }
+ }
+ fetchPage()
+ }, [slug])
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-[#f4f6fa]">
-        <LoadingSpinner size="large" />
-      </div>
-    )
-  }
+ if (isLoading) {
+ return (
+ <div className="min-h-screen flex justify-center items-center bg-[#f4f6fa]">
+ <LoadingSpinner size="large" />
+ </div>
+ )
+ }
 
-  if (error || !page) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-[#f4f6fa] p-4 text-center">
-        <h1 className="text-3xl font-extrabold text-slate-900 mb-2">404 - Page Not Found</h1>
-        <p className="text-slate-500 mb-8 max-w-md">The Link-in-Bio page you are looking for does not exist or has been removed.</p>
-        <Link to="/" className="text-white bg-[#0b5cff] hover:bg-[#094acc] px-6 py-3 rounded-lg font-bold transition-colors">
-          Go to RYZ Shortlink
-        </Link>
-      </div>
-    )
-  }
+ if (error || !page) {
+ return (
+ <div className="min-h-screen flex flex-col justify-center items-center bg-[#f4f6fa] p-4 text-center">
+ <h1 className="text-3xl font-extrabold text-slate-900 mb-2">404 - Page Not Found</h1>
+ <p className="text-slate-500 mb-8 max-w-md">The Link-in-Bio page you are looking for does not exist or has been removed.</p>
+ <Link to="/" className="text-white bg-[#0b5cff] hover:bg-[#094acc] px-6 py-3 rounded-lg font-bold transition-colors">
+ Go to RYZ Shortlink
+ </Link>
+ </div>
+ )
+ }
 
-  const { theme, title, description, avatar_url, links } = page
+ const { theme, title, description, avatar_url, links } = page
 
-  // Partition links by page_break
-  const pagesData = [];
-  let currentPageLinks = [];
-  
-  if (links) {
-    links.forEach(link => {
-      if (link.type === 'page_break') {
-        pagesData.push(currentPageLinks);
-        currentPageLinks = [];
-      } else {
-        currentPageLinks.push(link);
-      }
-    });
-    pagesData.push(currentPageLinks);
-  }
+ // Partition links by page_break
+ const pagesData = [];
+ let currentPageLinks = [];
+ 
+ if (links) {
+ links.forEach(link => {
+ if (link.type === 'page_break') {
+ pagesData.push(currentPageLinks);
+ currentPageLinks = [];
+ } else {
+ currentPageLinks.push(link);
+ }
+ });
+ pagesData.push(currentPageLinks);
+ }
 
-  const currentLinks = pagesData[activePageIndex] || [];
+ const currentLinks = pagesData[activePageIndex] || [];
 
-  return (
-    <div 
-      className={`min-h-screen w-full flex flex-col items-center py-16 px-4 ${theme.bg_animation && theme.bg_animation !== 'none' ? theme.bg_animation : ''} ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
-      style={{ 
-        fontFamily: theme.font_family || 'Inter',
-        background: theme.bg_type === 'gradient' ? theme.bg_value : theme.bg_type === 'image' ? `url(${theme.bg_value}) center/cover` : theme.bg_value || theme.bg_color,
-        color: theme.text_color 
-      }}
-    >
-      <FloatingParticles count={80} color={theme.text_color} />
-      <Helmet>
-        <title>{title || `@${slug}`} | RYZLink</title>
-        <meta name="description" content={description || `Link-in-Bio for ${title || slug}`} />
-        <meta property="og:title" content={title || `@${slug}`} />
-        <meta property="og:description" content={description || `Link-in-Bio for ${title || slug}`} />
-        {avatar_url && <meta property="og:image" content={avatar_url} />}
-        {/* Dynamic Google Font Loader */}
-        {theme.font_family && theme.font_family !== 'Inter' && (
-          <link href={`https://fonts.googleapis.com/css2?family=${theme.font_family.replace(/ /g, '+')}:wght@400;500;600;700;800;900&display=swap`} rel="stylesheet" />
-        )}
-      </Helmet>
+ return (
+ <div 
+ className={`min-h-screen w-full flex flex-col items-center py-16 px-4 ${theme.bg_animation && theme.bg_animation !== 'none' ? theme.bg_animation : ''} ${theme.bg_animated && theme.bg_type === 'gradient' ? 'animate-gradient' : ''} ${theme.bg_pattern && theme.bg_pattern !== 'none' ? 'bg-pattern-' + theme.bg_pattern : ''}`}
+ style={{ 
+ fontFamily: theme.font_family || 'Inter',
+ background: theme.bg_type === 'gradient' ? theme.bg_value : theme.bg_type === 'image' ? `url(${theme.bg_value}) center/cover` : theme.bg_value || theme.bg_color,
+ color: theme.text_color 
+ }}
+ >
+ <FloatingParticles count={80} color={theme.text_color} />
+ <Helmet>
+ <title>{title || `@${slug}`} | RYZLink</title>
+ <meta name="description" content={description || `Link-in-Bio for ${title || slug}`} />
+ <meta property="og:title" content={title || `@${slug}`} />
+ <meta property="og:description" content={description || `Link-in-Bio for ${title || slug}`} />
+ {avatar_url && <meta property="og:image" content={avatar_url} />}
+ {/* Dynamic Google Font Loader */}
+ {theme.font_family && theme.font_family !== 'Inter' && (
+ <link href={`https://fonts.googleapis.com/css2?family=${theme.font_family.replace(/ /g, '+')}:wght@400;500;600;700;800;900&display=swap`} rel="stylesheet" />
+ )}
+ </Helmet>
 
-      {/* Top Navbar */}
-      {theme.navbar_enabled && (
-        <div className={`fixed top-0 inset-x-0 z-50 px-6 py-4 flex items-center justify-between transition-colors
-          ${theme.navbar_style === 'solid' ? 'bg-white text-slate-900 border-b border-slate-200 shadow-sm' : 
-            theme.navbar_style === 'transparent' ? 'bg-transparent' : 
-            'bg-white/70 backdrop-blur-md text-slate-900 border-b border-white/20 shadow-sm'}`}
-          style={theme.navbar_style === 'transparent' ? { color: theme.text_color } : {}}
-        >
-          <div className="font-bold text-base truncate pr-4 max-w-xl mx-auto w-full flex items-center justify-between">
-            <span>{theme.navbar_title || title || `@${slug}`}</span>
-            <button onClick={handleShare} className={`p-2 rounded-full transition-colors ${theme.navbar_style === 'transparent' ? 'hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}>
-              <LucideIcons.Share2 className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      )}
+ {/* Top Navbar */}
+ {theme.navbar_enabled && (
+ <div className={`fixed top-0 inset-x-0 z-50 px-6 py-4 flex items-center justify-between transition-colors
+ ${theme.navbar_style === 'solid' ? 'bg-white text-slate-900 border-b border-slate-200 shadow-sm' : 
+ theme.navbar_style === 'transparent' ? 'bg-transparent' : 
+ 'bg-white/70 backdrop-blur-md text-slate-900 border-b border-white/20 shadow-sm'}`}
+ style={theme.navbar_style === 'transparent' ? { color: theme.text_color } : {}}
+ >
+ <div className="font-bold text-base truncate pr-4 max-w-xl mx-auto w-full flex items-center justify-between">
+ <span>{theme.navbar_title || title || `@${slug}`}</span>
+ <button onClick={handleShare} className={`p-2 rounded-full transition-colors ${theme.navbar_style === 'transparent' ? 'hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}>
+ <LucideIcons.Share2 className="w-5 h-5" />
+ </button>
+ </div>
+ </div>
+ )}
 
-      <div className={`w-full max-w-[600px] flex flex-col items-center animate-fade-in-up ${theme.navbar_enabled ? 'pt-24' : 'pt-12'}`}>
-        {/* Profile Layout Logic */}
-        {theme.profile_layout !== 'hidden' && (
-          <div className={`w-full flex ${theme.profile_layout === 'side-by-side' ? 'flex-row items-center text-left gap-6 mb-10 px-4' : 'flex-col items-center mb-10'}`}>
-            {/* Avatar */}
-            {avatar_url ? (
-              <img src={avatar_url} alt={title || slug} className={`object-cover shadow-xl border-4 border-white/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'} ${theme.profile_layout === 'compact' ? 'w-20 h-20' : theme.profile_layout === 'side-by-side' ? 'w-24 h-24 md:w-28 md:h-28 shrink-0' : 'w-24 h-24 md:w-28 md:h-28 mb-6'}`} />
-            ) : (
-              <div className={`bg-black/5 shadow-xl border-4 border-white/20 flex items-center justify-center text-black/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'} ${theme.profile_layout === 'compact' ? 'w-20 h-20' : theme.profile_layout === 'side-by-side' ? 'w-24 h-24 md:w-28 md:h-28 shrink-0' : 'w-24 h-24 md:w-28 md:h-28 mb-6'}`}>
-                {LucideIcons.Image && <LucideIcons.Image className={`${theme.profile_layout === 'compact' ? 'w-8 h-8' : 'h-10 w-10'}`} />}
-              </div>
-            )}
-            
-            {/* Profile Info */}
-            <div className={`${theme.profile_layout === 'side-by-side' ? 'flex-1' : 'w-full'}`}>
-              <h1 className={`${theme.profile_layout === 'compact' ? 'text-xl md:text-2xl mt-4' : 'text-2xl md:text-3xl'} font-extrabold mb-3 ${theme.profile_layout === 'side-by-side' ? 'text-left' : 'text-center'} tracking-tight`} style={{ color: theme.text_color }}>
-                {title || `@${slug}`}
-              </h1>
-              <p className={`text-base md:text-lg opacity-90 leading-relaxed ${theme.profile_layout === 'side-by-side' ? 'text-left' : 'text-center mx-auto max-w-md'} ${theme.profile_layout === 'compact' ? 'mb-6' : ''}`} style={{ color: theme.text_color }}>
-                {description}
-              </p>
-            </div>
-          </div>
-        )}
+ <div className={`w-full max-w-[600px] flex flex-col items-center animate-fade-in-up ${theme.navbar_enabled ? 'pt-24' : 'pt-12'}`}>
+ {/* Profile Layout Logic */}
+ {theme.profile_layout !== 'hidden' && (
+ <div className={`w-full flex ${theme.profile_layout === 'side-by-side' ? 'flex-row items-center text-left gap-6 mb-10 px-4' : 'flex-col items-center mb-10'}`}>
+ {/* Avatar */}
+ {avatar_url ? (
+ <img src={avatar_url} alt={title || slug} className={`object-cover shadow-xl border-4 border-white/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'} ${theme.profile_layout === 'compact' ? 'w-20 h-20' : theme.profile_layout === 'side-by-side' ? 'w-24 h-24 md:w-28 md:h-28 shrink-0' : 'w-24 h-24 md:w-28 md:h-28 mb-6'}`} />
+ ) : (
+ <div className={`bg-black/5 shadow-xl border-4 border-white/20 flex items-center justify-center text-black/20 ${theme.avatar_shape === 'clip-hexagon' ? '[clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)]' : theme.avatar_shape || 'rounded-full'} ${theme.profile_layout === 'compact' ? 'w-20 h-20' : theme.profile_layout === 'side-by-side' ? 'w-24 h-24 md:w-28 md:h-28 shrink-0' : 'w-24 h-24 md:w-28 md:h-28 mb-6'}`}>
+ {LucideIcons.Image && <LucideIcons.Image className={`${theme.profile_layout === 'compact' ? 'w-8 h-8' : 'h-10 w-10'}`} />}
+ </div>
+ )}
+ 
+ {/* Profile Info */}
+ <div className={`${theme.profile_layout === 'side-by-side' ? 'flex-1' : 'w-full'}`}>
+ <h1 className={`${theme.profile_layout === 'compact' ? 'text-xl md:text-2xl mt-4' : 'text-2xl md:text-3xl'} font-extrabold mb-3 ${theme.profile_layout === 'side-by-side' ? 'text-left' : 'text-center'} tracking-tight`} style={{ color: theme.text_color }}>
+ {title || `@${slug}`}
+ </h1>
+ <p className={`text-base md:text-lg opacity-90 leading-relaxed ${theme.profile_layout === 'side-by-side' ? 'text-left' : 'text-center mx-auto max-w-md'} ${theme.profile_layout === 'compact' ? 'mb-6' : ''}`} style={{ color: theme.text_color }}>
+ {description}
+ </p>
+ </div>
+ </div>
+ )}
 
-        {/* Social Links */}
-        {(theme.social_links?.instagram || theme.social_links?.twitter || theme.social_links?.github || theme.social_links?.linkedin || theme.social_links?.youtube || theme.social_links?.tiktok) && (
-          <div className="flex flex-wrap justify-center gap-5 mb-10">
-            {theme.social_links?.instagram && <a href={theme.social_links.instagram} target="_blank" rel="noreferrer" className="hover:scale-110 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.instagram : theme.text_color }}><FaInstagram className="w-7 h-7" /></a>}
-            {theme.social_links?.twitter && <a href={theme.social_links.twitter} target="_blank" rel="noreferrer" className="hover:scale-110 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.twitter : theme.text_color }}><FaXTwitter className="w-7 h-7" /></a>}
-            {theme.social_links?.github && <a href={theme.social_links.github} target="_blank" rel="noreferrer" className="hover:scale-110 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.github : theme.text_color }}><FaGithub className="w-7 h-7" /></a>}
-            {theme.social_links?.linkedin && <a href={theme.social_links.linkedin} target="_blank" rel="noreferrer" className="hover:scale-110 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.linkedin : theme.text_color }}><FaLinkedin className="w-7 h-7" /></a>}
-            {theme.social_links?.youtube && <a href={theme.social_links.youtube} target="_blank" rel="noreferrer" className="hover:scale-110 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.youtube : theme.text_color }}><FaYoutube className="w-7 h-7" /></a>}
-            {theme.social_links?.tiktok && <a href={theme.social_links.tiktok} target="_blank" rel="noreferrer" className="hover:scale-110 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.tiktok : theme.text_color }}><FaTiktok className="w-7 h-7" /></a>}
-          </div>
-        )}
+ {/* Social Links */}
+ {(theme.social_links?.instagram || theme.social_links?.twitter || theme.social_links?.github || theme.social_links?.linkedin || theme.social_links?.youtube || theme.social_links?.tiktok) && (
+ <div className="flex flex-wrap justify-center gap-5 mb-10">
+ {theme.social_links?.instagram && <a href={theme.social_links.instagram} target="_blank" rel="noreferrer" className="hover:scale-110 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.instagram : theme.text_color }}><FaInstagram className="w-7 h-7" /></a>}
+ {theme.social_links?.twitter && <a href={theme.social_links.twitter} target="_blank" rel="noreferrer" className="hover:scale-110 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.twitter : theme.text_color }}><FaXTwitter className="w-7 h-7" /></a>}
+ {theme.social_links?.github && <a href={theme.social_links.github} target="_blank" rel="noreferrer" className="hover:scale-110 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.github : theme.text_color }}><FaGithub className="w-7 h-7" /></a>}
+ {theme.social_links?.linkedin && <a href={theme.social_links.linkedin} target="_blank" rel="noreferrer" className="hover:scale-110 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.linkedin : theme.text_color }}><FaLinkedin className="w-7 h-7" /></a>}
+ {theme.social_links?.youtube && <a href={theme.social_links.youtube} target="_blank" rel="noreferrer" className="hover:scale-110 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.youtube : theme.text_color }}><FaYoutube className="w-7 h-7" /></a>}
+ {theme.social_links?.tiktok && <a href={theme.social_links.tiktok} target="_blank" rel="noreferrer" className="hover:scale-110 transition-all duration-300 flex items-center justify-center" style={{ color: theme.social_style === 'brand' ? BRAND_COLORS.tiktok : theme.text_color }}><FaTiktok className="w-7 h-7" /></a>}
+ </div>
+ )}
 
-        {/* Links & Blocks */}
-        <div className={`w-full ${theme.layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
-          {currentLinks && currentLinks.length > 0 ? (
-            currentLinks.map((link, i) => {
-              if (link.type === 'header') {
-                return (
-                  <div key={i} className={`w-full pt-10 pb-4 flex items-center justify-center gap-4 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ color: theme.text_color }}>
-                    <div className="h-[2px] bg-current opacity-20 flex-1 max-w-[40px] rounded-full"></div>
-                    <h2 className="text-sm md:text-base font-black tracking-[0.2em] uppercase text-center">
-                      {link.title}
-                    </h2>
-                    <div className="h-[2px] bg-current opacity-20 flex-1 max-w-[40px] rounded-full"></div>
-                  </div>
-                )
-              }
+ {/* Links & Blocks */}
+ <div className={`w-full ${theme.layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
+ {currentLinks && currentLinks.length > 0 ? (
+ currentLinks.map((link, i) => {
+ if (link.type === 'header') {
+ return (
+ <div key={i} className={`w-full pt-10 pb-4 flex items-center justify-center gap-4 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ color: theme.text_color }}>
+ <div className="h-[2px] bg-current opacity-20 flex-1 max-w-[40px] rounded-full"></div>
+ <h2 className="text-sm md:text-base font-black tracking-[0.2em] uppercase text-center">
+ {link.title}
+ </h2>
+ <div className="h-[2px] bg-current opacity-20 flex-1 max-w-[40px] rounded-full"></div>
+ </div>
+ )
+ }
 
-              if (link.type === 'video') {
-                const embedUrl = getYouTubeEmbedUrl(link.url);
-                return (
-                  <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
-                    {embedUrl ? (
-                      <div className="relative w-full pb-[56.25%]">
-                        <iframe
-                          src={embedUrl}
-                          className="absolute top-0 left-0 w-full h-full border-0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        ></iframe>
-                      </div>
-                    ) : (
-                      <div className="w-full py-12 bg-black/5 flex flex-col items-center justify-center text-current opacity-60">
-                        <LucideIcons.Video className="w-8 h-8 mb-2" />
-                        <span className="text-xs font-medium">Invalid Video URL</span>
-                      </div>
-                    )}
-                  </div>
-                )
-              }
+ if (link.type === 'video') {
+ const embedUrl = getYouTubeEmbedUrl(link.url);
+ return (
+ <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
+ {embedUrl ? (
+ <div className="relative w-full pb-[56.25%]">
+ <iframe
+ src={embedUrl}
+ className="absolute top-0 left-0 w-full h-full border-0"
+ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+ allowFullScreen
+ ></iframe>
+ </div>
+ ) : (
+ <div className="w-full py-12 bg-black/5 flex flex-col items-center justify-center text-current opacity-60">
+ <LucideIcons.Video className="w-8 h-8 mb-2" />
+ <span className="text-xs font-medium">Invalid Video URL</span>
+ </div>
+ )}
+ </div>
+ )
+ }
 
-              if (link.type === 'image') {
-                return (
-                  <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.button_animation || 'hover:scale-[1.02]'} transition-transform ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
-                    {link.url ? (
-                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="block w-full">
-                        <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
-                      </a>
-                    ) : (
-                      <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
-                    )}
-                  </div>
-                )
-              }
+ if (link.type === 'image') {
+ return (
+ <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.button_animation || 'hover:scale-[1.02]'} transition-transform ${theme.layout === 'grid' ? 'col-span-2' : ''}`}>
+ {link.url ? (
+ <a href={link.url} target="_blank" rel="noopener noreferrer" className="block w-full">
+ <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
+ </a>
+ ) : (
+ <img src={link.thumbnail_url || 'https://via.placeholder.com/600x200?text=Image+Placeholder'} alt="Image Block" className="w-full object-cover" />
+ )}
+ </div>
+ )
+ }
 
-              if (link.type === 'folder') {
-                const isExpanded = expandedFolders[i];
-                return (
-                  <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} transition-all duration-300 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ backgroundColor: theme.button_bg, color: theme.button_text }}>
-                    <button 
-                      onClick={() => toggleFolder(i)}
-                      className="w-full py-4 px-6 flex items-center justify-between font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform"
-                    >
-                      <span className="flex items-center gap-3">
-                        {link.icon && LucideIcons[link.icon] ? React.createElement(LucideIcons[link.icon], { className: "w-5 h-5" }) : <LucideIcons.Folder className="w-5 h-5"/>} 
-                        {link.title || 'Folder'}
-                      </span>
-                      <LucideIcons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                    </button>
-                    {isExpanded && (link.items && link.items.length > 0) && (
-                      <div className="px-6 pb-4 pt-1 flex flex-col gap-3 border-t border-current/10">
-                        {link.items.map((subLink, subIdx) => (
-                          <a 
-                            key={subIdx} 
-                            href={subLink.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="w-full text-center py-3 px-4 rounded-xl font-semibold bg-white/10 hover:bg-white/20 transition-colors"
-                          >
-                            {subLink.title || 'Link'}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              }
+ if (link.type === 'folder') {
+ const isExpanded = expandedFolders[i];
+ return (
+ <div key={i} className={`w-full overflow-hidden ${theme.button_style} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} transition-all duration-300 ${theme.layout === 'grid' ? 'col-span-2' : ''}`} style={{ backgroundColor: theme.button_bg, color: theme.button_text }}>
+ <button 
+ onClick={() => toggleFolder(i)}
+ className="w-full py-4 px-6 flex items-center justify-between font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform"
+ >
+ <span className="flex items-center gap-3">
+ {link.icon && LucideIcons[link.icon] ? React.createElement(LucideIcons[link.icon], { className:"w-5 h-5" }) : <LucideIcons.Folder className="w-5 h-5"/>} 
+ {link.title || 'Folder'}
+ </span>
+ <LucideIcons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+ </button>
+ {isExpanded && (link.items && link.items.length > 0) && (
+ <div className="px-6 pb-4 pt-1 flex flex-col gap-3 border-t border-current/10">
+ {link.items.map((subLink, subIdx) => (
+ <a 
+ key={subIdx} 
+ href={subLink.url} 
+ target="_blank" 
+ rel="noopener noreferrer"
+ className="w-full text-center py-3 px-4 rounded-xl font-semibold bg-white/10 hover:bg-white/20 transition-colors"
+ >
+ {subLink.title || 'Link'}
+ </a>
+ ))}
+ </div>
+ )}
+ </div>
+ )
+ }
 
-              const isComplex = ['digital_product', 'appointment', 'event', 'physical_product', 'blog'].includes(link.type);
-              if (isComplex) {
-                return (
-                  <ComplexBlockRender 
-                    key={i} 
-                    link={link} 
-                    theme={theme} 
-                    onClick={(product) => {
-                      if (product.type === 'blog') {
-                        navigate(`/p/${slug}/blog/${product.id}`);
-                        return;
-                      } 
-                      setSelectedProduct(product);
-                      setSelectedVariantIndex(0);
-                      setIsCheckoutOpen(true);
-                      setCheckoutForm({ name: '', phone: '', address: '', email: '', customAnswers: {} });
-                    }} 
-                  />
-                )
-              }
+ const isComplex = ['digital_product', 'appointment', 'event', 'physical_product', 'blog'].includes(link.type);
+ if (isComplex) {
+ return (
+ <ComplexBlockRender 
+ key={i} 
+ link={link} 
+ theme={theme} 
+ onClick={(product) => {
+ if (product.type === 'blog') {
+ navigate(`/p/${slug}/blog/${product.id}`);
+ return;
+ } 
+ setSelectedProduct(product);
+ setSelectedVariantIndex(0);
+ setIsCheckoutOpen(true);
+ setCheckoutForm({ name: '', phone: '', address: '', email: '', customAnswers: {} });
+ }} 
+ />
+ )
+ }
 
-              return (
-                <a
-                  key={i}
-                  href={link.url || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`block w-full text-lg font-bold transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} relative overflow-hidden ${theme.layout === 'grid' ? 'aspect-square p-4 flex flex-col items-center justify-center text-center gap-3' : 'py-4 px-6'}`}
-                  style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
-                >
-                  <div className={`flex relative z-10 w-full ${theme.layout === 'grid' ? 'flex-col items-center justify-center' : `items-center gap-4 ${theme.button_align || 'justify-center'}`}`}>
-                    {link.thumbnail_url ? (
-                      <div className="shrink-0">
-                        <img src={link.thumbnail_url} alt="thumbnail" className={`${theme.layout === 'grid' ? 'w-16 h-16 mb-2' : 'w-12 h-12'} rounded-lg object-cover shadow-sm`} />
-                      </div>
-                    ) : (link.icon && LucideIcons[link.icon]) && (
-                      <div className="flex items-center justify-center shrink-0">
-                        {(() => {
-                          const IconComponent = LucideIcons[link.icon];
-                          return <IconComponent className={`${theme.layout === 'grid' ? 'w-10 h-10 mb-2' : 'w-6 h-6'}`} />;
-                        })()}
-                      </div>
-                    )}
-                    
-                    <div className={`flex flex-col w-full ${theme.layout === 'grid' ? 'items-center text-center' : (theme.button_align === 'justify-start' ? 'items-start text-left' : 'items-center text-center')}`}>
-                      <span className="truncate w-full leading-tight">{link.title || 'Untitled Link'}</span>
-                      {link.subtitle && <span className="text-sm font-medium opacity-80 truncate w-full mt-1 leading-none">{link.subtitle}</span>}
-                    </div>
-                  </div>
-                </a>
-              )
-            })
-          ) : (
-            <p className="text-center opacity-50 w-full col-span-2">No links have been added yet.</p>
-          )}
-        </div>
+ return (
+ <a
+ key={i}
+ href={link.url || '#'}
+ target="_blank"
+ rel="noopener noreferrer"
+ className={`block w-full text-lg font-bold transition-all duration-300 ${theme.button_animation || 'hover:scale-[1.02]'} active:scale-[0.98] ${theme.button_style} ${theme.button_border || 'border border-transparent'} ${theme.button_shadow || 'shadow-sm'} relative overflow-hidden ${theme.layout === 'grid' ? 'aspect-square p-4 flex flex-col items-center justify-center text-center gap-3' : 'py-4 px-6'}`}
+ style={{ backgroundColor: theme.button_bg, color: theme.button_text }}
+ >
+ <div className={`flex relative z-10 w-full ${theme.layout === 'grid' ? 'flex-col items-center justify-center' : `items-center gap-4 ${theme.button_align || 'justify-center'}`}`}>
+ {link.thumbnail_url ? (
+ <div className="shrink-0">
+ <img src={link.thumbnail_url} alt="thumbnail" className={`${theme.layout === 'grid' ? 'w-16 h-16 mb-2' : 'w-12 h-12'} rounded-lg object-cover shadow-sm`} />
+ </div>
+ ) : (link.icon && LucideIcons[link.icon]) && (
+ <div className="flex items-center justify-center shrink-0">
+ {(() => {
+ const IconComponent = LucideIcons[link.icon];
+ return <IconComponent className={`${theme.layout === 'grid' ? 'w-10 h-10 mb-2' : 'w-6 h-6'}`} />;
+ })()}
+ </div>
+ )}
+ 
+ <div className={`flex flex-col w-full ${theme.layout === 'grid' ? 'items-center text-center' : (theme.button_align === 'justify-start' ? 'items-start text-left' : 'items-center text-center')}`}>
+ <span className="truncate w-full leading-tight">{link.title || 'Untitled Link'}</span>
+ {link.subtitle && <span className="text-sm font-medium opacity-80 truncate w-full mt-1 leading-none">{link.subtitle}</span>}
+ </div>
+ </div>
+ </a>
+ )
+ })
+ ) : (
+ <p className="text-center opacity-50 w-full col-span-2">No links have been added yet.</p>
+ )}
+ </div>
 
-        {/* Tabs / Pagination */}
-        {pagesData.length > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
-            {pagesData.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setActivePageIndex(idx);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className={`w-10 h-10 rounded-full font-bold transition-all duration-300 ${activePageIndex === idx ? 'scale-110 shadow-lg' : 'opacity-50 hover:opacity-100 hover:scale-105'}`}
-                style={{ 
-                  backgroundColor: activePageIndex === idx ? theme.button_bg : 'transparent',
-                  color: activePageIndex === idx ? theme.button_text : theme.text_color,
-                  border: `2px solid ${activePageIndex === idx ? theme.button_bg : theme.text_color}`
-                }}
-              >
-                {idx + 1}
-              </button>
-            ))}
-          </div>
-        )}
-        
-        {/* Custom Footer */}
-        {theme.footer_enabled && (
-          <div className="w-full mt-16 mb-4 text-center">
-            <p className="text-sm font-medium opacity-70" style={{ color: theme.text_color }}>
-              {theme.footer_text || `© ${new Date().getFullYear()} ${title || 'RYZ Shortlink'}`}
-            </p>
-          </div>
-        )}
+ {/* Tabs / Pagination */}
+ {pagesData.length > 1 && (
+ <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
+ {pagesData.map((_, idx) => (
+ <button
+ key={idx}
+ onClick={() => {
+ setActivePageIndex(idx);
+ window.scrollTo({ top: 0, behavior: 'smooth' });
+ }}
+ className={`w-10 h-10 rounded-full font-bold transition-all duration-300 ${activePageIndex === idx ? 'scale-110 shadow-lg' : 'opacity-50 hover:opacity-100 hover:scale-105'}`}
+ style={{ 
+ backgroundColor: activePageIndex === idx ? theme.button_bg : 'transparent',
+ color: activePageIndex === idx ? theme.button_text : theme.text_color,
+ border: `2px solid ${activePageIndex === idx ? theme.button_bg : theme.text_color}`
+ }}
+ >
+ {idx + 1}
+ </button>
+ ))}
+ </div>
+ )}
+ 
+ {/* Custom Footer */}
+ {theme.footer_enabled && (
+ <div className="w-full mt-16 mb-4 text-center">
+ <p className="text-sm font-medium opacity-70" style={{ color: theme.text_color }}>
+ {theme.footer_text || `© ${new Date().getFullYear()} ${title || 'RYZ Shortlink'}`}
+ </p>
+ </div>
+ )}
 
-        {/* Footer Brand */}
-        {!theme.hide_branding && (
-          <a 
-            href="/" 
-            className="mt-12 mb-12 opacity-40 hover:opacity-100 transition-opacity flex flex-col items-center gap-2 group" 
-            style={{ color: theme.text_color }}
-          >
-            <div className="text-xs font-bold uppercase tracking-widest mb-1">Powered by</div>
-            <div className="flex items-center gap-2 font-black text-xl tracking-tighter">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center text-sm" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#000' }}>R</div>
-              RYZLink
-            </div>
-          </a>
-        )}
-      </div>
+ {/* Footer Brand */}
+ {!theme.hide_branding && (
+ <a 
+ href="/" 
+ className="mt-12 mb-12 opacity-40 hover:opacity-100 transition-opacity flex flex-col items-center gap-2 group" 
+ style={{ color: theme.text_color }}
+ >
+ <div className="text-xs font-bold uppercase tracking-widest mb-1">Powered by</div>
+ <div className="flex items-center gap-2 font-black text-xl tracking-tighter">
+ <div className="w-6 h-6 rounded-md flex items-center justify-center text-sm" style={{ backgroundColor: theme.text_color, color: theme.bg_type === 'color' ? theme.bg_value : '#000' }}>R</div>
+ RYZLink
+ </div>
+ </a>
+ )}
+ </div>
 
-      {/* Checkout Modal */}
-      {isCheckoutOpen && selectedProduct && (
-        <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col animate-fade-in-up overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between shrink-0 shadow-sm">
-            <button 
-              type="button" 
-              onClick={() => setIsCheckoutOpen(false)} 
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
-            >
-              <LucideIcons.ArrowLeft className="w-5 h-5" /> Back
-            </button>
-            <h3 className="text-lg font-black text-slate-900 hidden sm:block">Secure Checkout</h3>
-            <div className="w-20"></div> {/* Spacer for centering */}
-          </div>
+ {/* Checkout Modal */}
+ {isCheckoutOpen && selectedProduct && (
+ <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col animate-fade-in-up overflow-y-auto">
+ {/* Header */}
+ <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between shrink-0 shadow-sm">
+ <button 
+ type="button" 
+ onClick={() => setIsCheckoutOpen(false)} 
+ className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
+ >
+ <LucideIcons.ArrowLeft className="w-5 h-5" /> Back
+ </button>
+ <h3 className="text-lg font-black text-slate-900 hidden sm:block">Secure Checkout</h3>
+ <div className="w-20"></div> {/* Spacer for centering */}
+ </div>
 
-          <div className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
-            <form onSubmit={handleCheckout} className="flex flex-col-reverse lg:flex-row gap-6 lg:gap-10">
-              
-              {/* Left Column: Form Fields */}
-              <div className="flex-1 flex flex-col gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-5">
-                  <h4 className="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3 flex items-center gap-2">
-                    <LucideIcons.User className="w-5 h-5 text-slate-400" /> Customer Details
-                  </h4>
-                  
-                  {selectedProduct.variants?.length > 0 && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Select Variant</label>
-                      <select 
-                        value={selectedVariantIndex}
-                        onChange={(e) => setSelectedVariantIndex(parseInt(e.target.value))}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
-                      >
-                        {selectedProduct.variants.map((v, i) => (
-                          <option key={i} value={i}>{v.name} {v.price ? `- Rp ${parseInt(v.price).toLocaleString('id-ID')}` : ''}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+ <div className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+ <form onSubmit={handleCheckout} className="flex flex-col-reverse lg:flex-row gap-6 lg:gap-10">
+ 
+ {/* Left Column: Form Fields */}
+ <div className="flex-1 flex flex-col gap-6">
+ <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-5">
+ <h4 className="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3 flex items-center gap-2">
+ <LucideIcons.User className="w-5 h-5 text-slate-400" /> Customer Details
+ </h4>
+ 
+ {selectedProduct.variants?.length > 0 && (
+ <div>
+ <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Select Variant</label>
+ <select 
+ value={selectedVariantIndex}
+ onChange={(e) => setSelectedVariantIndex(parseInt(e.target.value))}
+ className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+ >
+ {selectedProduct.variants.map((v, i) => (
+ <option key={i} value={i}>{v.name} {v.price ? `- Rp ${parseInt(v.price).toLocaleString('id-ID')}` : ''}</option>
+ ))}
+ </select>
+ </div>
+ )}
 
-                  {/* Name */}
-                  {selectedProduct.ask_name !== false && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
-                      <input 
-                        required={selectedProduct.require_name !== false}
-                        type="text" 
-                        placeholder="e.g. John Doe"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
-                        value={checkoutForm.name}
-                        onChange={(e) => setCheckoutForm({...checkoutForm, name: e.target.value})}
-                      />
-                    </div>
-                  )}
+ {/* Name */}
+ {selectedProduct.ask_name !== false && (
+ <div>
+ <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
+ <input 
+ required={selectedProduct.require_name !== false}
+ type="text" 
+ placeholder="e.g. John Doe"
+ className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+ value={checkoutForm.name}
+ onChange={(e) => setCheckoutForm({...checkoutForm, name: e.target.value})}
+ />
+ </div>
+ )}
 
-                  {/* Phone */}
-                  {selectedProduct.ask_phone !== false && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Phone Number</label>
-                      <input 
-                        required={selectedProduct.require_phone !== false}
-                        type="tel" 
-                        placeholder="e.g. 081234567890"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
-                        value={checkoutForm.phone || ''}
-                        onChange={(e) => setCheckoutForm({...checkoutForm, phone: e.target.value})}
-                      />
-                    </div>
-                  )}
+ {/* Phone */}
+ {selectedProduct.ask_phone !== false && (
+ <div>
+ <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Phone Number</label>
+ <input 
+ required={selectedProduct.require_phone !== false}
+ type="tel" 
+ placeholder="e.g. 081234567890"
+ className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+ value={checkoutForm.phone || ''}
+ onChange={(e) => setCheckoutForm({...checkoutForm, phone: e.target.value})}
+ />
+ </div>
+ )}
 
-                  {/* Email */}
-                  {selectedProduct.custom_message_email && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Email Address</label>
-                      <input 
-                        required
-                        type="email" 
-                        placeholder="your@email.com"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
-                        value={checkoutForm.email || ''}
-                        onChange={(e) => setCheckoutForm({...checkoutForm, email: e.target.value})}
-                      />
-                    </div>
-                  )}
+ {/* Email */}
+ {selectedProduct.custom_message_email && (
+ <div>
+ <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Email Address</label>
+ <input 
+ required
+ type="email" 
+ placeholder="your@email.com"
+ className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+ value={checkoutForm.email || ''}
+ onChange={(e) => setCheckoutForm({...checkoutForm, email: e.target.value})}
+ />
+ </div>
+ )}
 
-                  {/* Address */}
-                  {(selectedProduct.type === 'physical_product' || selectedProduct.ask_address || selectedProduct.require_address) && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Shipping Address</label>
-                      
-                      {(selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id) ? (
-                        <div className="space-y-4">
-                           <div className="relative">
-                              <label className="block text-sm font-medium text-slate-600 mb-1">Kecamatan Tujuan</label>
-                              <div className="relative">
-                                <LucideIcons.Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                                <input
-                                  type="text"
-                                  placeholder="Cari kecamatan (min 3 huruf)"
-                                  className="w-full pl-10 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
-                                  value={areaSearchInput}
-                                  onChange={(e) => {
-                                    setAreaSearchInput(e.target.value);
-                                    if (e.target.value.length >= 3) {
-                                      searchArea(e.target.value);
-                                      setShowAreaResults(true);
-                                    } else {
-                                      setShowAreaResults(false);
-                                    }
-                                  }}
-                                />
-                              </div>
-                              {isSearchingArea && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 text-center text-sm text-slate-500">
-                                  Mencari...
-                                </div>
-                              )}
-                              {showAreaResults && areas.length > 0 && !isSearchingArea && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                  {areas.map(area => (
-                                    <button
-                                      key={area.id}
-                                      type="button"
-                                      className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-sm transition-colors"
-                                      onClick={() => {
-                                        setSelectedDestinationArea(area);
-                                        setAreaSearchInput(area.name);
-                                        setShowAreaResults(false);
-                                        handleCalculateRates(area.id);
-                                      }}
-                                    >
-                                      <span className="font-bold text-slate-800 block">{area.name}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                           </div>
-                           
-                           {/* Shipping Rates */}
-                           {isLoadingRates ? (
-                              <div className="text-sm font-medium text-slate-500 animate-pulse bg-slate-50 p-4 rounded-xl border border-slate-200">Menghitung tarif ongkos kirim...</div>
-                           ) : shippingRates.length > 0 ? (
-                              <div className="space-y-2 mt-4">
-                                 <label className="block text-sm font-medium text-slate-600 mb-2">Pilih Kurir</label>
-                                 <div className="max-h-56 overflow-y-auto space-y-2 pr-2">
-                                   {shippingRates.map((rate, i) => (
-                                     <label key={i} className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${selectedRate?.courier_service_code === rate.courier_service_code ? 'border-[#0b5cff] bg-blue-50/50 ring-1 ring-[#0b5cff]/50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                        <div className="flex items-center gap-3">
-                                          <input 
-                                            type="radio" 
-                                            name="shipping_rate"
-                                            checked={selectedRate?.courier_service_code === rate.courier_service_code}
-                                            onChange={() => setSelectedRate(rate)}
-                                            className="w-4 h-4 text-[#0b5cff]"
-                                          />
-                                          <div>
-                                            <div className="font-bold text-slate-800 text-sm uppercase">{rate.courier_name} - {rate.courier_service_name}</div>
-                                            <div className="text-xs font-medium text-slate-500 mt-0.5">{rate.duration}</div>
-                                          </div>
-                                        </div>
-                                        <div className="font-bold text-slate-900">
-                                          Rp {rate.price.toLocaleString('id-ID')}
-                                        </div>
-                                     </label>
-                                   ))}
-                                 </div>
-                              </div>
-                           ) : selectedDestinationArea && !isLoadingRates && (
-                              <div className="text-sm font-medium text-red-600 bg-red-50 p-4 rounded-xl border border-red-200">Tidak ada kurir tersedia untuk rute ini.</div>
-                           )}
+ {/* Address */}
+ {(selectedProduct.type === 'physical_product' || selectedProduct.ask_address || selectedProduct.require_address) && (
+ <div>
+ <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Shipping Address</label>
+ 
+ {(selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id) ? (
+ <div className="space-y-4">
+ <div className="relative">
+ <label className="block text-sm font-medium text-slate-600 mb-1">Kecamatan Tujuan</label>
+ <div className="relative">
+ <LucideIcons.Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+ <input
+ type="text"
+ placeholder="Cari kecamatan (min 3 huruf)"
+ className="w-full pl-10 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+ value={areaSearchInput}
+ onChange={(e) => {
+ setAreaSearchInput(e.target.value);
+ if (e.target.value.length >= 3) {
+ searchArea(e.target.value);
+ setShowAreaResults(true);
+ } else {
+ setShowAreaResults(false);
+ }
+ }}
+ />
+ </div>
+ {isSearchingArea && (
+ <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 text-center text-sm text-slate-500">
+ Mencari...
+ </div>
+ )}
+ {showAreaResults && areas.length > 0 && !isSearchingArea && (
+ <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+ {areas.map(area => (
+ <button
+ key={area.id}
+ type="button"
+ className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-sm transition-colors"
+ onClick={() => {
+ setSelectedDestinationArea(area);
+ setAreaSearchInput(area.name);
+ setShowAreaResults(false);
+ handleCalculateRates(area.id);
+ }}
+ >
+ <span className="font-bold text-slate-800 block">{area.name}</span>
+ </button>
+ ))}
+ </div>
+ )}
+ </div>
+ 
+ {/* Shipping Rates */}
+ {isLoadingRates ? (
+ <div className="text-sm font-medium text-slate-500 animate-pulse bg-slate-50 p-4 rounded-xl border border-slate-200">Menghitung tarif ongkos kirim...</div>
+ ) : shippingRates.length > 0 ? (
+ <div className="space-y-2 mt-4">
+ <label className="block text-sm font-medium text-slate-600 mb-2">Pilih Kurir</label>
+ <div className="max-h-56 overflow-y-auto space-y-2 pr-2">
+ {shippingRates.map((rate, i) => (
+ <label key={i} className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${selectedRate?.courier_service_code === rate.courier_service_code ? 'border-[#0b5cff] bg-blue-50/50 ring-1 ring-[#0b5cff]/50' : 'border-slate-200 hover:bg-slate-50'}`}>
+ <div className="flex items-center gap-3">
+ <input 
+ type="radio" 
+ name="shipping_rate"
+ checked={selectedRate?.courier_service_code === rate.courier_service_code}
+ onChange={() => setSelectedRate(rate)}
+ className="w-4 h-4 text-[#0b5cff]"
+ />
+ <div>
+ <div className="font-bold text-slate-800 text-sm uppercase">{rate.courier_name} - {rate.courier_service_name}</div>
+ <div className="text-xs font-medium text-slate-500 mt-0.5">{rate.duration}</div>
+ </div>
+ </div>
+ <div className="font-bold text-slate-900">
+ Rp {rate.price.toLocaleString('id-ID')}
+ </div>
+ </label>
+ ))}
+ </div>
+ </div>
+ ) : selectedDestinationArea && !isLoadingRates && (
+ <div className="text-sm font-medium text-red-600 bg-red-50 p-4 rounded-xl border border-red-200">Tidak ada kurir tersedia untuk rute ini.</div>
+ )}
 
-                           <div>
-                             <label className="block text-sm font-medium text-slate-600 mb-1">Detail Alamat Lengkap</label>
-                             <textarea 
-                                required={selectedProduct.require_address}
-                                placeholder="Jalan, RT/RW, Blok, No Rumah..."
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
-                                rows={2}
-                                value={checkoutForm.address}
-                                onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
-                              />
-                           </div>
-                        </div>
-                      ) : (
-                        <textarea 
-                          required={selectedProduct.type === 'physical_product' || selectedProduct.require_address}
-                          placeholder="Alamat lengkap (Jalan, RT/RW, Kecamatan, Kota, Kode Pos)"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
-                          rows={3}
-                          value={checkoutForm.address}
-                          onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
-                        />
-                      )}
-                    </div>
-                  )}
+ <div>
+ <label className="block text-sm font-medium text-slate-600 mb-1">Detail Alamat Lengkap</label>
+ <textarea 
+ required={selectedProduct.require_address}
+ placeholder="Jalan, RT/RW, Blok, No Rumah..."
+ className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
+ rows={2}
+ value={checkoutForm.address}
+ onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
+ />
+ </div>
+ </div>
+ ) : (
+ <textarea 
+ required={selectedProduct.type === 'physical_product' || selectedProduct.require_address}
+ placeholder="Alamat lengkap (Jalan, RT/RW, Kecamatan, Kota, Kode Pos)"
+ className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900 resize-none"
+ rows={3}
+ value={checkoutForm.address}
+ onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
+ />
+ )}
+ </div>
+ )}
 
-                  {/* Custom Questions */}
-                  {selectedProduct.custom_questions?.map((q, idx) => (
-                    <div key={q.id || idx}>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">{q.label}</label>
-                      <input 
-                        required={q.required}
-                        type="text" 
-                        placeholder="Your answer"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
-                        value={checkoutForm.customAnswers[q.id] || ''}
-                        onChange={(e) => setCheckoutForm({...checkoutForm, customAnswers: {...checkoutForm.customAnswers, [q.id]: e.target.value}})}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+ {/* Custom Questions */}
+ {selectedProduct.custom_questions?.map((q, idx) => (
+ <div key={q.id || idx}>
+ <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">{q.label}</label>
+ <input 
+ required={q.required}
+ type="text" 
+ placeholder="Your answer"
+ className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#0b5cff]/20 focus:outline-none transition-all font-medium text-slate-900"
+ value={checkoutForm.customAnswers[q.id] || ''}
+ onChange={(e) => setCheckoutForm({...checkoutForm, customAnswers: {...checkoutForm.customAnswers, [q.id]: e.target.value}})}
+ />
+ </div>
+ ))}
+ </div>
+ </div>
 
-              {/* Right Column: Order Summary */}
-              <div className="w-full lg:w-[400px] shrink-0">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:sticky lg:top-24">
-                  <h4 className="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
-                    <LucideIcons.ShoppingCart className="w-5 h-5 text-slate-400" /> Order Summary
-                  </h4>
-                  
-                  <div className="flex gap-4 items-start mb-6">
-                    <div className="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100 relative">
-                      {selectedProduct.thumbnail_url ? (
-                        <img src={selectedProduct.thumbnail_url} alt="Product" className="w-full h-full object-cover" />
-                      ) : (selectedProduct.icon && LucideIcons[selectedProduct.icon]) ? (
-                        <div className="absolute inset-0 flex items-center justify-center opacity-40">
-                          {(() => {
-                            const IconComponent = LucideIcons[selectedProduct.icon];
-                            return <IconComponent className="w-8 h-8" />;
-                          })()}
-                        </div>
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center opacity-40">
-                          <LucideIcons.Image className="w-8 h-8" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h5 className="font-bold text-slate-800 text-sm line-clamp-2 leading-snug">{selectedProduct.title || 'Untitled Product'}</h5>
-                      {selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex] && (
-                        <p className="text-xs text-slate-500 mt-1 font-medium bg-slate-100 inline-block px-2 py-0.5 rounded">
-                          Variant: {selectedProduct.variants[selectedVariantIndex].name}
-                        </p>
-                      )}
-                      <div className="mt-2 font-black text-slate-900 text-sm">
-                        {(() => {
-                          let p = selectedProduct.price;
-                          if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
-                            p = selectedProduct.variants[selectedVariantIndex].price;
-                          }
-                          return p ? `Rp ${parseInt(p).toLocaleString('id-ID')}` : 'FREE';
-                        })()}
-                      </div>
-                    </div>
-                  </div>
+ {/* Right Column: Order Summary */}
+ <div className="w-full lg:w-[400px] shrink-0">
+ <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:sticky lg:top-24">
+ <h4 className="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+ <LucideIcons.ShoppingCart className="w-5 h-5 text-slate-400" /> Order Summary
+ </h4>
+ 
+ <div className="flex gap-4 items-start mb-6">
+ <div className="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100 relative">
+ {selectedProduct.thumbnail_url ? (
+ <img src={selectedProduct.thumbnail_url} alt="Product" className="w-full h-full object-cover" />
+ ) : (selectedProduct.icon && LucideIcons[selectedProduct.icon]) ? (
+ <div className="absolute inset-0 flex items-center justify-center opacity-40">
+ {(() => {
+ const IconComponent = LucideIcons[selectedProduct.icon];
+ return <IconComponent className="w-8 h-8" />;
+ })()}
+ </div>
+ ) : (
+ <div className="absolute inset-0 flex items-center justify-center opacity-40">
+ <LucideIcons.Image className="w-8 h-8" />
+ </div>
+ )}
+ </div>
+ <div className="flex-1">
+ <h5 className="font-bold text-slate-800 text-sm line-clamp-2 leading-snug">{selectedProduct.title || 'Untitled Product'}</h5>
+ {selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex] && (
+ <p className="text-xs text-slate-500 mt-1 font-medium bg-slate-100 inline-block px-2 py-0.5 rounded">
+ Variant: {selectedProduct.variants[selectedVariantIndex].name}
+ </p>
+ )}
+ <div className="mt-2 font-black text-slate-900 text-sm">
+ {(() => {
+ let p = selectedProduct.price;
+ if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
+ p = selectedProduct.variants[selectedVariantIndex].price;
+ }
+ return p ? `Rp ${parseInt(p).toLocaleString('id-ID')}` : 'FREE';
+ })()}
+ </div>
+ </div>
+ </div>
 
-                  <div className="border-t border-slate-100 pt-4 mb-6">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-500 font-medium">Subtotal</span>
-                        <span className="text-sm font-bold text-slate-800">
-                          {(() => {
-                            let p = selectedProduct.price || 0;
-                            if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
-                              p = selectedProduct.variants[selectedVariantIndex].price;
-                            }
-                            return p ? `Rp ${parseInt(p).toLocaleString('id-ID')}` : 'FREE';
-                          })()}
-                        </span>
-                      </div>
-                      
-                      {selectedRate && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-500 font-medium">Shipping ({selectedRate.courier_name})</span>
-                          <span className="text-sm font-bold text-slate-800">
-                            Rp {selectedRate.price.toLocaleString('id-ID')}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+ <div className="border-t border-slate-100 pt-4 mb-6">
+ <div className="space-y-3">
+ <div className="flex justify-between items-center">
+ <span className="text-sm text-slate-500 font-medium">Subtotal</span>
+ <span className="text-sm font-bold text-slate-800">
+ {(() => {
+ let p = selectedProduct.price || 0;
+ if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
+ p = selectedProduct.variants[selectedVariantIndex].price;
+ }
+ return p ? `Rp ${parseInt(p).toLocaleString('id-ID')}` : 'FREE';
+ })()}
+ </span>
+ </div>
+ 
+ {selectedRate && (
+ <div className="flex justify-between items-center">
+ <span className="text-sm text-slate-500 font-medium">Shipping ({selectedRate.courier_name})</span>
+ <span className="text-sm font-bold text-slate-800">
+ Rp {selectedRate.price.toLocaleString('id-ID')}
+ </span>
+ </div>
+ )}
+ </div>
 
-                    <div className="flex justify-between items-center pt-4 mt-4 border-t border-slate-100">
-                      <span className="text-slate-800 font-black text-lg">Total</span>
-                      <span className="font-black text-[#0b5cff] text-xl">
-                        {(() => {
-                          let p = selectedProduct.price || 0;
-                          if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
-                            p = selectedProduct.variants[selectedVariantIndex].price;
-                          }
-                          let total = parseInt(p) + parseInt(selectedRate?.price || 0);
-                          return total ? `Rp ${total.toLocaleString('id-ID')}` : 'FREE';
-                        })()}
-                      </span>
-                    </div>
-                  </div>
+ <div className="flex justify-between items-center pt-4 mt-4 border-t border-slate-100">
+ <span className="text-slate-800 font-black text-lg">Total</span>
+ <span className="font-black text-[#0b5cff] text-xl">
+ {(() => {
+ let p = selectedProduct.price || 0;
+ if (selectedProduct.variants?.length > 0 && selectedProduct.variants[selectedVariantIndex]?.price) {
+ p = selectedProduct.variants[selectedVariantIndex].price;
+ }
+ let total = parseInt(p) + parseInt(selectedRate?.price || 0);
+ return total ? `Rp ${total.toLocaleString('id-ID')}` : 'FREE';
+ })()}
+ </span>
+ </div>
+ </div>
 
-                  <button 
-                    type="submit"
-                    disabled={selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id && (!selectedDestinationArea || !selectedRate)}
-                    className="w-full bg-[#0b5cff] hover:bg-[#094acc] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <LucideIcons.CreditCard className="w-5 h-5" />
-                    Bayar Sekarang
-                  </button>
+ <button 
+ type="submit"
+ disabled={selectedProduct.type === 'physical_product' && biteshipOrigin?.origin_area_id && (!selectedDestinationArea || !selectedRate)}
+ className="w-full bg-[#0b5cff] hover:bg-[#094acc] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+ >
+ <LucideIcons.CreditCard className="w-5 h-5" />
+ Bayar Sekarang
+ </button>
 
-                  <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400 font-medium">
-                    <LucideIcons.Lock className="w-3 h-3" /> Secure and Encrypted Payment
-                  </div>
-                </div>
-              </div>
+ <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400 font-medium">
+ <LucideIcons.Lock className="w-3 h-3" /> Secure and Encrypted Payment
+ </div>
+ </div>
+ </div>
 
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+ </form>
+ </div>
+ </div>
+ )}
+ </div>
+ )
 }
