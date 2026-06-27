@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDetailedAnalytics } from "@/hooks/useDetailedAnalytics";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import SEO from "@/components/SEO";
+import LoadingSpinner from '@/components/LoadingSpinner';
 import {
   BarChart3,
   Smartphone,
@@ -65,7 +66,7 @@ export default function AnalyticsPage() {
 
           {isLoading ? (
             <div className="text-center py-20">
-              <div className="animate-spin h-8 w-8 border-2 border-[#0b5cff] border-t-transparent rounded-full mx-auto"></div>
+              <LoadingSpinner size="large" />
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

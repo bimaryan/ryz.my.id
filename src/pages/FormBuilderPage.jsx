@@ -12,6 +12,7 @@ import {
 import toast from "react-hot-toast";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const FIELD_TYPES = [
   { id: 'short_text', label: 'Teks Singkat', icon: Type },
@@ -603,7 +604,7 @@ export default function FormBuilderPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F0EBF8] flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-purple-600 rounded-full"></div>
+        <LoadingSpinner size="large" />
       </div>
     );
   }

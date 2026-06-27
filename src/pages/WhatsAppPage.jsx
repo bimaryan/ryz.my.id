@@ -1,3 +1,4 @@
+import LoadingSpinner from '@/components/LoadingSpinner';
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -584,14 +585,9 @@ export default function WhatsAppPage() {
                     </div>
                   ) : selectedSession.status === "pending" &&
                     !selectedSession.qr_code ? (
-                    <div className="text-center py-8">
-                      <div className="inline-block">
-                        <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full" />
-                      </div>
-                      <p className="text-slate-600 mt-4 font-medium">
-                        Mempersiapkan QR Code...
-                      </p>
-                      <p className="text-sm text-slate-500">
+                    <div className="text-center py-8 flex flex-col items-center">
+                      <LoadingSpinner text="Mempersiapkan QR Code..." />
+                      <p className="text-sm text-slate-500 mt-4">
                         Tunggu 2-5 detik, QR akan muncul otomatis
                       </p>
                       <p className="text-xs text-slate-400 mt-2">
@@ -710,7 +706,7 @@ export default function WhatsAppPage() {
                     >
                       {sending ? (
                         <>
-                          <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                          <LoadingSpinner size="large" />
                           Mengirim...
                         </>
                       ) : (

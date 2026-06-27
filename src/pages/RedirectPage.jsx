@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Lock, ArrowRight } from 'lucide-react'
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 // Simple User Agent Parser
 const parseUserAgent = (ua) => {
@@ -215,8 +216,7 @@ export default function RedirectPage() {
   return (
     <div className="min-h-screen bg-[#f4f6fa] flex items-center justify-center font-sans">
       <div className="animate-pulse flex flex-col items-center">
-        <div className="h-12 w-12 rounded-xl bg-[#0b5cff]/10 border border-[#0b5cff]/20 mb-4 animate-spin" />
-        <p className="text-slate-500 font-bold tracking-wide">Redirecting...</p>
+        <LoadingSpinner size="large" />
       </div>
     </div>
   )

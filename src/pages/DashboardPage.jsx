@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import QRCodeModal from "@/components/QRCodeModal";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import Button from "@/components/ui/Button";
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -276,12 +277,7 @@ export default function DashboardPage() {
 
           <div className="divide-y divide-slate-100 p-2 sm:p-4">
             {linksLoading && (
-              <div className="text-center py-12">
-                <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mx-auto"></div>
-                <p className="mt-4 text-slate-500 font-medium">
-                  Memuat link Anda...
-                </p>
-              </div>
+              <LoadingSpinner text="Memuat link Anda..." />
             )}
 
             {!linksLoading && filteredLinks.length === 0 && (

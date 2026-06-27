@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import SEO from "@/components/SEO";
 import { CheckCircle2, ChevronDown, FileText, X } from "lucide-react";
 import toast from "react-hot-toast";
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function PublicFormPage() {
   const { id } = useParams();
@@ -277,7 +278,7 @@ export default function PublicFormPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin h-10 w-10 border-4 border-slate-200 border-t-[#0b5cff] rounded-full"></div>
+        <LoadingSpinner size="large" />
       </div>
     );
   }

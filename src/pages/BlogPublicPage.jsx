@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, ShoppingCart, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function BlogPublicPage() {
   const { slug, blogId } = useParams();
@@ -65,7 +66,7 @@ export default function BlogPublicPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: bgStyle }}>
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: theme.primary_color || '#0b5cff' }} />
+        <LoadingSpinner size="large" />
       </div>
     );
   }

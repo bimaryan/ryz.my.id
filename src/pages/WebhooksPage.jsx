@@ -7,6 +7,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useWebhooks } from "@/hooks/useWebhooks";
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function WebhooksPage() {
   const {
@@ -91,7 +92,7 @@ export default function WebhooksPage() {
             <div className="divide-y divide-slate-100">
               {isLoading && webhooks.length === 0 && (
                 <div className="text-center py-10">
-                  <div className="animate-spin h-6 w-6 border-2 border-[#0b5cff] border-t-transparent rounded-full mx-auto"></div>
+                  <LoadingSpinner size="large" />
                 </div>
               )}
 

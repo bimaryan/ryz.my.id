@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Webhook, Save } from "lucide-react";
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function WebhookTab({ sessionId, userId, apiUrl }) {
   const [webhookUrl, setWebhookUrl] = useState("");
@@ -87,7 +88,7 @@ export default function WebhookTab({ sessionId, userId, apiUrl }) {
           disabled={loading}
           className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-50"
         >
-          {loading ? <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"/> : <Save className="w-4 h-4" />}
+          {loading ? <LoadingSpinner size="large" /> : <Save className="w-4 h-4" />}
           Simpan Konfigurasi
         </button>
       </form>

@@ -18,6 +18,7 @@ import BlogEditorModal from '@/components/BlogEditorModal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return null;
@@ -360,7 +361,7 @@ export default function PageEditor() {
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0b5cff]"></div>
+          <LoadingSpinner size="large" />
         </div>
       </DashboardLayout>
     )

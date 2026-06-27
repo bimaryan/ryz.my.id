@@ -7,6 +7,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useTeams } from '@/hooks/useTeams'
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function TeamsPage() {
   const { teams, fetchTeams, createTeam, updateTeam, deleteTeam, addTeamMember, isLoading } = useTeams()
@@ -110,7 +111,7 @@ export default function TeamsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {isLoading && teams.length === 0 && (
-               <div className="col-span-full text-center py-10"><div className="animate-spin h-6 w-6 border-2 border-[#0b5cff] border-t-transparent rounded-full mx-auto"></div></div>
+               <div className="col-span-full text-center py-10"><LoadingSpinner size="large" /></div>
             )}
 
             {!isLoading && teams.length === 0 && (

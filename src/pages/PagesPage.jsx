@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import SEO from '@/components/SEO'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function PagesPage() {
   const { pages, isLoading, fetchPages, createPage, deletePage } = usePages()
@@ -98,7 +99,7 @@ export default function PagesPage() {
 
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0b5cff]"></div>
+            <LoadingSpinner size="large" />
           </div>
         ) : filteredPages.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

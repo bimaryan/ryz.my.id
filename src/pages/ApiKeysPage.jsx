@@ -7,6 +7,7 @@ import Input from '@/components/ui/Input'
 import toast from 'react-hot-toast'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import { Shield, Key, Copy, Plus, Trash2, X, AlertCircle } from 'lucide-react'
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function ApiKeysPage() {
   const { apiKeys, fetchApiKeys, createApiKey, deleteApiKey, isLoading } = useApiKeys()
@@ -79,7 +80,7 @@ export default function ApiKeysPage() {
             
             {isLoading && apiKeys.length === 0 ? (
               <div className="text-center py-16">
-                <div className="animate-spin h-8 w-8 border-2 border-[#0b5cff] border-t-transparent rounded-full mx-auto"></div>
+                <LoadingSpinner size="large" />
               </div>
             ) : apiKeys.length === 0 ? (
               <div className="py-16 text-center bg-white">

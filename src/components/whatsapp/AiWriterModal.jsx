@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bot, Sparkles, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function AiWriterModal({ isOpen, onClose, onApply }) {
   const [prompt, setPrompt] = useState('');
@@ -83,7 +84,7 @@ export default function AiWriterModal({ isOpen, onClose, onApply }) {
               className="mt-3 w-full bg-purple-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 flex justify-center items-center gap-2 shadow-sm"
             >
               {isLoading ? (
-                <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                <LoadingSpinner size="large" />
               ) : (
                 <Sparkles className="w-4 h-4" />
               )}

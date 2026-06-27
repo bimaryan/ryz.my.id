@@ -7,6 +7,7 @@ import { FileText, Plus, Search, Edit, Trash2, ExternalLink, BarChart3, Settings
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function FormsPage() {
   const { user } = useAuth();
@@ -151,7 +152,7 @@ export default function FormsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {isLoading ? (
             <div className="col-span-full py-12 text-center text-slate-500">
-              <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mx-auto mb-4"></div>
+              <LoadingSpinner size="large" />
               Memuat formulir...
             </div>
           ) : filteredForms.length === 0 ? (

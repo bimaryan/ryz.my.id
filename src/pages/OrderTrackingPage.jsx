@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Package, Truck, CheckCircle2, Clock, XCircle, Search, ArrowLeft, Copy, Check, MapPin, Activity } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { useBiteship } from "@/hooks/useBiteship";
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function OrderTrackingPage() {
   const { orderId } = useParams();
@@ -76,10 +77,7 @@ export default function OrderTrackingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="animate-spin h-10 w-10 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mb-4"></div>
-        <p className="text-slate-500 font-medium">Mencari pesanan Anda...</p>
-      </div>
+      <LoadingSpinner text="Mencari pesanan Anda..." />
     );
   }
 
@@ -178,7 +176,7 @@ export default function OrderTrackingPage() {
               
               {isTracking ? (
                 <div className="flex items-center gap-2 text-slate-500 text-sm font-medium py-4">
-                  <div className="animate-spin h-4 w-4 border-2 border-slate-200 border-t-[#0b5cff] rounded-full"></div>
+                  <LoadingSpinner size="large" />
                   Mengambil pembaruan dari kurir...
                 </div>
               ) : trackingData ? (

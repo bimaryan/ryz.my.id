@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast'
 import { useBiteship } from '@/hooks/useBiteship'
 import emailjs from '@emailjs/browser'
 import FloatingParticles from '../components/FloatingParticles'
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const BRAND_COLORS = {
   instagram: '#E1306C',
@@ -404,7 +405,7 @@ export default function PublicPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-[#f4f6fa]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0b5cff]"></div>
+        <LoadingSpinner size="large" />
       </div>
     )
   }

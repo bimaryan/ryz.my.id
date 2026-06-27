@@ -3,6 +3,7 @@ import { Send, Trash2, Megaphone, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../ui/ConfirmModal';
 import AiWriterModal from './AiWriterModal';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function BroadcastTab({ sessionId, userId, API_URL }) {
   const [broadcasts, setBroadcasts] = useState([]);
@@ -151,7 +152,7 @@ export default function BroadcastTab({ sessionId, userId, API_URL }) {
           className="w-full sm:w-auto bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-700 flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isLoading ? (
-            <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+            <LoadingSpinner size="large" />
           ) : (
             <Send className="w-4 h-4" />
           )}

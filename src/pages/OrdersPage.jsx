@@ -6,6 +6,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { ShoppingCart, Edit, Package, Search, Clock, CheckCircle2, Truck, XCircle, ChevronDown, Save } from "lucide-react";
 import toast from "react-hot-toast";
 import { useBiteship } from "@/hooks/useBiteship";
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function OrdersPage() {
   const { user } = useAuth();
@@ -194,7 +195,7 @@ export default function OrdersPage() {
                 {isLoading ? (
                   <tr>
                     <td colSpan="4" className="px-6 py-12 text-center text-slate-500">
-                      <div className="animate-spin h-8 w-8 border-4 border-slate-200 border-t-[#0b5cff] rounded-full mx-auto mb-4"></div>
+                      <LoadingSpinner size="large" />
                       Memuat pesanan...
                     </td>
                   </tr>

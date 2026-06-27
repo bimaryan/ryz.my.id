@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useTeams } from '@/hooks/useTeams'
 import { useAuth } from '@/hooks/useAuth'
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function TeamDetailsPage() {
   const { id } = useParams()
@@ -69,7 +70,7 @@ export default function TeamDetailsPage() {
     return (
       <DashboardLayout>
         <div className="flex-1 p-10 flex items-center justify-center">
-          <div className="animate-spin h-8 w-8 border-4 border-[#0b5cff] border-t-transparent rounded-full"></div>
+          <LoadingSpinner size="large" />
         </div>
       </DashboardLayout>
     )

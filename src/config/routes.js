@@ -28,6 +28,8 @@ import FormsPage from '@/pages/FormsPage'
 import FormBuilderPage from '@/pages/FormBuilderPage'
 import PublicFormPage from '@/pages/PublicFormPage'
 import WhatsAppPage from '@/pages/WhatsAppPage'
+import WordEditorPage from '@/pages/WordEditorPage'
+import WordPublicPage from '@/pages/WordPublicPage'
 
 export const routes = [
   // Public routes
@@ -99,6 +101,11 @@ export const routes = [
   {
     path: '/:slug',
     element: RedirectPage,
+    public: true,
+  },
+  {
+    path: '/d/:id',
+    element: WordPublicPage,
     public: true,
   },
 
@@ -181,6 +188,16 @@ export const routes = [
   {
     path: '/dashboard/whatsapp',
     element: WhatsAppPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/word-editor',
+    element: WordEditorPage,
+    protected: true,
+  },
+  {
+    path: '/dashboard/word-editor/:id',
+    element: WordEditorPage,
     protected: true,
   },
 
