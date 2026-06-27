@@ -3,13 +3,40 @@ import { DocxEditor } from '@eigenpal/docx-editor-react';
 import '@eigenpal/docx-editor-react/styles.css';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, UploadCloud, Save, Share2, Loader2, FileText, Menu, Search, Grid, LayoutGrid, ArrowDownAZ, Folder, ChevronDown, MoreVertical, List, Edit2, Trash2 } from 'lucide-react';
+import { ArrowLeft, UploadCloud, Save, Share2, Loader2, FileText, Menu, Search, Grid, LayoutGrid, ArrowDownAZ, Folder, ChevronDown, MoreVertical, List, Edit2, Trash2, FolderPlus, ChevronRight, History, Play, RotateCcw, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { createPortal } from 'react-dom';
+import React from 'react';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-10 bg-red-50 text-red-600 min-h-screen">
+          <h1 className="text-2xl font-bold mb-4">Aplikasi Crash! (Error Boundary)</h1>
+          <pre className="bg-white p-4 rounded border border-red-200 overflow-auto">
+            {this.state.error?.toString()}
+            <br/>
+            {this.state.error?.stack}
+          </pre>
+          <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-red-600 text-white rounded">Muat Ulang</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Utility for Base64 -> ArrayBuffer
 const base64ToArrayBuffer = (base64) => {
@@ -24,6 +51,7 @@ const base64ToArrayBuffer = (base64) => {
 
 // Global cache to prevent reload UI when switching sidebar tabs
 let cachedDocs = null;
+let cachedFolders = null;
 let lastFetchWordDocs = 0;
 
 export default function WordEditorPage() {
@@ -44,10 +72,20 @@ export default function WordEditorPage() {
  const [activeMenu, setActiveMenu] = useState(null);
  const [deleteDocTarget, setDeleteDocTarget] = useState(null);
  const [renameDocTarget, setRenameDocTarget] = useState(null);
+ const [moveDocTarget, setMoveDocTarget] = useState(null);
  const [newTitle, setNewTitle] = useState('');
  const [activeViewers, setActiveViewers] = useState([]);
  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+ const [folders, setFolders] = useState(cachedFolders || []);
+ const [currentFolderId, setCurrentFolderId] = useState(null);
+ const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+ const [newFolderNameState, setNewFolderNameState] = useState('');
  const menuRef = useRef(null);
+
+ const [showHistory, setShowHistory] = useState(false);
+ const [docVersions, setDocVersions] = useState([]);
+ const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+ const lastVersionTime = useRef(Date.now());
 
  // Auto-save effect
  useEffect(() => {
@@ -168,6 +206,28 @@ export default function WordEditorPage() {
  }
  };
 
+  const executeMoveDoc = async (folderId) => {
+    if (!moveDocTarget) return;
+    try {
+      const { error } = await supabase
+        .from('word_documents')
+        .update({ folder_id: folderId })
+        .eq('id', moveDocTarget.id);
+      
+      if (error) throw error;
+      
+      const newDocs = savedDocs.map(d => d.id === moveDocTarget.id ? { ...d, folder_id: folderId } : d);
+      setSavedDocs(newDocs);
+      cachedDocs = newDocs;
+      toast.success("Dokumen dipindahkan");
+    } catch (err) {
+      console.error("Error moving doc:", err);
+      toast.error("Gagal memindahkan");
+    } finally {
+      setMoveDocTarget(null);
+    }
+  };
+
  // Fetch list of documents when on the"Home" view (no id and no buffer)
  useEffect(() => {
  if (user && !id && !buffer) {
@@ -175,30 +235,62 @@ export default function WordEditorPage() {
  }
  }, [user, id, buffer]);
 
- const fetchSavedDocs = async () => {
- // Only show loading spinner if we don't have cache
- if (!cachedDocs) {
- setIsLoadingList(true);
- }
- 
- try {
- const { data, error } = await supabase
- .from('word_documents')
- .select('*')
- .eq('user_id', user.id)
- .order('updated_at', { ascending: false });
- 
- if (error) throw error;
- 
- cachedDocs = data || [];
- lastFetchWordDocs = Date.now();
- setSavedDocs(cachedDocs);
- } catch (error) {
- console.error('Error fetching documents:', error);
- } finally {
- setIsLoadingList(false);
- }
- };
+  const fetchSavedDocs = async () => {
+  // Only show loading spinner if we don't have cache
+  if (!cachedDocs) {
+  setIsLoadingList(true);
+  }
+  
+  try {
+  const docsRes = await supabase
+    .from('word_documents')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false });
+
+  if (docsRes.error) throw docsRes.error;
+
+  const foldersRes = await supabase
+    .from('word_folders')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('name', { ascending: true });
+  
+  cachedDocs = docsRes.data || [];
+  cachedFolders = foldersRes.error ? [] : (foldersRes.data || []);
+  
+  lastFetchWordDocs = Date.now();
+  setSavedDocs(cachedDocs);
+  setFolders(cachedFolders);
+  } catch (error) {
+  console.error('Error fetching documents:', error);
+  } finally {
+  setIsLoadingList(false);
+  }
+  };
+
+  const createFolder = async (e) => {
+    e.preventDefault();
+    if (!newFolderNameState.trim()) return;
+    try {
+      const { data, error } = await supabase
+        .from('word_folders')
+        .insert({ user_id: user.id, name: newFolderNameState.trim() })
+        .select()
+        .single();
+      if (error) throw error;
+      
+      const newFolders = [...folders, data].sort((a,b) => a.name.localeCompare(b.name));
+      setFolders(newFolders);
+      cachedFolders = newFolders;
+      setIsCreatingFolder(false);
+      setNewFolderNameState('');
+      toast.success("Folder berhasil dibuat!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal membuat folder");
+    }
+  };
 
  useEffect(() => {
  if (id) {
@@ -246,16 +338,60 @@ export default function WordEditorPage() {
  }
  };
 
- const handleFileUpload = async (e) => {
- const file = e.target.files?.[0];
- if (file) {
- setTitle(file.name.replace('.docx', ''));
- const arrayBuffer = await file.arrayBuffer();
- setBuffer(arrayBuffer);
- // Remove id from URL if we load a new local file
- if (id) navigate('/dashboard/word-editor', { replace: true });
- }
- };
+  const handleFileUpload = async (e) => {
+  const file = e.target.files?.[0];
+  if (file) {
+  setTitle(file.name.replace('.docx', ''));
+  const arrayBuffer = await file.arrayBuffer();
+  setBuffer(arrayBuffer);
+  // Remove id from URL if we load a new local file
+  if (id) navigate('/dashboard/word-editor', { replace: true });
+  }
+  };
+
+  const fetchVersions = async () => {
+    if (!id) return;
+    setIsLoadingVersions(true);
+    try {
+      const { data, error } = await supabase
+        .from('word_document_versions')
+        .select('*')
+        .eq('document_id', id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setDocVersions(data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal memuat riwayat versi');
+    } finally {
+      setIsLoadingVersions(false);
+    }
+  };
+
+  const loadVersion = async (version) => {
+    try {
+      setIsLoadingDoc(true);
+      if (version.file_url && version.file_url.startsWith('UEsD')) {
+        const arrayBuffer = base64ToArrayBuffer(version.file_url);
+        setBuffer(arrayBuffer);
+      } else {
+        const { data: fileData, error: storageError } = await supabase.storage
+          .from('documents')
+          .download(version.file_url);
+        if (storageError) throw storageError;
+        const arrayBuffer = await fileData.arrayBuffer();
+        setBuffer(arrayBuffer);
+      }
+      setHasUnsavedChanges(true); 
+      toast.success(`Versi "${version.version_name}" dimuat! (Klik Save untuk menyimpan)`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal memuat versi');
+    } finally {
+      setIsLoadingDoc(false);
+      setShowHistory(false);
+    }
+  };
 
  const handleSaveToCloud = async (isAutoSave = false) => {
  if (!buffer) return;
@@ -336,14 +472,21 @@ export default function WordEditorPage() {
  }
  };
 
- return (
- <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden h-screen">
- <Helmet>
- <title>{title} | Word Editor RYZ</title>
- </Helmet>
+  const currentFolderName = currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : null;
+  const displayedDocs = savedDocs.filter(d => (d.folder_id || null) === currentFolderId);
+  const displayedFolders = currentFolderId ? [] : folders;
 
- {/* Header */}
- {buffer ? (
+  const hasItems = displayedDocs.length > 0 || displayedFolders.length > 0;
+
+  return (
+  <ErrorBoundary>
+  <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden h-screen">
+  <Helmet>
+  <title>{title} | Word Editor RYZ</title>
+  </Helmet>
+
+  {/* Header */}
+  {buffer ? (
         <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm z-10 shrink-0 gap-3">
  <div className="flex items-center gap-2 min-w-0 flex-1">
  <Link to="/dashboard/word-editor" className="text-gray-500 hover:text-gray-700 transition-colors shrink-0">
@@ -419,6 +562,19 @@ export default function WordEditorPage() {
  </button>
  )}
 
+ {id && (
+    <button 
+      onClick={() => {
+        setShowHistory(!showHistory);
+        if (!showHistory) fetchVersions();
+      }}
+      className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-sm font-medium transition-colors shrink-0 whitespace-nowrap rounded-md ${showHistory ? 'bg-blue-100 text-blue-700' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}`}
+    >
+      <History className="w-4 h-4 shrink-0" />
+      <span className="hidden sm:inline">Riwayat</span>
+    </button>
+  )}
+
  <button 
  onClick={() => handleSaveToCloud(false)}
  disabled={isSaving}
@@ -445,13 +601,13 @@ export default function WordEditorPage() {
  )}
 
  {/* Editor Container / File Upload View */}
- <div className="flex-1 w-full relative overflow-y-auto bg-slate-50">
+ <div className="flex-1 w-full relative overflow-hidden bg-slate-50 flex">
  {isLoadingDoc ? (
- <div className="flex h-full items-center justify-center">
+ <div className="flex w-full h-full items-center justify-center">
  <LoadingSpinner text="Memuat Dokumen dari Supabase..." fullScreen={false} />
  </div>
  ) : !buffer ? (
- <div>
+ <div className="w-full h-full overflow-y-auto">
  {/* Template Gallery Section */}
  <div className="bg-slate-50 py-8 border-b border-slate-200/60">
  <div className="max-w-6xl mx-auto px-4 lg:px-8">
@@ -497,8 +653,26 @@ export default function WordEditorPage() {
  {/* Recent Documents Section */}
  <div className="max-w-6xl mx-auto px-4 lg:px-8 py-10">
  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
- <h2 className="text-xl font-bold text-slate-800">Dokumen Anda</h2>
+ 
  <div className="flex items-center gap-2">
+   {currentFolderId ? (
+     <div className="flex items-center text-slate-600 gap-2 font-bold text-lg">
+       <button onClick={() => setCurrentFolderId(null)} className="hover:text-blue-600 transition-colors">Dokumen Anda</button>
+       <ChevronRight className="w-5 h-5 text-slate-400" />
+       <span className="text-slate-800">{currentFolderName}</span>
+     </div>
+   ) : (
+     <h2 className="text-xl font-bold text-slate-800">Dokumen Anda</h2>
+   )}
+ </div>
+
+ <div className="flex items-center gap-2">
+ <button 
+   onClick={() => setIsCreatingFolder(true)}
+   className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-md text-sm font-medium transition-colors"
+ >
+   <FolderPlus className="w-4 h-4" /> New Folder
+ </button>
  <div className="bg-white border border-slate-200 rounded-lg flex items-center p-1 shadow-sm">
  <button 
  onClick={() => setViewMode('grid')}
@@ -524,154 +698,255 @@ export default function WordEditorPage() {
  <div className="py-20 flex items-center justify-center">
  <LoadingSpinner text="Memuat dokumen..." size="default" />
  </div>
- ) : savedDocs.length > 0 ? (
+ ) : hasItems ? (
  viewMode === 'grid' ? (
- <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
- {savedDocs.map(doc => (
- <div key={doc.id} className="group border border-gray-200 hover:border-blue-500 bg-white hover:shadow-md transition-all duration-200 flex flex-col h-[280px] relative rounded-md overflow-hidden">
- <Link 
- to={`/dashboard/word-editor/${doc.id}`}
- className="flex flex-col h-full"
- >
- {/* Thumbnail Section */}
- <div className="flex-1 bg-slate-50 flex items-center justify-center p-4 overflow-hidden border-b border-gray-200 relative group-hover:bg-blue-50/50 transition-colors">
- <FileText className="w-16 h-16 text-blue-500/40 group-hover:text-blue-500/60 transition-colors transform group-hover:scale-110 duration-300" strokeWidth={1.5} />
- </div>
+ <div>
+ {/* Render Folders Section */}
+ {displayedFolders.length > 0 && (
+   <div className="mb-8">
+     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Folders</h3>
+     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+       {displayedFolders.map(folder => (
+         <div key={folder.id} 
+              onClick={() => setCurrentFolderId(folder.id)}
+              className="group bg-white border border-slate-200 hover:border-blue-400 hover:shadow-md rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all h-16">
+           <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+             <Folder className="w-6 h-6 fill-current opacity-80" />
+           </div>
+           <div className="flex-1 min-w-0">
+             <h4 className="font-semibold text-slate-800 text-sm truncate">{folder.name}</h4>
+           </div>
+         </div>
+       ))}
+     </div>
+   </div>
+ )}
 
- {/* Bottom Info Section */}
- <div className="h-[75px] bg-white p-3 flex items-start gap-3">
- <div className="mt-0.5 shrink-0">
- <FileText className="w-5 h-5 text-blue-500 fill-blue-500/10" />
- </div>
- <div className="flex flex-col min-w-0 pr-6">
- <h4 className="font-semibold text-gray-800 text-sm truncate">{doc.title}</h4>
- <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
- <span className="truncate">
- Dibuka {new Date(doc.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
- </span>
- {doc.is_public && (
- <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] uppercase font-bold ml-1">Publik</span>
+ {/* Render Docs Section */}
+ {displayedDocs.length > 0 && (
+   <div>
+     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Files</h3>
+     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+       {displayedDocs.map(doc => (
+       <div key={doc.id} className="group border border-gray-200 hover:border-blue-500 bg-white hover:shadow-md transition-all duration-200 flex flex-col h-[280px] relative rounded-md overflow-hidden">
+       <Link 
+       to={`/dashboard/word-editor/${doc.id}`}
+       className="flex flex-col h-full"
+       >
+       {/* Thumbnail Section */}
+       <div className="flex-1 bg-slate-50 flex items-center justify-center p-4 overflow-hidden border-b border-gray-200 relative group-hover:bg-blue-50/50 transition-colors">
+       <FileText className="w-16 h-16 text-blue-500/40 group-hover:text-blue-500/60 transition-colors transform group-hover:scale-110 duration-300" strokeWidth={1.5} />
+       </div>
+
+       {/* Bottom Info Section */}
+       <div className="h-[75px] bg-white p-3 flex items-start gap-3">
+       <div className="mt-0.5 shrink-0">
+       <FileText className="w-5 h-5 text-blue-500 fill-blue-500/10" />
+       </div>
+       <div className="flex flex-col min-w-0 pr-6">
+       <h4 className="font-semibold text-gray-800 text-sm truncate">{doc.title}</h4>
+       <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+       <span className="truncate">
+       Dibuka {new Date(doc.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+       </span>
+       {doc.is_public && (
+       <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] uppercase font-bold ml-1">Publik</span>
+       )}
+       </div>
+       </div>
+       </div>
+       </Link>
+       
+       {/* Actions Dropdown */}
+       <div className="absolute bottom-2 right-2 z-20">
+       <button 
+       onClick={(e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       setActiveMenu(activeMenu === doc.id ? null : doc.id);
+       }}
+       className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+       >
+       <MoreVertical className="w-5 h-5" />
+       </button>
+       {activeMenu === doc.id && (
+       <div ref={menuRef} className="absolute right-0 bottom-8 mb-1 w-40 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 overflow-hidden z-30">
+       <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMoveDocTarget(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2.5 transition-colors">
+       <FolderPlus className="w-4 h-4" /> Move to...
+       </button>
+       <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openRenameModal(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2.5 transition-colors">
+       <Edit2 className="w-4 h-4" /> Rename
+       </button>
+       <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteDocTarget(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors">
+       <Trash2 className="w-4 h-4" /> Delete
+       </button>
+       </div>
+       )}
+       </div>
+       </div>
+       ))}
+     </div>
+   </div>
  )}
- </div>
- </div>
- </div>
- </Link>
- 
- {/* Actions Dropdown */}
- <div className="absolute bottom-2 right-2 z-20">
- <button 
- onClick={(e) => {
- e.preventDefault();
- e.stopPropagation();
- setActiveMenu(activeMenu === doc.id ? null : doc.id);
- }}
- className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
- >
- <MoreVertical className="w-5 h-5" />
- </button>
- {activeMenu === doc.id && (
- <div ref={menuRef} className="absolute right-0 bottom-8 mb-1 w-36 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 overflow-hidden z-30">
- <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openRenameModal(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2.5 transition-colors">
- <Edit2 className="w-4 h-4" /> Rename
- </button>
- <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteDocTarget(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors">
- <Trash2 className="w-4 h-4" /> Delete
- </button>
- </div>
- )}
- </div>
- </div>
- ))}
  </div>
  ) : (
- <div className="flex flex-col gap-3">
- {savedDocs.map(doc => (
- <div key={doc.id} className="group bg-white border border-slate-200/80 rounded-xl hover:shadow-lg hover:shadow-blue-500/5 hover:border-blue-400 transition-all duration-300 flex items-center justify-between relative">
- <Link 
- to={`/dashboard/word-editor/${doc.id}`}
- className="flex items-center justify-between flex-1 p-4 pr-16"
- >
- <div className="flex items-center gap-4">
- <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
- <FileText className="w-5 h-5" />
- </div>
- <div>
- <h4 className="font-bold text-slate-800 text-[15px] group-hover:text-blue-600 transition-colors leading-tight mb-1">{doc.title}</h4>
- <div className="flex items-center gap-2">
- {doc.is_public && (
- <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider">Public</span>
+ <div className="flex flex-col gap-8">
+ {/* Render Folders Section */}
+ {displayedFolders.length > 0 && (
+   <div>
+     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Folders</h3>
+     <div className="flex flex-col gap-2">
+       {displayedFolders.map(folder => (
+         <div key={folder.id} 
+              onClick={() => setCurrentFolderId(folder.id)}
+              className="group bg-white border border-slate-200/80 rounded-xl hover:shadow-lg hover:shadow-blue-500/5 hover:border-blue-400 p-3 flex items-center gap-4 cursor-pointer transition-all">
+           <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+             <Folder className="w-5 h-5 fill-current opacity-80" />
+           </div>
+           <h4 className="font-bold text-slate-800 text-[15px] group-hover:text-blue-600 transition-colors leading-tight">{folder.name}</h4>
+         </div>
+       ))}
+     </div>
+   </div>
  )}
- {doc.allow_public_edit && (
- <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider">Guest Edit</span>
+
+ {/* Render Docs Section */}
+ {displayedDocs.length > 0 && (
+   <div>
+     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Files</h3>
+     <div className="flex flex-col gap-3">
+       {displayedDocs.map(doc => (
+       <div key={doc.id} className="group bg-white border border-slate-200/80 rounded-xl hover:shadow-lg hover:shadow-blue-500/5 hover:border-blue-400 transition-all duration-300 flex items-center justify-between relative">
+       <Link 
+       to={`/dashboard/word-editor/${doc.id}`}
+       className="flex items-center justify-between flex-1 p-4 pr-16"
+       >
+       <div className="flex items-center gap-4">
+       <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+       <FileText className="w-5 h-5" />
+       </div>
+       <div>
+       <h4 className="font-bold text-slate-800 text-[15px] group-hover:text-blue-600 transition-colors leading-tight mb-1">{doc.title}</h4>
+       <div className="flex items-center gap-2">
+       {doc.is_public && (
+       <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider">Public</span>
+       )}
+       {doc.allow_public_edit && (
+       <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider">Guest Edit</span>
+       )}
+       </div>
+       </div>
+       </div>
+       <div className="text-sm text-slate-500 font-medium hidden sm:block">
+       {new Date(doc.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+       </div>
+       </Link>
+       
+       {/* Actions Dropdown */}
+       <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+       <button 
+       onClick={(e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       setActiveMenu(activeMenu === doc.id ? null : doc.id);
+       }}
+       className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+       >
+       <MoreVertical className="w-5 h-5" />
+       </button>
+       {activeMenu === doc.id && (
+       <div ref={menuRef} className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 overflow-hidden z-30">
+       <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMoveDocTarget(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2.5 transition-colors">
+       <FolderPlus className="w-4 h-4" /> Move to...
+       </button>
+       <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openRenameModal(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2.5 transition-colors">
+       <Edit2 className="w-4 h-4" /> Rename
+       </button>
+       <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteDocTarget(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors">
+       <Trash2 className="w-4 h-4" /> Delete
+       </button>
+       </div>
+       )}
+       </div>
+       </div>
+       ))}
+     </div>
+   </div>
  )}
- </div>
- </div>
- </div>
- <div className="text-sm text-slate-500 font-medium hidden sm:block">
- {new Date(doc.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
- </div>
- </Link>
- 
- {/* Actions Dropdown */}
- <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
- <button 
- onClick={(e) => {
- e.preventDefault();
- e.stopPropagation();
- setActiveMenu(activeMenu === doc.id ? null : doc.id);
- }}
- className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
- >
- <MoreVertical className="w-5 h-5" />
- </button>
- {activeMenu === doc.id && (
- <div ref={menuRef} className="absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 overflow-hidden z-30">
- <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openRenameModal(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2.5 transition-colors">
- <Edit2 className="w-4 h-4" /> Rename
- </button>
- <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteDocTarget(doc); setActiveMenu(null); }} className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors">
- <Trash2 className="w-4 h-4" /> Delete
- </button>
- </div>
- )}
- </div>
- </div>
- ))}
  </div>
  )
  ) : (
- <div className="text-center py-20 px-4 border border-slate-200 border-dashed rounded-2xl bg-slate-50/50">
- <div className="w-20 h-20 bg-white border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
- <FileText className="w-10 h-10 text-slate-300" />
- </div>
- <p className="text-slate-600 font-medium text-lg">Belum ada dokumen yang tersimpan di cloud.</p>
- <p className="text-slate-500 mt-2 text-sm">Gunakan kotak upload di atas untuk menyimpan dokumen pertama Anda.</p>
- </div>
+ <div className="py-16 text-center bg-white border border-slate-200/60 rounded-2xl border-dashed">
+  <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+  <FileText className="w-8 h-8 text-slate-300" />
+  </div>
+  <p className="text-slate-500 font-medium">Belum ada dokumen yang disimpan.</p>
+  <p className="text-sm text-slate-400 mt-1">Upload file docx pertama Anda di atas untuk memulai!</p>
+  </div>
  )}
  </>
  ) : (
- <div className="text-center p-12 bg-white border border-slate-200 rounded-2xl shadow-sm">
- <p className="text-slate-600 font-medium text-lg">
- Silakan login untuk menyimpan dan melihat dokumen di Cloud.
- </p>
- </div>
+ <div className="py-20 text-center bg-white border border-slate-200 rounded-xl">
+  <p className="text-gray-500 mb-4">Silakan login untuk melihat daftar dokumen yang tersimpan di Cloud.</p>
+  <Link 
+  to="/auth" 
+  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+  >
+  Login ke RYZ
+  </Link>
+  </div>
  )}
  </div>
  </div>
  ) : (
- <div className="h-full w-full">
- <DocxEditor 
- ref={editorRef} 
- documentBuffer={buffer} 
- mode="editing" 
- author={user?.email ||"Author"}
- onChange={() => setHasUnsavedChanges(true)}
- />
- </div>
- )}
- </div>
+  <div className="flex-1 overflow-hidden relative">
+     <DocxEditor 
+     ref={editorRef} 
+     documentBuffer={buffer} 
+     mode="editing" 
+     author={user?.email || "Author"}
+     onChange={() => setHasUnsavedChanges(true)}
+     />
 
- {/* Rename Modal */}
+  {/* Version History Sidebar */}
+  {showHistory && (
+    <div className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.1)] border-l border-slate-200 z-40 flex flex-col animate-in slide-in-from-right-8 duration-300">
+      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <h3 className="font-bold text-slate-800 flex items-center gap-2"><History className="w-4 h-4 text-blue-600"/> Riwayat Versi</h3>
+        <button onClick={() => setShowHistory(false)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"><X className="w-4 h-4"/></button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {isLoadingVersions ? (
+          <div className="flex flex-col items-center justify-center py-10 opacity-70">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500 mb-2"/>
+            <span className="text-sm text-slate-500">Memuat riwayat...</span>
+          </div>
+        ) : docVersions.length === 0 ? (
+          <div className="text-center py-10 text-slate-500 text-sm">
+            Belum ada versi tersimpan.
+          </div>
+        ) : (
+          docVersions.map(v => (
+            <div key={v.id} className="p-3 border border-slate-200 rounded-lg bg-white hover:border-blue-300 hover:shadow-sm transition-all group">
+              <div className="font-medium text-slate-800 text-sm mb-1">{v.version_name}</div>
+              <div className="text-xs text-slate-500 mb-3">{new Date(v.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+              <button 
+                onClick={() => loadVersion(v)}
+                className="w-full py-1.5 px-3 bg-slate-100 hover:bg-blue-600 text-slate-600 hover:text-white text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100"
+              >
+                <RotateCcw className="w-3 h-3"/> Restore Versi Ini
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )}
+  </div>
+  )}
+  </div>
+
+  {/* Rename Modal */}
  {renameDocTarget && createPortal(
  <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
  <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 p-6">
@@ -709,16 +984,84 @@ export default function WordEditorPage() {
  document.body
  )}
 
- {/* Delete Confirmation Modal */}
- <ConfirmModal
- isOpen={!!deleteDocTarget}
- onClose={() => setDeleteDocTarget(null)}
- onConfirm={executeDeleteDoc}
- title="Hapus Dokumen?"
- message={`Anda yakin ingin menghapus dokumen"${deleteDocTarget?.title}"? Tindakan ini tidak dapat dibatalkan.`}
- confirmText="Hapus"
- cancelText="Batal"
- />
- </div>
- );
-}
+        {/* Delete Confirmation Modal */}
+        <ConfirmModal
+          isOpen={!!deleteDocTarget}
+          onClose={() => setDeleteDocTarget(null)}
+          onConfirm={executeDeleteDoc}
+          title="Hapus Dokumen?"
+          message={`Anda yakin ingin menghapus dokumen "${deleteDocTarget?.title}"? Tindakan ini tidak dapat dibatalkan.`}
+          confirmText="Hapus"
+          cancelText="Batal"
+        />
+
+        {/* Create Folder Modal */}
+        {isCreatingFolder && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">Buat Folder Baru</h3>
+              <form onSubmit={createFolder}>
+                <input
+                  autoFocus
+                  type="text"
+                  value={newFolderNameState}
+                  onChange={(e) => setNewFolderNameState(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-800 font-medium mb-6"
+                  placeholder="Nama Folder"
+                  required
+                />
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => { setIsCreatingFolder(false); setNewFolderNameState(''); }}
+                    className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!newFolderNameState.trim()}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors shadow-sm"
+                  >
+                    Buat Folder
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* Move Folder Modal */}
+        {moveDocTarget && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-slate-800">Pindahkan Dokumen</h3>
+                <button onClick={() => setMoveDocTarget(null)} className="p-1 text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
+              </div>
+              <div className="mb-4">
+                <p className="text-sm text-slate-500 mb-2">Pilih folder tujuan untuk "{moveDocTarget.title}":</p>
+                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
+                  <button 
+                    onClick={() => executeMoveDoc(null)}
+                    className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                  >
+                    <Folder className="w-5 h-5 text-slate-400" /> Root (Tidak masuk folder)
+                  </button>
+                  {folders.map(f => (
+                    <button 
+                      key={f.id}
+                      onClick={() => executeMoveDoc(f.id)}
+                      className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                    >
+                      <Folder className="w-5 h-5 text-blue-500" /> {f.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
+    );
+  }
