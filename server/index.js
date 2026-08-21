@@ -24,7 +24,12 @@ const PORT = process.env.PORT || 5009;
 app.set('trust proxy', 1);
 
 // Standard Middlewares (Must be before security/routes)
-app.use(cors());
+app.use(cors({
+    origin: ['https://ryz.my.id', 'http://localhost:5173'], // Izinkan domain frontend lu (tambahkan localhost buat dev)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id', 'x-forwarded-for'], // Izinkan custom header lu
+    credentials: true
+}));
 app.use(express.json());
 
 // Apply Security Middlewares
