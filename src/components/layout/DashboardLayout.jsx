@@ -20,7 +20,6 @@ import {
  AlertTriangle,
  FileText,
  MessageSquare,
- FileEdit
 } from"lucide-react";
 import { supabase } from"@/lib/supabase";
 import { useAuth } from"@/hooks/useAuth";
@@ -110,7 +109,6 @@ export default function DashboardLayout({ children }) {
  { name:"Forms", path:"/dashboard/forms", icon: FileText },
  { name:"Pages", path:"/dashboard/pages", icon: LayoutTemplate },
  { name:"WhatsApp", path:"/dashboard/whatsapp", icon: MessageSquare },
- { name:"Word Editor", path:"/dashboard/word-editor", icon: FileEdit },
  { name:"Webhooks", path:"/dashboard/webhooks", icon: Webhook },
  { name:"API Keys", path:"/dashboard/api-keys", icon: Shield },
  { name:"Teams", path:"/dashboard/teams", icon: Users },
