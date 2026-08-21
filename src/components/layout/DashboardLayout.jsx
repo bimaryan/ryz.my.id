@@ -53,85 +53,85 @@ export default function DashboardLayout({ children }) {
    }
  }, [isSessionLoading, user, navigate]);
 
- if (isSessionLoading) {
-   return (
-     <div className="min-h-screen bg-[#f8f9fc] flex items-center justify-center">
-       <LoadingSpinner text="Memuat data pengguna..." />
-     </div>
-   );
- }
+  const dismissExpiredBanner = async () => {
+    setShowExpiredBanner(false);
+    await supabase.auth.updateUser({
+      data: {
+        subscription_expired_at: null
+      }
+    });
+  };
 
- if (!user) return null;
+  const searchQuery = searchParams.get("q") ||"";
 
- const dismissExpiredBanner = async () => {
- setShowExpiredBanner(false);
- await supabase.auth.updateUser({
- data: {
- subscription_expired_at: null
- }
- });
- };
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
- const searchQuery = searchParams.get("q") ||"";
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    if (value) {
+      setSearchParams({ q: value });
+      if (currentPath !=="/dashboard") {
+        navigate(`/dashboard?q=${encodeURIComponent(value)}`);
+      }
+    } else {
+      setSearchParams({});
+    }
+  };
 
- useEffect(() => {
- function handleClickOutside(event) {
- if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
- setIsProfileMenuOpen(false);
- }
- }
- document.addEventListener("mousedown", handleClickOutside);
- return () => document.removeEventListener("mousedown", handleClickOutside);
- }, []);
+  // Otomatis menutup menu mobile saat rute (URL) berubah
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location]);
 
- const handleSearchChange = (e) => {
- const value = e.target.value;
- if (value) {
- setSearchParams({ q: value });
- if (currentPath !=="/dashboard") {
- navigate(`/dashboard?q=${encodeURIComponent(value)}`);
- }
- } else {
- setSearchParams({});
- }
- };
+  // Mengunci scroll body saat menu mobile terbuka
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow ="hidden";
+    } else {
+      document.body.style.overflow ="unset";
+    }
+    return () => {
+      document.body.style.overflow ="unset";
+    };
+  }, [isMobileMenuOpen]);
 
- // Otomatis menutup menu mobile saat rute (URL) berubah
- useEffect(() => {
- setIsMobileMenuOpen(false);
- }, [location]);
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href ="/login";
+  };
 
- // Mengunci scroll body saat menu mobile terbuka
- useEffect(() => {
- if (isMobileMenuOpen) {
- document.body.style.overflow ="hidden";
- } else {
- document.body.style.overflow ="unset";
- }
- return () => {
- document.body.style.overflow ="unset";
- };
- }, [isMobileMenuOpen]);
+  const navItems = [
+    { name:"Dashboard", path:"/dashboard", icon: LayoutDashboard },
+    { name:"Links", path:"/dashboard/links", icon: Link2 },
+    { name:"Analytics", path:"/dashboard/analytics", icon: BarChart3 },
+    { name:"Orders", path:"/dashboard/orders", icon: ShoppingCart },
+    { name:"Forms", path:"/dashboard/forms", icon: FileText },
+    { name:"Pages", path:"/dashboard/pages", icon: LayoutTemplate },
+    { name:"WhatsApp", path:"/dashboard/whatsapp", icon: MessageSquare },
+    { name:"Webhooks", path:"/dashboard/webhooks", icon: Webhook },
+    { name:"API Keys", path:"/dashboard/api-keys", icon: Shield },
+    { name:"Teams", path:"/dashboard/teams", icon: Users },
+  ];
 
- const handleSignOut = async () => {
- await supabase.auth.signOut();
- window.location.href ="/login";
- };
+  if (isSessionLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fc] flex items-center justify-center">
+        <LoadingSpinner text="Memuat data pengguna..." />
+      </div>
+    );
+  }
 
- const navItems = [
- { name:"Dashboard", path:"/dashboard", icon: LayoutDashboard },
- { name:"Links", path:"/dashboard/links", icon: Link2 },
- { name:"Analytics", path:"/dashboard/analytics", icon: BarChart3 },
- { name:"Orders", path:"/dashboard/orders", icon: ShoppingCart },
- { name:"Forms", path:"/dashboard/forms", icon: FileText },
- { name:"Pages", path:"/dashboard/pages", icon: LayoutTemplate },
- { name:"WhatsApp", path:"/dashboard/whatsapp", icon: MessageSquare },
- { name:"Webhooks", path:"/dashboard/webhooks", icon: Webhook },
- { name:"API Keys", path:"/dashboard/api-keys", icon: Shield },
- { name:"Teams", path:"/dashboard/teams", icon: Users },
- ];
+  if (!user) return null;
 
- return (
+  return (
  <div className="min-h-screen bg-[#f8f9fc] text-[#273144] font-sans flex">
  {/* Mobile Backdrop Overlay */}
  {isMobileMenuOpen && (
