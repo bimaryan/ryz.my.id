@@ -18,7 +18,7 @@ dotenv.config({ path: path.join(__dirname, '.env.local') });
 dotenv.config({ path: path.join(__dirname, '../.env.local') });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5009;
 
 // Enable if you're behind a reverse proxy
 app.set('trust proxy', 1);
