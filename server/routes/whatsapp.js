@@ -323,7 +323,7 @@ Jangan tambahkan kalimat pengantar seperti "Tentu" atau "Ini jawabannya", langsu
                         'Authorization': `Bearer ${groqApiKey}`
                       },
                       body: JSON.stringify({
-                        model: 'llama-3.1-8b-instant',
+                        model: 'openai/gpt-oss-120b',
                         messages: [
                           { 
                             role: 'system', 
