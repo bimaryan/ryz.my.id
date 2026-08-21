@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Bot, Sparkles, X, Wand2, Copy, Check, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -68,8 +69,8 @@ export default function AiWriterModal({ isOpen, onClose, onApply }) {
     '🤝 Follow-up setelah meeting',
   ];
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: 'fadeIn 0.2s ease' }}>
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ animation: 'fadeIn 0.2s ease' }}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose} />
 
@@ -215,6 +216,7 @@ export default function AiWriterModal({ isOpen, onClose, onApply }) {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.9) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
