@@ -162,7 +162,7 @@ export default function PublicPage() {
  if (orderError) throw orderError;
 
  // 2. Minta Token Snap dari Midtrans (Lewat Backend Express kita yang AMAN)
- const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id';
+ const apiUrl = import.meta.env.DEV ? 'http://localhost:5009' : 'https://api.ryz.my.id';
  
  const invoiceResponse = await fetch(`${apiUrl}/api/pakasir/create-invoice`, {
  method: 'POST',

@@ -25,9 +25,10 @@ import { supabase } from"@/lib/supabase";
 import { useAuth } from"@/hooks/useAuth";
 import Button from"@/components/ui/Button";
 import CreateLinkModal from"@/components/CreateLinkModal";
+import LoadingSpinner from"@/components/LoadingSpinner";
 
 export default function DashboardLayout({ children }) {
- const { user } = useAuth();
+ const { user, isSessionLoading } = useAuth();
  const location = useLocation();
  const navigate = useNavigate();
  const [searchParams, setSearchParams] = useSearchParams();
@@ -45,6 +46,22 @@ export default function DashboardLayout({ children }) {
  setShowExpiredBanner(false);
  }
  }, [user]);
+
+ useEffect(() => {
+   if (!isSessionLoading && !user) {
+     navigate('/login');
+   }
+ }, [isSessionLoading, user, navigate]);
+
+ if (isSessionLoading) {
+   return (
+     <div className="min-h-screen bg-[#f8f9fc] flex items-center justify-center">
+       <LoadingSpinner text="Memuat data pengguna..." />
+     </div>
+   );
+ }
+
+ if (!user) return null;
 
  const dismissExpiredBanner = async () => {
  setShowExpiredBanner(false);

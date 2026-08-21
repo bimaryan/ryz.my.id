@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'react-hot-toast'
 import { routes } from '@/config/routes'
 import { ChatbotWidget } from '@/components/ui/chatbot/ChatbotWidget'
+import { AuthSessionProvider } from '@/hooks/useSession'
 
 import { useState, useEffect } from 'react'
 
@@ -30,7 +31,7 @@ function App() {
     // 2. Check with our new backend security system
     const checkSecurity = async () => {
       try {
-        const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://api.ryz.my.id'
+        const apiUrl = import.meta.env.DEV ? 'http://localhost:5009' : 'https://api.ryz.my.id'
         
         // Cek apakah hacker mencoba akses URL berbahaya di frontend
         const currentPath = window.location.pathname.toLowerCase();
@@ -78,17 +79,19 @@ function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <Toaster position="top-right" />
-          <ChatbotWidget />
-          <Routes>
-            {routes.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={<route.element />}
-              />
-            ))}
-          </Routes>
+          <AuthSessionProvider>
+            <Toaster position="top-right" />
+            <ChatbotWidget />
+            <Routes>
+              {routes.map((route) => (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={<route.element />}
+                />
+              ))}
+            </Routes>
+          </AuthSessionProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </HelmetProvider>

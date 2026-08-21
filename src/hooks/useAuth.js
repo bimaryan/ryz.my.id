@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useSession } from './useSession'
 
 export function useAuth() {
-  const { session } = useSession()
+  const { session, isLoading: isSessionLoading } = useSession()
   const user = session?.user
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -193,6 +193,7 @@ export function useAuth() {
     updateEmail,
     resetPassword,
     isLoading,
+    isSessionLoading,
     error,
   }
 }

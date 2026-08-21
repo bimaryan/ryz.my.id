@@ -7,7 +7,7 @@ async function test() {
   form.append('message_content', 'hello');
 
   try {
-    const res = await fetch('http://localhost:5000/api/whatsapp/send-message', {
+    const res = await fetch('http://localhost:5009/api/whatsapp/send-message', {
       method: 'POST',
       body: form
     });
